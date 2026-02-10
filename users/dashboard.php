@@ -22,46 +22,18 @@ try {
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>Site Under Maintenance - <?= Config::getSiteName() ?></title>
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+            <!-- Tailwind CSS CDN -->
+            <script src="https://cdn.tailwindcss.com"></script>
             <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body {
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                }
-                .maintenance-container {
-                    text-align: center;
-                    padding: 2rem;
-                    background: rgba(255, 255, 255, 0.1);
-                    backdrop-filter: blur(20px);
-                    border-radius: 24px;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
-                }
-                .crypto-icon {
-                    font-size: 4rem;
-                    margin-bottom: 1rem;
-                    background: linear-gradient(45deg, #f7931a, #ffd700);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    background-clip: text;
-                }
-                h1 { font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; }
-                .lead { font-size: 1.2rem; margin-bottom: 1.5rem; opacity: 0.9; }
-                .completion { opacity: 0.8; font-size: 0.95rem; }
+                body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
             </style>
         </head>
-        <body>
-            <div class="maintenance-container">
-                <div class="crypto-icon">₿</div>
-                <h1>Site Under Maintenance</h1>
-                <p class="lead">We're currently performing scheduled maintenance. Please check back shortly.</p>
-                <div class="completion">Expected completion: Within 2 hours</div>
+        <body class="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 flex items-center justify-center text-white">
+            <div class="text-center p-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl max-w-md">
+                <div class="text-6xl mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">₿</div>
+                <h1 class="text-3xl font-bold mb-4">Site Under Maintenance</h1>
+                <p class="text-lg mb-6 opacity-90">We're currently performing scheduled maintenance. Please check back shortly.</p>
+                <div class="text-sm opacity-75">Expected completion: Within 2 hours</div>
             </div>
         </body>
         </html>
@@ -118,15 +90,20 @@ $pageTitle = 'Dashboard';
 $currentPage = 'dashboard';
 
 // Impersonation alert
+$impersonationAlert = '';
 if (SessionManager::get('is_impersonating')) {
-    echo '<div class="impersonation-alert alert alert-warning alert-dismissible" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <div>
-                <strong>Admin Impersonation Active</strong>
-                <div>You are viewing this account as an administrator. All actions are being logged.</div>
+    $impersonationAlert = '<div class="mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-4 rounded-xl shadow-lg">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <div>
+                    <strong class="font-semibold">Admin Impersonation Active</strong>
+                    <div class="text-sm opacity-90">You are viewing this account as an administrator. All actions are being logged.</div>
+                </div>
             </div>
-            <a href="../admin/stop-impersonation.php" class="btn btn-warning btn-sm ms-auto">
+            <a href="../admin/stop-impersonation.php" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-sm font-medium">
                 Return to Admin Panel
             </a>
         </div>
@@ -136,537 +113,292 @@ if (SessionManager::get('is_impersonating')) {
 include __DIR__ . '/includes/header.php';
 ?>
 
-    <style>
-    .welcome-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--radius-lg);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-lg);
-    }
-
-    .welcome-title {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-
-    .welcome-subtitle {
-        font-size: 1rem;
-        opacity: 0.9;
-        font-weight: 400;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .stat-card.gradient {
-        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
-    }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: var(--primary-color);
-    }
-
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-    }
-
-    .stat-card.balance::before { background: var(--success-color); }
-    .stat-card.earned::before { background: var(--warning-color); }
-    .stat-card.investments::before { background: var(--info-color); }
-    .stat-card.referrals::before { background: var(--dark-color); }
-
-    .stat-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-
-    .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: var(--radius);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-            color: white;
-        }
-
-    .stat-card.balance .stat-icon { background: var(--success-color); }
-    .stat-card.earned .stat-icon { background: var(--warning-color); }
-    .stat-card.investments .stat-icon { background: var(--info-color); }
-    .stat-card.referrals .stat-icon { background: var(--dark-color); }
-
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-        color: var(--text-primary);
-    }
-
-    .stat-label {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-
-    .quick-actions {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-    }
-
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-    }
-
-    .section-title i {
-        margin-right: 0.5rem;
-        color: var(--primary-color);
-    }
-
-    .actions-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-
-    .action-btn {
-        background: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1rem;
-        text-decoration: none;
-        color: var(--text-primary);
-        text-align: center;
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .action-btn:hover {
-        border-color: var(--primary-color);
-            transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-        color: var(--primary-color);
-        text-decoration: none;
-    }
-
-    .action-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: var(--radius);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-        color: white;
-    }
-
-    .action-btn.deposit .action-icon { background: var(--success-color); }
-    .action-btn.withdraw .action-icon { background: var(--warning-color); }
-    .action-btn.referrals .action-icon { background: var(--info-color); }
-    .action-btn.transactions .action-icon { background: var(--dark-color); }
-
-    .action-title {
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .action-desc {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-    }
-
-    .content-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .investment-plans {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-    }
-
-    .plan-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: var(--radius);
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-    }
-
-    .plan-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-    }
-
-    .plan-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .plan-name {
-        font-weight: 600;
-        font-size: 1rem;
-    }
-
-    .plan-rate {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .plan-details {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-
-    .plan-detail {
-        text-align: center;
-    }
-
-    .detail-value {
-        font-size: 1.125rem;
-        font-weight: 700;
-        margin-bottom: 0.125rem;
-    }
-
-    .detail-label {
-        font-size: 0.75rem;
-        opacity: 0.9;
-    }
-
-        .plan-action {
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius);
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: inline-block;
-        font-size: 0.875rem;
-        backdrop-filter: blur(10px);
-    }
-
-    .plan-action:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-1px);
-        color: white;
-        text-decoration: none;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    .recent-activity {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-    }
-
-    .activity-item {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .activity-item:last-child {
-        border-bottom: none;
-    }
-
-    .activity-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 0.75rem;
-        font-size: 0.875rem;
-        color: white;
-    }
-
-    .activity-icon.deposit { background: var(--success-color); }
-    .activity-icon.withdrawal { background: var(--warning-color); }
-    .activity-icon.withdraw { background: var(--warning-color); }
-    .activity-icon.profit { background: var(--info-color); }
-
-    .activity-content {
-        flex: 1;
-    }
-
-    .activity-title {
-        font-weight: 600;
-        margin-bottom: 0.125rem;
-        font-size: 0.875rem;
-    }
-
-    .activity-time {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-    }
-
-    .activity-amount {
-        font-weight: 600;
-        color: var(--text-primary);
-        font-size: 0.875rem;
-    }
-
-    .amount.positive { color: var(--success-color); }
-    .amount.negative { color: var(--danger-color); }
-
-    @media (max-width: 768px) {
-        .content-grid { 
-            grid-template-columns: 1fr; 
-        }
-        .stats-grid { 
-            grid-template-columns: 1fr; 
-        }
-        .actions-grid { 
-            grid-template-columns: repeat(2, 1fr); 
-        }
-        .welcome-title { 
-            font-size: 1.5rem; 
-        }
-        }
-    </style>
+<!-- Impersonation Alert -->
+<?= $impersonationAlert ?>
 
 <!-- Welcome Section -->
-<div class="welcome-section gradient-bg">
-    <h1 class="welcome-title">Welcome back, <?= htmlspecialchars($currentUser['first_name'] ?? 'User') ?>! 👋</h1>
-    <p class="welcome-subtitle">Here's what's happening with your investments today</p>
-                    </div>
+<div class="bg-gradient-to-br from-cf-primary via-cf-secondary to-cf-primary text-white rounded-2xl p-8 mb-8 shadow-2xl shadow-cf-primary/20 relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/5 animate-pulse"></div>
+    <div class="relative z-10">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">Welcome back, <?= htmlspecialchars($currentUser['first_name'] ?? 'User') ?>! 👋</h1>
+        <p class="text-lg opacity-95">Here's what's happening with your investments today</p>
+    </div>
+    <!-- Floating decorative elements -->
+    <div class="absolute top-4 right-4 w-20 h-20 bg-white/10 rounded-full blur-xl animate-bounce"></div>
+    <div class="absolute bottom-4 left-4 w-16 h-16 bg-white/5 rounded-full blur-lg animate-pulse"></div>
+</div>
 
 <!-- Statistics Grid -->
-<div class="stats-grid">
-    <div class="stat-card balance gradient-card gradient-shadow">
-        <div class="stat-header">
-            <div class="stat-icon gradient-bg-success">
-                <i class="fas fa-wallet"></i>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <!-- Available Balance Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-slate-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cf-success to-emerald-400"></div>
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-r from-cf-success to-emerald-400 rounded-xl flex items-center justify-center shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
             </div>
-                                </div>
-        <div class="stat-value gradient-text">$<?= number_format($stats['balance'] ?? 0, 2) ?></div>
-        <div class="stat-label">Available Balance</div>
-                            </div>
+        </div>
+        <div class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            $<?= number_format($stats['balance'] ?? 0, 2) ?>
+        </div>
+        <div class="text-gray-600 dark:text-gray-300 font-medium">Available Balance</div>
+    </div>
 
-    <div class="stat-card earned gradient-card gradient-shadow">
-        <div class="stat-header">
-            <div class="stat-icon gradient-bg-warning">
-                <i class="fas fa-chart-line"></i>
+    <!-- Total Earned Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-slate-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cf-warning to-amber-400"></div>
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-r from-cf-warning to-amber-400 rounded-xl flex items-center justify-center shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
             </div>
-                            </div>
-        <div class="stat-value gradient-text">$<?= number_format($stats['total_earned'] ?? 0, 2) ?></div>
-        <div class="stat-label">Total Earned</div>
-                        </div>
+        </div>
+        <div class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            $<?= number_format($stats['total_earned'] ?? 0, 2) ?>
+        </div>
+        <div class="text-gray-600 dark:text-gray-300 font-medium">Total Earned</div>
+    </div>
 
-    <div class="stat-card investments gradient-card gradient-shadow">
-        <div class="stat-header">
-            <div class="stat-icon gradient-bg">
-                <i class="fas fa-rocket"></i>
+    <!-- Active Investments Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-slate-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cf-primary to-cf-info"></div>
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-r from-cf-primary to-cf-info rounded-xl flex items-center justify-center shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
             </div>
-                                    </div>
-        <div class="stat-value gradient-text"><?= number_format($stats['active_investments'] ?? 0) ?></div>
-        <div class="stat-label">Active Investments</div>
-                        </div>
+        </div>
+        <div class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <?= number_format($stats['active_investments'] ?? 0) ?>
+        </div>
+        <div class="text-gray-600 dark:text-gray-300 font-medium">Active Investments</div>
+    </div>
 
-    <div class="stat-card referrals gradient-card gradient-shadow">
-        <div class="stat-header">
-            <div class="stat-icon gradient-bg-alt">
-                <i class="fas fa-users"></i>
-                                        </div>
-                                    </div>
-        <div class="stat-value gradient-text"><?= number_format($stats['referral_count'] ?? 0) ?></div>
-        <div class="stat-label">Total Referrals</div>
-                        </div>
-                    </div>
+    <!-- Total Referrals Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-slate-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cf-secondary to-purple-400"></div>
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-r from-cf-secondary to-purple-400 rounded-xl flex items-center justify-center shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <?= number_format($stats['referral_count'] ?? 0) ?>
+        </div>
+        <div class="text-gray-600 dark:text-gray-300 font-medium">Total Referrals</div>
+    </div>
+</div>
 
-                    <!-- Quick Actions -->
-<div class="quick-actions gradient-card">
-    <h2 class="section-title gradient-text">
-        <i class="fas fa-bolt"></i>
+<!-- Quick Actions -->
+<div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-slate-700 mb-8">
+    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+        <svg class="w-6 h-6 text-cf-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
         Quick Actions
     </h2>
-    <div class="actions-grid">
-        <a href="deposit.php" class="action-btn deposit">
-            <div class="action-icon gradient-bg-success">
-                <i class="fas fa-plus"></i>
-                                </div>
-            <div class="action-title">Deposit Funds</div>
-            <div class="action-desc">Add money via crypto</div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <a href="deposit.php" class="group bg-gradient-to-br from-cf-success/10 to-emerald-50 dark:from-cf-success/20 dark:to-slate-700 border border-cf-success/20 rounded-xl p-4 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div class="flex flex-col items-center text-center space-y-3">
+                <div class="w-12 h-12 bg-gradient-to-r from-cf-success to-emerald-400 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Deposit Funds</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Add money via crypto</div>
+                </div>
+            </div>
         </a>
 
-        <a href="withdraw.php" class="action-btn withdraw">
-            <div class="action-icon gradient-bg-warning">
-                <i class="fas fa-minus"></i>
-                                        </div>
-            <div class="action-title">Withdraw</div>
-            <div class="action-desc">Cash out your profits</div>
+        <a href="withdraw.php" class="group bg-gradient-to-br from-cf-warning/10 to-amber-50 dark:from-cf-warning/20 dark:to-slate-700 border border-cf-warning/20 rounded-xl p-4 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div class="flex flex-col items-center text-center space-y-3">
+                <div class="w-12 h-12 bg-gradient-to-r from-cf-warning to-amber-400 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4m16 0l-4-4m4 4l-4 4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Withdraw</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Cash out your profits</div>
+                </div>
+            </div>
         </a>
 
-        <a href="referrals.php" class="action-btn referrals">
-            <div class="action-icon gradient-bg-alt">
-                <i class="fas fa-users"></i>
-                                        </div>
-            <div class="action-title">Referrals</div>
-            <div class="action-desc">Earn commissions</div>
+        <a href="referrals.php" class="group bg-gradient-to-br from-cf-secondary/10 to-purple-50 dark:from-cf-secondary/20 dark:to-slate-700 border border-cf-secondary/20 rounded-xl p-4 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div class="flex flex-col items-center text-center space-y-3">
+                <div class="w-12 h-12 bg-gradient-to-r from-cf-secondary to-purple-400 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Referrals</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Earn commissions</div>
+                </div>
+            </div>
         </a>
 
-                <a href="transactions.php" class="action-btn transactions">
-            <div class="action-icon gradient-bg">
-                <i class="fas fa-history"></i>
-                                        </div>
-            <div class="action-title">Transactions</div>
-            <div class="action-desc">View all activity</div>
-                                            </a>
-                                        </div>
-                                    </div>
+        <a href="transactions.php" class="group bg-gradient-to-br from-cf-info/10 to-blue-50 dark:from-cf-info/20 dark:to-slate-700 border border-cf-info/20 rounded-xl p-4 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div class="flex flex-col items-center text-center space-y-3">
+                <div class="w-12 h-12 bg-gradient-to-r from-cf-info to-blue-400 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Transactions</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">View all activity</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
 
 <!-- Content Grid -->
-<div class="content-grid">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <!-- Investment Plans -->
-    <div class="investment-plans gradient-card">
-        <h2 class="section-title gradient-text">
-            <i class="fas fa-chart-pie"></i>
+    <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-slate-700">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+            <svg class="w-6 h-6 text-cf-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
             Investment Plans
         </h2>
+        
         <?php if (!empty($investmentSchemas)): ?>
-            <?php foreach ($investmentSchemas as $schema): ?>
-                <div class="plan-card">
-                    <div class="plan-header">
-                        <div class="plan-name"><?= htmlspecialchars($schema['name']) ?></div>
-                        <div class="plan-rate"><?= number_format($schema['daily_rate'], 2) ?>% Daily</div>
+            <div class="space-y-4">
+                <?php foreach ($investmentSchemas as $schema): ?>
+                    <div class="bg-gradient-to-br from-cf-primary via-cf-secondary to-cf-primary text-white rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/5"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-xl font-bold"><?= htmlspecialchars($schema['name']) ?></h3>
+                                <span class="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full font-semibold text-sm">
+                                    <?= number_format($schema['daily_rate'], 2) ?>% Daily
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 mb-4">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold">$<?= number_format($schema['min_amount'], 0) ?></div>
+                                    <div class="text-sm opacity-90">Min Investment</div>
                                 </div>
-                    <div class="plan-details">
-                        <div class="plan-detail">
-                            <div class="detail-value">$<?= number_format($schema['min_amount'], 2) ?></div>
-                            <div class="detail-label">Min Investment</div>
-                        </div>
-                        <div class="plan-detail">
-                            <div class="detail-value"><?= $schema['duration_days'] ?> Days</div>
-                            <div class="detail-label">Duration</div>
-                        </div>
-                        <div class="plan-detail">
-                            <div class="detail-value"><?= number_format($schema['total_return'] * 100, 1) ?>%</div>
-                            <div class="detail-label">Total Return</div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold"><?= $schema['duration_days'] ?> Days</div>
+                                    <div class="text-sm opacity-90">Duration</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold"><?= number_format($schema['total_return'] * 100, 1) ?>%</div>
+                                    <div class="text-sm opacity-90">Total Return</div>
+                                </div>
+                            </div>
+                            <a href="invest.php?plan=<?= $schema['id'] ?>" class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                Invest Now
+                            </a>
                         </div>
                     </div>
-                    <a href="invest.php?plan=<?= $schema['id'] ?>" class="plan-action" style="display: inline-block; text-decoration: none;">
-                        Invest Now
-                    </a>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
         <?php else: ?>
-            <div class="text-center text-muted py-4">
-                <i class="fas fa-info-circle fa-2x mb-3"></i>
-                <p>No investment plans available at the moment.</p>
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <p class="text-gray-500 dark:text-gray-400">No investment plans available at the moment.</p>
             </div>
         <?php endif; ?>
     </div>
 
     <!-- Recent Activity -->
-    <div class="recent-activity gradient-card">
-        <h2 class="section-title gradient-text">
-            <i class="fas fa-history"></i>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-slate-700">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+            <svg class="w-6 h-6 text-cf-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
             Recent Activity
         </h2>
+        
         <?php if (!empty($recentTransactions)): ?>
-            <?php foreach ($recentTransactions as $transaction): ?>
-                <div class="activity-item">
-                    <div class="activity-icon <?= strtolower($transaction['type']) ?>">
-                        <?php
-                        switch (strtolower($transaction['type'])) {
-                            case 'deposit':
-                                echo '<i class="fas fa-plus"></i>';
-                                break;
-                            case 'withdrawal':
-                                echo '<i class="fas fa-minus"></i>';
-                                break;
-                            case 'withdraw':
-                                echo '<i class="fas fa-minus"></i>';
-                                break;
-                            case 'profit':
-                                echo '<i class="fas fa-chart-line"></i>';
-                                break;
-                            default:
-                                echo '<i class="fas fa-exchange-alt"></i>';
-                        }
-                        ?>
-                </div>
-                    <div class="activity-content">
-                        <div class="activity-title"><?= htmlspecialchars(ucfirst($transaction['type'])) ?></div>
-                        <div class="activity-time"><?= date('M j, Y g:i A', strtotime($transaction['created_at'])) ?></div>
-                    </div>
-                    <div class="activity-amount">
-                        <span class="amount <?= $transaction['amount'] >= 0 ? 'positive' : 'negative' ?>">
+            <div class="space-y-4">
+                <?php foreach ($recentTransactions as $transaction): ?>
+                    <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm
+                            <?php
+                            switch (strtolower($transaction['type'])) {
+                                case 'deposit':
+                                    echo 'bg-gradient-to-r from-cf-success to-emerald-400 text-white';
+                                    break;
+                                case 'withdrawal':
+                                case 'withdraw':
+                                    echo 'bg-gradient-to-r from-cf-warning to-amber-400 text-white';
+                                    break;
+                                case 'profit':
+                                    echo 'bg-gradient-to-r from-cf-info to-blue-400 text-white';
+                                    break;
+                                default:
+                                    echo 'bg-gradient-to-r from-gray-400 to-gray-500 text-white';
+                            }
+                            ?>">
+                            <?php
+                            switch (strtolower($transaction['type'])) {
+                                case 'deposit':
+                                    echo '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>';
+                                    break;
+                                case 'withdrawal':
+                                case 'withdraw':
+                                    echo '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>';
+                                    break;
+                                case 'profit':
+                                    echo '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>';
+                                    break;
+                                default:
+                                    echo '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>';
+                            }
+                            ?>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-gray-900 dark:text-white">
+                                <?= htmlspecialchars(ucfirst($transaction['type'])) ?>
+                            </div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                <?= date('M j, Y g:i A', strtotime($transaction['created_at'])) ?>
+                            </div>
+                        </div>
+                        <div class="font-semibold
+                            <?= $transaction['amount'] >= 0 ? 'text-cf-success' : 'text-cf-danger' ?>">
                             <?= ($transaction['amount'] >= 0 ? '+' : '') ?>$<?= number_format(abs($transaction['amount']), 2) ?>
-                        </span>
+                        </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
+            
+            <div class="mt-6">
+                <a href="transactions.php" class="w-full flex items-center justify-center gap-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 font-medium py-3 px-4 rounded-xl transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    View All Transactions
+                </a>
+            </div>
         <?php else: ?>
-            <div class="text-center text-muted py-4">
-                <i class="fas fa-history fa-2x mb-3"></i>
-                <p>No recent transactions.</p>
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-gray-500 dark:text-gray-400">No recent transactions.</p>
             </div>
         <?php endif; ?>
-        </div>
     </div>
+</div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

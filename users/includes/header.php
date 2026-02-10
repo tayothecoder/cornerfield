@@ -1,1104 +1,429 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Cornerfield Investment Platform
+ * File: users/includes/header.php
+ * Purpose: Shared header for all user dashboard pages
+ * Security Level: PROTECTED
+ * 
+ * @author Cornerfield Development Team
+ * @version 1.0.0
+ * @since 2026-02-10
+ */
+
+// Include autoload and authentication check
+require_once dirname(__DIR__, 2) . '/autoload.php';
+
+use App\Models\UserModel;
+use App\Utils\Security;
+
+// Set security headers
+Security::setSecurityHeaders();
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Authentication check - redirect to login if not authenticated
+if (!isset($_SESSION['authenticated']) || !$_SESSION['authenticated'] || !isset($_SESSION['user_id'])) {
+    header('Location: /login.php');
+    exit;
+}
+
+// Check session timeout
+if (time() - ($_SESSION['last_activity'] ?? 0) > 1800) { // 30 minutes
+    session_destroy();
+    header('Location: /login.php?timeout=1');
+    exit;
+}
+
+// Update last activity
+$_SESSION['last_activity'] = time();
+
+// Get current user data
+$userModel = new UserModel();
+$currentUser = $userModel->findById((int)$_SESSION['user_id']);
+
+if (!$currentUser || !$currentUser['is_active']) {
+    session_destroy();
+    header('Location: /login.php?account_inactive=1');
+    exit;
+}
+
+// Get current page for active navigation highlighting
+$currentPage = basename($_SERVER['PHP_SELF'], '.php');
+
+// Page title - can be overridden in individual pages
+$pageTitle = $pageTitle ?? 'Dashboard';
+$pageDescription = $pageDescription ?? 'Manage your investments and track your portfolio performance';
+
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="<?= ($_SESSION['theme'] ?? 'light') === 'dark' ? 'dark' : '' ?>">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= $pageTitle ?? 'User Dashboard' ?> - <?= \App\Config\Config::getSiteName() ?></title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Tailwind CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= Security::escape($pageTitle) ?> - Cornerfield Investment Platform</title>
+    <meta name="description" content="<?= Security::escape($pageDescription) ?>">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
+        tailwindcss.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: '#2563eb',
-                        secondary: '#64748b',
-                        success: '#10b981',
-                        warning: '#f59e0b',
-                        danger: '#ef4444',
-                        info: '#06b6d4',
-                        dark: '#1e293b'
+                        cf: {
+                            primary: '#667eea',
+                            'primary-dark': '#5a67d8',
+                            secondary: '#764ba2',
+                            success: '#10b981',
+                            warning: '#f59e0b',
+                            danger: '#ef4444',
+                            info: '#3b82f6',
+                        }
                     }
                 }
             }
         }
     </script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --sidebar-width: 280px;
-            --header-height: 70px;
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --secondary-color: #64748b;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --info-color: #06b6d4;
-            --dark-color: #1e293b;
-            --light-color: #f8fafc;
-            --border-color: #e2e8f0;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-tertiary: #f1f5f9;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-            --radius: 8px;
-            --radius-lg: 12px;
-            --radius-xl: 16px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: var(--bg-primary);
-            border-right: 1px solid var(--border-color);
-            box-shadow: var(--shadow-lg);
-            z-index: 1000;
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            color: white;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.25rem;
-        }
-
-        .sidebar-brand .crypto-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: var(--radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 0.75rem;
-            font-size: 1.5rem;
-        }
-
-        .sidebar-nav {
-            padding: 1rem 0;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .nav-section {
-            margin-bottom: 2rem;
-        }
-
-        .nav-section-title {
-            padding: 0 1.5rem 0.5rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-        }
-
-        .nav-item {
-            margin: 0.25rem 0;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1.5rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-link:hover {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-            text-decoration: none;
-        }
-
-        .nav-link.active {
-            background-color: rgba(37, 99, 235, 0.1);
-            color: var(--primary-color);
-            border-left-color: var(--primary-color);
-        }
-
-        .nav-link i {
-            width: 20px;
-            margin-right: 0.75rem;
-            font-size: 1rem;
-        }
-
-        .nav-link .nav-text {
-            flex: 1;
-        }
-
-        .nav-link .nav-badge {
-            background: var(--danger-color);
-            color: white;
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-weight: 600;
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            transition: margin-left 0.3s ease;
-        }
-
-        .main-header {
-            height: var(--header-height);
-            background: var(--bg-primary);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .user-menu {
-            position: relative;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .user-avatar:hover {
-            transform: scale(1.05);
-        }
-
-        /* User Dropdown */
-        .user-menu {
-            position: relative;
-        }
-
-        .user-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            min-width: 250px;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.2s ease;
-        }
-
-        .user-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .dropdown-header {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            background: var(--bg-secondary);
-        }
-
-        .user-info {
-            text-align: center;
-        }
-
-        .user-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-        }
-
-        .user-email {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .dropdown-menu {
-            padding: 0.5rem 0;
-        }
-
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            color: var(--text-primary);
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .dropdown-item:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            text-decoration: none;
-        }
-
-        .dropdown-item.logout:hover {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger-color);
-        }
-
-        .dropdown-item i {
-            width: 20px;
-            margin-right: 0.75rem;
-            font-size: 0.875rem;
-        }
-
-        .dropdown-divider {
-            height: 1px;
-            background: var(--border-color);
-            margin: 0.5rem 0;
-        }
-
-        .content-area {
-            padding: 2rem;
-            min-height: calc(100vh - 200px);
-        }
-
-        /* Footer Styles */
-        .main-footer {
-            background: var(--bg-primary);
-            border-top: 1px solid var(--border-color);
-            margin-top: 3rem;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .footer-section h4 {
-            color: var(--text-primary);
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .footer-section p {
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-
-        .social-link {
-            width: 40px;
-            height: 40px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .social-link:hover {
-            background: var(--primary-color);
-            color: white;
-            transform: translateY(-2px);
-            text-decoration: none;
-        }
-
-        .footer-bottom {
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--border-color);
-            padding: 1.5rem 2rem;
-        }
-
-        .footer-bottom-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .footer-bottom p {
-            color: var(--text-secondary);
-            margin: 0;
-            font-size: 0.875rem;
-        }
-
-        @media (max-width: 1024px) {
-            .content-area {
-                margin-left: 0;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .footer-content {
-                padding: 2rem 1rem;
-            }
-            
-            .footer-bottom {
-                padding: 1rem;
-            }
-        }
-
-        /* Beautiful Gradient Button Style from Uiverse */
-        .gradient-btn {
-            position: relative;
-            border: none;
-            background: transparent;
-            padding: 0;
-            outline: none;
-            cursor: pointer;
-            font-family: 'Inter', monospace;
-            font-weight: 300;
-            text-transform: uppercase;
-            font-size: 1rem;
-        }
-
-        .gradient-btn .shadow-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 0.5rem;
-            transform: translateY(2px);
-            transition: all 600ms cubic-bezier(0.3, 0.7, 0.4, 1);
-        }
-
-        .gradient-btn:hover .shadow-layer {
-            transform: translateY(4px);
-            transition: all 250ms cubic-bezier(0.3, 0.7, 0.4, 1);
-        }
-
-        .gradient-btn:active .shadow-layer {
-            transform: translateY(1px);
-        }
-
-        .gradient-btn .bg-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 0.5rem;
-            background: linear-gradient(to left, hsl(217, 33%, 16%), hsl(217, 33%, 32%), hsl(217, 33%, 16%));
-        }
-
-        .gradient-btn .content-layer {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 1.5rem;
-            font-size: 1.125rem;
-            color: white;
-            border-radius: 0.5rem;
-            transform: translateY(-4px);
-            background: linear-gradient(to right, #f27121, #e94057, #8a2387);
-            gap: 0.75rem;
-            transition: all 600ms cubic-bezier(0.3, 0.7, 0.4, 1);
-            filter: brightness(100%);
-        }
-
-        .gradient-btn:hover .content-layer {
-            transform: translateY(-6px);
-            transition: all 250ms cubic-bezier(0.3, 0.7, 0.4, 1);
-            filter: brightness(110%);
-        }
-
-        .gradient-btn:active .content-layer {
-            transform: translateY(-2px);
-        }
-
-        .gradient-btn .content-layer span {
-            user-select: none;
-        }
-
-        .gradient-btn .content-layer svg {
-            width: 1.25rem;
-            height: 1.25rem;
-            margin-left: 0.5rem;
-            margin-right: -0.25rem;
-            transition: transform 250ms;
-        }
-
-        .gradient-btn:hover .content-layer svg {
-            transform: translateX(4px);
-        }
-
-        /* Variants */
-        .gradient-btn.primary .content-layer {
-            background: linear-gradient(to right, #f27121, #e94057, #8a2387);
-        }
-
-        .gradient-btn.success .content-layer {
-            background: linear-gradient(to right, #10b981, #059669, #047857);
-        }
-
-        .gradient-btn.warning .content-layer {
-            background: linear-gradient(to right, #f59e0b, #d97706, #b45309);
-        }
-
-        .gradient-btn.danger .content-layer {
-            background: linear-gradient(to right, #ef4444, #dc2626, #b91c1c);
-        }
-
-        .gradient-btn.info .content-layer {
-            background: linear-gradient(to right, #06b6d4, #0891b2, #0e7490);
-        }
-
-        /* Gradient Integration Throughout Application */
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .gradient-bg-alt {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .gradient-bg-success {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .gradient-bg-warning {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        .gradient-bg-danger {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .gradient-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .gradient-border {
-            border: 2px solid transparent;
-            background: linear-gradient(white, white) padding-box,
-                        linear-gradient(135deg, #667eea 0%, #764ba2 100%) border-box;
-        }
-
-        .gradient-shadow {
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        }
-
-        .gradient-hover:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-        }
-
-        /* Mobile Toggle */
-        .mobile-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: var(--radius);
-            transition: all 0.2s ease;
-        }
-
-        .mobile-toggle:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .mobile-toggle {
-                display: block;
-            }
-
-            .content-area {
-                padding: 1rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-header {
-                padding: 0 1rem;
-            }
-
-            .page-title {
-                font-size: 1.25rem;
-            }
-        }
-
-        /* Overlay for mobile */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-
-        .sidebar-overlay.active {
-            display: block;
-        }
-
-        /* Custom scrollbar */
-        .sidebar-nav::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .sidebar-nav::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .sidebar-nav::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 2px;
-        }
-
-        .sidebar-nav::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
-
-        /* Impersonation Alert */
-        .impersonation-alert {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: white;
-            padding: 1rem 2rem;
-            margin-bottom: 0;
-            border: none;
-            border-radius: 0;
-        }
-
-        .impersonation-alert .d-flex {
-            align-items: center;
-        }
-
-        .impersonation-alert .btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .impersonation-alert .btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-            text-decoration: none;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1050;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        
-        .modal.show {
-            display: block;
-        }
-        
-        .modal-dialog {
-            position: relative;
-            width: auto;
-            margin: 1.75rem auto;
-            max-width: 800px;
-        }
-        
-        .modal-content {
-            position: relative;
-            background-color: #fff;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-            outline: 0;
-        }
-        
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #dee2e6;
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-        }
-        
-        .modal-body {
-            position: relative;
-            padding: 1.5rem;
-        }
-        
-        .modal-footer {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 1rem 1.5rem;
-            border-top: 1px solid #dee2e6;
-            border-bottom-left-radius: 0.5rem;
-            border-bottom-right-radius: 0.5rem;
-        }
-        
-        .btn-close {
-            background: transparent;
-            border: 0;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0;
-            width: 1.5rem;
-            height: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6c757d;
-        }
-        
-        .btn-close:hover {
-            color: #000;
-        }
-        
-        .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1040;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        
-        .modal-open {
-            overflow: hidden;
-        }
-
-        /* Form Styles */
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .form-control {
-            display: block;
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            color: var(--text-primary);
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-
-        .form-control:focus {
-            color: var(--text-primary);
-            background-color: #fff;
-            border-color: #86b7fe;
-            outline: 0;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        .form-text {
-            margin-top: 0.25rem;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .btn {
-            display: inline-block;
-            font-weight: 400;
-            line-height: 1.5;
-            color: #212529;
-            text-align: center;
-            text-decoration: none;
-            vertical-align: middle;
-            cursor: pointer;
-            user-select: none;
-            background-color: transparent;
-            border: 1px solid transparent;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            border-radius: 0.375rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-
-        .btn-primary {
-            color: #fff;
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-
-        .btn-primary:hover {
-            color: #fff;
-            background-color: #0b5ed7;
-            border-color: #0a58ca;
-        }
-
-        .btn-secondary {
-            color: #fff;
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            color: #fff;
-            background-color: #5c636a;
-            border-color: #565e64;
-        }
-
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-            margin-right: -0.75rem;
-            margin-left: -0.75rem;
-        }
-
-        .col-md-4 {
-            flex: 0 0 auto;
-            width: 33.33333333%;
-            padding-right: 0.75rem;
-            padding-left: 0.75rem;
-        }
-
-        .col-md-6 {
-            flex: 0 0 auto;
-            width: 50%;
-            padding-right: 0.75rem;
-            padding-left: 0.75rem;
-        }
-
-        .col-12 {
-            flex: 0 0 auto;
-            width: 100%;
-            padding-right: 0.75rem;
-            padding-left: 0.75rem;
-        }
-
-        .mb-3 {
-            margin-bottom: 1rem;
-        }
-
-        .mt-3 {
-            margin-top: 1rem;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .h4 {
-            font-size: 1.5rem;
-            font-weight: 500;
-            line-height: 1.2;
-        }
-
-        .h6 {
-            font-size: 1rem;
-            font-weight: 500;
-            line-height: 1.2;
-        }
-
-        .card {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            word-wrap: break-word;
-            background-color: #fff;
-            background-clip: border-box;
-            border: 1px solid rgba(0, 0, 0, 0.125);
-            border-radius: 0.375rem;
-        }
-
-        .card-body {
-            flex: 1 1 auto;
-            padding: 1rem;
-        }
-
-        .bg-light {
-            background-color: #f8f9fa !important;
-        }
-
-        .bg-primary {
-            background-color: #0d6efd !important;
-        }
-
-        .text-white {
-            color: #fff !important;
-        }
-
-        .text-muted {
-            color: var(--text-secondary) !important;
-        }
-
-        .small {
-            font-size: 0.875rem;
-        }
-
-        @media (max-width: 768px) {
-            .col-md-4,
-            .col-md-6 {
-                width: 100%;
-            }
-            
-            .modal-dialog {
-                margin: 0.5rem;
-                max-width: calc(100% - 1rem);
-            }
-        }
-    </style>
+    
+    <!-- Custom CSS Variables (keep for theme system) -->
+    <link rel="stylesheet" href="/assets/css/cornerfield.css">
+    
+    <!-- CSRF Token Meta -->
+    <meta name="csrf-token" content="<?= Security::generateCsrfToken() ?>">
 </head>
-<body>
-    <!-- Sidebar Overlay for Mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a href="dashboard.php" class="sidebar-brand">
-                <div class="crypto-icon">₿</div>
-                <?= explode(' ', \App\Config\Config::getSiteName())[0] ?>
-            </a>
+<body class="bg-gray-50 dark:bg-slate-900 font-inter">
+    <!-- Loading Overlay -->
+    <div class="fixed inset-0 bg-white dark:bg-slate-900 flex items-center justify-center z-50 transition-opacity duration-300 hidden" id="loadingOverlay">
+        <div class="text-center">
+            <svg class="animate-spin w-8 h-8 text-cf-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
+    </div>
 
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-section-title">Main</div>
-                <div class="nav-item">
-                    <a href="dashboard.php" class="nav-link <?= $currentPage === 'dashboard' ? 'active' : '' ?>">
-                        <i class="fas fa-home"></i>
-                        <span class="nav-text">Dashboard</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="deposit.php" class="nav-link <?= $currentPage === 'deposit' ? 'active' : '' ?>">
-                        <i class="fas fa-plus-circle"></i>
-                        <span class="nav-text">Deposit</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="withdraw.php" class="nav-link <?= $currentPage === 'withdraw' ? 'active' : '' ?>">
-                        <i class="fas fa-minus-circle"></i>
-                        <span class="nav-text">Withdraw</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="transfer.php" class="nav-link <?= $currentPage === 'transfer' ? 'active' : '' ?>">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span class="nav-text">Transfer</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="invest.php" class="nav-link <?= $currentPage === 'invest' ? 'active' : '' ?>">
-                        <i class="fas fa-rocket"></i>
-                        <span class="nav-text">Invest</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-section-title">Account</div>
-                <div class="nav-item">
-                    <a href="transactions.php" class="nav-link <?= $currentPage === 'transactions' ? 'active' : '' ?>">
-                        <i class="fas fa-history"></i>
-                        <span class="nav-text">Transactions</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="referrals.php" class="nav-link <?= $currentPage === 'referrals' ? 'active' : '' ?>">
-                        <i class="fas fa-users"></i>
-                        <span class="nav-text">Referrals</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="profile.php" class="nav-link <?= $currentPage === 'profile' ? 'active' : '' ?>">
-                        <i class="fas fa-user"></i>
-                        <span class="nav-text">Profile</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-section-title">Support</div>
-                <div class="nav-item">
-                    <a href="support.php" class="nav-link <?= $currentPage === 'support' ? 'active' : '' ?>">
-                        <i class="fas fa-headset"></i>
-                        <span class="nav-text">Support</span>
+    <!-- Main Layout Container -->
+    <div class="flex h-screen bg-gray-50 dark:bg-slate-900">
+        <!-- Sidebar -->
+        <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-800 shadow-xl transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0" id="sidebar">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-center h-16 px-6 bg-gradient-to-r from-cf-primary to-cf-secondary">
+                    <a href="/users/dashboard.php" class="flex items-center gap-3">
+                        <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="text-xl font-bold text-white">Cornerfield</span>
                     </a>
                 </div>
 
-
-                <div class="nav-item">
-                    <a href="../logout.php" class="nav-link">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span class="nav-text">Logout</span>
-                    </a>
-                </div>
-            </div>
-        </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Main Header -->
-        <header class="main-header">
-            <div class="header-left">
-                <button class="mobile-toggle" id="mobileToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="page-title"><?= $pageTitle ?? 'Dashboard' ?></h1>
-            </div>
-            <div class="header-right">
-                <div class="user-menu">
-                    <div class="user-avatar" id="userMenuToggle" title="<?= htmlspecialchars($currentUser['first_name'] ?? 'User') ?>">
-                        <?= strtoupper(substr($currentUser['first_name'] ?? 'U', 0, 1)) ?>
+                <!-- User Info -->
+                <div class="flex items-center px-6 py-4 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-600">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-gradient-to-r from-cf-primary to-cf-secondary rounded-full flex items-center justify-center text-white font-semibold">
+                            <?= Security::escape(strtoupper(substr($currentUser['first_name'] ?? $currentUser['username'], 0, 1))) ?>
+                        </div>
                     </div>
-                    <div class="user-dropdown" id="userDropdown">
-                        <div class="dropdown-header">
-                            <div class="user-info">
-                                <div class="user-name"><?= htmlspecialchars($currentUser['first_name'] ?? '') ?> <?= htmlspecialchars($currentUser['last_name'] ?? '') ?></div>
-                                <div class="user-email"><?= htmlspecialchars($currentUser['email'] ?? '') ?></div>
+                    <div class="ml-3 flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            <?= Security::escape($currentUser['first_name'] ? $currentUser['first_name'] . ' ' . ($currentUser['last_name'] ?? '') : $currentUser['username']) ?>
+                        </p>
+                        <p class="text-sm text-cf-primary font-semibold">
+                            $<?= number_format((float)$currentUser['balance'], 2) ?>
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <?= $currentUser['kyc_status'] === 'approved' ? 'bg-cf-success/10 text-cf-success' : ($currentUser['kyc_status'] === 'rejected' ? 'bg-cf-danger/10 text-cf-danger' : 'bg-cf-warning/10 text-cf-warning') ?>">
+                            <?= Security::escape(ucfirst($currentUser['kyc_status'])) ?>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+                    <a href="/users/dashboard.php" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors <?= $currentPage === 'dashboard' ? 'bg-cf-primary text-white shadow-lg shadow-cf-primary/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' ?>">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                    
+                    <a href="/users/invest.php" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors <?= $currentPage === 'invest' ? 'bg-cf-primary text-white shadow-lg shadow-cf-primary/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' ?>">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        Investments
+                        <?php if (isset($pendingInvestments) && $pendingInvestments > 0): ?>
+                        <span class="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-cf-warning rounded-full">
+                            <?= $pendingInvestments ?>
+                        </span>
+                        <?php endif; ?>
+                    </a>
+                    
+                    <a href="/users/deposit.php" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors <?= $currentPage === 'deposit' ? 'bg-cf-primary text-white shadow-lg shadow-cf-primary/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' ?>">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Deposit
+                    </a>
+                    
+                    <a href="/users/withdraw.php" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors <?= $currentPage === 'withdraw' ? 'bg-cf-primary text-white shadow-lg shadow-cf-primary/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' ?>">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Withdraw
+                    </a>
+                    
+                    <a href="/users/transactions.php" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors <?= $currentPage === 'transactions' ? 'bg-cf-primary text-white shadow-lg shadow-cf-primary/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' ?>">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Transactions
+                    </a>
+                    
+                    <a href="/users/profile.php" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors <?= $currentPage === 'profile' ? 'bg-cf-primary text-white shadow-lg shadow-cf-primary/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' ?>">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        Profile
+                        <?php if ($currentUser['kyc_status'] === 'pending'): ?>
+                        <span class="ml-auto inline-flex items-center justify-center w-2 h-2 bg-cf-warning rounded-full"></span>
+                        <?php endif; ?>
+                    </a>
+                    
+                    <a href="/users/support.php" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors <?= $currentPage === 'support' ? 'bg-cf-primary text-white shadow-lg shadow-cf-primary/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' ?>">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        Support
+                    </a>
+                </nav>
+
+                <!-- Quick Actions -->
+                <div class="p-4 border-t border-gray-200 dark:border-slate-600">
+                    <button type="button" class="w-full bg-gradient-to-r from-cf-primary to-cf-secondary hover:from-cf-primary-dark hover:to-cf-primary text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-cf-primary/25" onclick="showQuickInvestModal()">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Quick Invest
+                    </button>
+                </div>
+
+                <!-- Settings -->
+                <div class="p-4 border-t border-gray-200 dark:border-slate-600">
+                    <div class="flex items-center justify-between">
+                        <button type="button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-cf-primary transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700" title="Toggle theme" onclick="toggleTheme()">
+                            <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </button>
+                        
+                        <div class="relative" id="settings-dropdown">
+                            <button type="button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-cf-primary transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700" onclick="toggleDropdown('settings-dropdown')">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </button>
+                            <div class="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 hidden" id="settings-menu">
+                                <a href="/users/profile.php" class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-t-xl">
+                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                    Profile Settings
+                                </a>
+                                <a href="/users/security.php" class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                    </svg>
+                                    Security
+                                </a>
+                                <div class="border-t border-gray-200 dark:border-slate-600"></div>
+                                <button onclick="logout()" class="flex items-center w-full px-4 py-3 text-sm text-cf-danger hover:bg-gray-100 dark:hover:bg-slate-700 rounded-b-xl">
+                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                    Logout
+                                </button>
                             </div>
                         </div>
-                        <div class="dropdown-menu">
-                            <a href="profile.php" class="dropdown-item">
-                                <i class="fas fa-user"></i>
-                                <span>Profile</span>
-                            </a>
-                            <a href="settings.php" class="dropdown-item">
-                                <i class="fas fa-cog"></i>
-                                <span>Settings</span>
-                            </a>
-                            <a href="referrals.php" class="dropdown-item">
-                                <i class="fas fa-users"></i>
-                                <span>Referrals</span>
-                            </a>
-                            <a href="transfer.php" class="dropdown-item">
-                                <i class="fas fa-exchange-alt"></i>
-                                <span>Transfer</span>
-                            </a>
-                            <a href="support.php" class="dropdown-item">
-                                <i class="fas fa-headset"></i>
-                                <span>Support</span>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="../logout.php" class="dropdown-item logout">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span>Logout</span>
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
-        </header>
+        </aside>
 
-        <!-- Content Area -->
-        <main class="content-area">
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col lg:ml-0">
+            <!-- Top Bar -->
+            <header class="flex items-center justify-between h-16 px-4 lg:px-6 bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 dark:border-slate-700">
+                <!-- Mobile Menu Toggle -->
+                <button type="button" class="p-2 text-gray-600 dark:text-gray-300 hover:text-cf-primary transition-colors lg:hidden" id="mobileToggle">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+
+                <!-- Page Title (mobile) -->
+                <h1 class="text-lg font-semibold text-gray-900 dark:text-white lg:hidden"><?= Security::escape($pageTitle) ?></h1>
+
+                <!-- Notifications and User Menu -->
+                <div class="flex items-center gap-4 ml-auto">
+                    <!-- Quick Stats (desktop only) -->
+                    <div class="hidden lg:flex items-center gap-6 mr-4 text-sm">
+                        <div class="text-center">
+                            <p class="text-gray-500 dark:text-gray-400">Balance</p>
+                            <p class="font-semibold text-gray-900 dark:text-white">$<?= number_format((float)$currentUser['balance'], 2) ?></p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-gray-500 dark:text-gray-400">Invested</p>
+                            <p class="font-semibold text-gray-900 dark:text-white">$<?= number_format((float)$currentUser['total_invested'], 2) ?></p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-gray-500 dark:text-gray-400">Earned</p>
+                            <p class="font-semibold text-cf-success">$<?= number_format((float)$currentUser['total_earned'], 2) ?></p>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Dropdown -->
+                    <div class="relative" id="notifications-dropdown">
+                        <button type="button" class="p-2 text-gray-600 dark:text-gray-300 hover:text-cf-primary transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 relative" onclick="toggleDropdown('notifications-dropdown')">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-3.5-3.5c-.83-.83-1.21-2.02-1.01-3.17L16 4a4.992 4.992 0 00-8 0L8.5 10.33c.2 1.15-.18 2.34-1.01 3.17L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span class="absolute -top-1 -right-1 h-4 w-4 bg-cf-danger rounded-full text-xs text-white flex items-center justify-center hidden" id="notificationCount"></span>
+                        </button>
+                        <div class="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 hidden z-50" id="notifications-menu">
+                            <div class="p-4 border-b border-gray-200 dark:border-slate-600">
+                                <div class="flex items-center justify-between">
+                                    <h6 class="font-semibold text-gray-900 dark:text-white">Notifications</h6>
+                                    <button type="button" class="text-sm text-cf-primary hover:text-cf-primary-dark" onclick="markAllNotificationsRead()">
+                                        Mark all read
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto" id="notificationList">
+                                <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+                                    <svg class="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-3.5-3.5c-.83-.83-1.21-2.02-1.01-3.17L16 4a4.992 4.992 0 00-8 0L8.5 10.33c.2 1.15-.18 2.34-1.01 3.17L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                    </svg>
+                                    <p>No new notifications</p>
+                                </div>
+                            </div>
+                            <div class="p-4 border-t border-gray-200 dark:border-slate-600">
+                                <a href="/users/notifications.php" class="block w-full text-center text-sm text-cf-primary hover:text-cf-primary-dark transition-colors">
+                                    View all notifications
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Menu -->
+                    <div class="relative" id="user-dropdown">
+                        <button type="button" class="flex items-center gap-3 p-2 text-gray-600 dark:text-gray-300 hover:text-cf-primary transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700" onclick="toggleDropdown('user-dropdown')">
+                            <div class="w-8 h-8 bg-gradient-to-r from-cf-primary to-cf-secondary rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                <?= Security::escape(strtoupper(substr($currentUser['first_name'] ?? $currentUser['username'], 0, 1))) ?>
+                            </div>
+                            <div class="hidden lg:block text-left">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                    <?= Security::escape($currentUser['first_name'] ?? $currentUser['username']) ?>
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Investor</p>
+                            </div>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 hidden z-50" id="user-menu">
+                            <div class="p-4 border-b border-gray-200 dark:border-slate-600">
+                                <p class="font-medium text-gray-900 dark:text-white">
+                                    <?= Security::escape($currentUser['first_name'] ? $currentUser['first_name'] . ' ' . ($currentUser['last_name'] ?? '') : $currentUser['username']) ?>
+                                </p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400"><?= Security::escape($currentUser['email']) ?></p>
+                            </div>
+                            <a href="/users/profile.php" class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                My Profile
+                            </a>
+                            <a href="/users/referrals.php" class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                </svg>
+                                Referrals
+                            </a>
+                            <a href="/users/security.php" class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                Security Settings
+                            </a>
+                            <div class="border-t border-gray-200 dark:border-slate-600"></div>
+                            <button onclick="logout()" class="flex items-center w-full px-4 py-3 text-sm text-cf-danger hover:bg-gray-100 dark:hover:bg-slate-700 rounded-b-xl">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="flex-1 overflow-auto bg-gray-50 dark:bg-slate-900">
+                <!-- Page Header (if not dashboard) -->
+                <?php if ($currentPage !== 'dashboard'): ?>
+                <div class="bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 dark:border-slate-700">
+                    <div class="px-4 lg:px-6 py-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900 dark:text-white"><?= Security::escape($pageTitle) ?></h1>
+                                <p class="text-gray-600 dark:text-gray-300"><?= Security::escape($pageDescription) ?></p>
+                            </div>
+                            
+                            <!-- Breadcrumbs -->
+                            <nav class="hidden lg:flex" aria-label="Breadcrumb">
+                                <ol class="flex items-center gap-2 text-sm">
+                                    <li>
+                                        <a href="/users/dashboard.php" class="text-gray-500 dark:text-gray-400 hover:text-cf-primary transition-colors">Dashboard</a>
+                                    </li>
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                    <li class="text-gray-900 dark:text-white font-medium">
+                                        <?= Security::escape($pageTitle) ?>
+                                    </li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Flash Messages Container -->
+                <div id="flashMessages" class="px-4 lg:px-6 pt-4"></div>
+
+                <!-- Main Content Wrapper -->
+                <div class="px-4 lg:px-6 py-6">

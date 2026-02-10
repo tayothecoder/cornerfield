@@ -1,490 +1,449 @@
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
+declare(strict_types=1);
 
-use App\Config\Config;
-use App\Config\Database;
+/**
+ * Cornerfield Investment Platform
+ * File: login.php
+ * Purpose: Modern login page with security and beautiful design
+ * Security Level: PUBLIC
+ * 
+ * @author Cornerfield Development Team
+ * @version 1.0.0
+ * @since 2026-02-10
+ */
+
+// Include autoload and check if already logged in
+require_once __DIR__ . '/autoload.php';
+
+use App\Middleware\AuthMiddleware;
+use App\Utils\Security;
 use App\Controllers\AuthController;
-use App\Utils\SessionManager;
-use App\Models\AdminSettings;
 
-try {
-    $database = new Database();
-    $adminSettingsModel = new AdminSettings($database);
-    $maintenanceMode = $adminSettingsModel->getSetting('maintenance_mode', 0);
-    
-    if ($maintenanceMode && !isset($_GET['admin_bypass'])) {
-        ?>
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Site Under Maintenance - <?= Config::getSiteName() ?></title>
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body {
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                }
-                .maintenance-container {
-                    text-align: center;
-                    padding: 2rem;
-                    background: rgba(255, 255, 255, 0.1);
-                    backdrop-filter: blur(20px);
-                    border-radius: 24px;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
-                }
-                .crypto-icon {
-                    font-size: 4rem;
-                    margin-bottom: 1rem;
-                    background: linear-gradient(45deg, #f7931a, #ffd700);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    background-clip: text;
-                }
-                h1 { font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; }
-                .lead { font-size: 1.2rem; margin-bottom: 1.5rem; opacity: 0.9; }
-                .completion { opacity: 0.8; font-size: 0.95rem; }
-            </style>
-        </head>
-        <body>
-            <div class="maintenance-container">
-                <div class="crypto-icon">₿</div>
-                <h1>Site Under Maintenance</h1>
-                <p class="lead">We're currently performing scheduled maintenance. Please check back shortly.</p>
-                <div class="completion">Expected completion: Within 2 hours</div>
-            </div>
-        </body>
-        </html>
-        <?php
-        exit;
-    }
-} catch (Exception $e) {
-    // If database fails, allow access
-}
+// Set security headers
+Security::setSecurityHeaders();
 
 // Start session and check if already logged in
-SessionManager::start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-if (SessionManager::get('user_logged_in')) {
-    header('Location: users/dashboard.php'); 
+if (AuthMiddleware::check()) {
+    header('Location: /users/dashboard.php');
     exit;
 }
 
-$error = '';
-$success = '';
-
-// Handle login form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    if (empty($email) || empty($password)) {
-        $error = 'Please fill in all fields';
-    } else {
-        try {
-            $database = new Database();
-            $authController = new AuthController($database);
-            
-            $result = $authController->login($email, $password);
-            
-            if ($result['success']) {
-                header('Location: users/dashboard.php'); 
-                exit;
-            } else {
-                $error = $result['message'];
-            }
-        } catch (Exception $e) {
-            $error = Config::isDebug() ? 'Login error: ' . $e->getMessage() : 'Login failed. Please try again.';
-        }
-    }
+// Handle AJAX login requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && 
+    isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+    $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+    
+    $authController = new AuthController();
+    $authController->login();
+    exit;
 }
+
+// Get any messages from URL parameters
+$message = '';
+$messageType = 'info';
+
+if (isset($_GET['registered'])) {
+    $message = 'Account created successfully! Please log in with your credentials.';
+    $messageType = 'success';
+}
+
+if (isset($_GET['logged_out'])) {
+    $message = 'You have been logged out successfully.';
+    $messageType = 'info';
+}
+
+if (isset($_GET['password_changed'])) {
+    $message = 'Password changed successfully! Please log in with your new password.';
+    $messageType = 'success';
+}
+
+if (isset($_GET['reset'])) {
+    $message = 'Password reset successfully! You can now log in with your new password.';
+    $messageType = 'success';
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - <?= Config::getSiteName() ?></title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cornerfield Investment Platform</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwindcss.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cf: {
+                            primary: '#667eea',
+                            'primary-dark': '#5a67d8',
+                            secondary: '#764ba2',
+                            success: '#10b981',
+                            warning: '#f59e0b',
+                            danger: '#ef4444',
+                            info: '#3b82f6',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
-            --border-radius: 24px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--primary-gradient);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 2rem;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .crypto-icon {
-            background: linear-gradient(45deg, #f7931a, #ffd700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .site-name {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-        }
-
-        .site-tagline {
-            opacity: 0.9;
-            font-size: 1rem;
-            font-weight: 400;
-        }
-
-        .login-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            box-shadow: var(--shadow);
-        }
-
-        .login-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            text-align: center;
-        }
-
-        .login-subtitle {
-            opacity: 0.9;
-            text-align: center;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            display: block;
-            font-size: 0.95rem;
-        }
-
-        .form-input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 1rem;
-            font-size: 1rem;
-            width: 100%;
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .form-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-        }
-
-        .input-group {
-            position: relative;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            font-size: 1rem;
-            transition: color 0.3s ease;
-        }
-
-        .password-toggle:hover {
-            color: white;
-        }
-
-        .form-check {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .form-check-input {
-            margin-right: 0.5rem;
-        }
-
-        .form-check-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .login-btn {
-            background: var(--success-gradient);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 1rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 1.5rem;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 40px rgba(79, 172, 254, 0.3);
-        }
-
-        .login-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .alert {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            color: #fca5a5;
-            font-size: 0.9rem;
-        }
-
-        .alert-success {
-            background: rgba(34, 197, 94, 0.1);
-            border-color: rgba(34, 197, 94, 0.2);
-            color: #86efac;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 1.5rem 0;
-            position: relative;
-            opacity: 0.7;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .divider span {
-            background: var(--primary-gradient);
-            padding: 0 1rem;
-            font-size: 0.875rem;
-        }
-
-        .register-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 1rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: block;
-            text-align: center;
-        }
-
-        .register-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            color: white;
-            text-decoration: none;
-        }
-
-        .login-footer {
-            text-align: center;
-            margin-top: 2rem;
-            opacity: 0.8;
-        }
-
-        .login-footer a {
-            color: white;
-            text-decoration: underline;
-            margin: 0 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .login-footer a:hover {
-            opacity: 0.8;
-        }
-
-        .debug-info {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 1rem;
-            }
-            
-            .login-card {
-                padding: 1.5rem;
-            }
-        }
-    </style>
+    
+    <!-- Custom CSS Variables (keep for theme system) -->
+    <link rel="stylesheet" href="/assets/css/cornerfield.css">
+    
+    <!-- CSRF Token Meta -->
+    <?= Security::getCsrfTokenInput() ?>
+    <meta name="csrf-token" content="<?= Security::generateCsrfToken() ?>">
 </head>
-<body>
-    <div class="login-container">
-        <div class="login-header">
-            <div class="crypto-icon">₿</div>
-            <h1 class="site-name"><?= explode(' ', Config::getSiteName())[0] ?></h1>
-            <p class="site-tagline">Investment Platform</p>
-        </div>
-
-        <div class="login-card">
-            <h2 class="login-title">Welcome Back</h2>
-            <p class="login-subtitle">Sign in to your investment account</p>
-            
-            <?php if ($error): ?>
-                <div class="alert">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <?= htmlspecialchars($error) ?>
+<body class="min-h-screen bg-gradient-to-br from-cf-primary via-cf-secondary to-cf-primary flex items-center justify-center p-4 relative overflow-hidden dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <!-- Animated Background Pattern -->
+    <div class="absolute inset-0 bg-gradient-to-br from-cf-primary/10 via-transparent to-cf-secondary/10 animate-pulse"></div>
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cf-primary/5 rounded-full blur-3xl animate-bounce" style="animation-delay: 1s;"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cf-secondary/5 rounded-full blur-3xl animate-bounce" style="animation-delay: 2s;"></div>
+    
+    <div class="w-full max-w-md relative z-10">
+        <div class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 rounded-3xl shadow-2xl shadow-cf-primary/20 p-8 transform transition-all duration-700">
+            <!-- Logo and Branding -->
+            <div class="text-center mb-8">
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <svg class="w-10 h-10 text-cf-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="text-2xl font-extrabold bg-gradient-to-r from-cf-primary to-cf-secondary bg-clip-text text-transparent">Cornerfield</span>
                 </div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    <?= htmlspecialchars($success) ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="POST" autocomplete="off" novalidate>
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-input" placeholder="your@email.com" 
-                           value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" autocomplete="username" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <div class="input-group">
-                        <input type="password" name="password" class="form-input" placeholder="Your password" 
-                               autocomplete="current-password" required id="password-input">
-                        <button type="button" class="password-toggle" onclick="togglePassword()">
-                            <i class="fas fa-eye" id="password-icon"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="remember">
-                    <label class="form-check-label" for="remember">Remember me on this device</label>
-                </div>
-
-                <button type="submit" class="login-btn">
-                    <i class="fas fa-sign-in-alt me-2"></i>
-                    Sign In
-                </button>
-            </form>
-
-            <div class="divider">
-                <span>or</span>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Your Gateway to Cryptocurrency Investment</p>
             </div>
 
-            <a href="register.php" class="register-btn">
-                <i class="fas fa-user-plus me-2"></i>
-                Create New Account
-            </a>
-
-            <?php if (Config::isDebug()): ?>
-                <div class="debug-info">
-                    <strong>🔧 Debug Mode:</strong><br>
-                    Test with existing user credentials from database
-                </div>
+            <!-- Messages -->
+            <?php if ($message): ?>
+            <div class="mb-6 p-4 rounded-xl <?= $messageType === 'success' ? 'bg-cf-success/10 text-cf-success border border-cf-success/20' : ($messageType === 'error' ? 'bg-cf-danger/10 text-cf-danger border border-cf-danger/20' : 'bg-cf-info/10 text-cf-info border border-cf-info/20') ?>" id="login-message">
+                <?= Security::escape($message) ?>
+            </div>
             <?php endif; ?>
-        </div>
 
-        <div class="login-footer">
-            <a href="admin/login.php">Admin Login</a> |
-            <a href="index.php">Back to Site</a>
+            <!-- Login Form -->
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h1>
+                <p class="text-gray-600 dark:text-gray-300 mb-6">Sign in to your investment account</p>
+
+                <form id="login-form" method="POST" novalidate class="space-y-6">
+                    <?= Security::getCsrfTokenInput() ?>
+                    
+                    <div>
+                        <label for="email" class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                            </svg>
+                            Email or Username
+                        </label>
+                        <input 
+                            type="text" 
+                            id="email" 
+                            name="email" 
+                            class="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border-2 border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-cf-primary focus:ring-4 focus:ring-cf-primary/20 transition-all duration-200 outline-none"
+                            placeholder="Enter your email or username"
+                            autocomplete="username"
+                            required
+                        >
+                        <div class="hidden text-sm text-cf-danger mt-1" id="email-error"></div>
+                    </div>
+
+                    <div>
+                        <label for="password" class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Password
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-slate-700 border-2 border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-cf-primary focus:ring-4 focus:ring-cf-primary/20 transition-all duration-200 outline-none"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+                            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cf-password-toggle" data-target="password">
+                                <svg class="w-5 h-5" id="password-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="hidden text-sm text-cf-danger mt-1" id="password-error"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="remember_me" name="remember_me" class="w-4 h-4 text-cf-primary bg-gray-100 border-gray-300 rounded focus:ring-cf-primary focus:ring-2">
+                            <span class="text-gray-700 dark:text-gray-300">Remember me</span>
+                        </label>
+                        
+                        <a href="/forgot-password.php" class="text-cf-primary hover:text-cf-primary-dark transition-colors font-medium">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-cf-primary to-cf-primary-dark hover:from-cf-primary-dark hover:to-cf-primary text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-cf-primary/25 focus:outline-none focus:ring-4 focus:ring-cf-primary/20" id="login-btn">
+                        <span class="flex items-center justify-center gap-2" id="btn-content">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Sign In
+                        </span>
+                        <div class="hidden items-center justify-center gap-2" id="btn-loading">
+                            <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Signing in...
+                        </div>
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="flex items-center my-6">
+                    <div class="flex-1 border-t border-gray-200 dark:border-slate-600"></div>
+                    <span class="px-4 text-sm text-gray-500 dark:text-gray-400">or</span>
+                    <div class="flex-1 border-t border-gray-200 dark:border-slate-600"></div>
+                </div>
+
+                <!-- Register Link -->
+                <a href="/register.php" class="w-full flex items-center justify-center gap-2 bg-white dark:bg-slate-700 border-2 border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 font-semibold py-3 px-4 rounded-xl transition-all duration-200 hover:border-cf-primary hover:text-cf-primary transform hover:scale-[1.02]">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"></path>
+                    </svg>
+                    Create New Account
+                </a>
+            </div>
+
+            <!-- Footer Links -->
+            <div class="flex items-center justify-between mt-8 text-xs text-gray-500 dark:text-gray-400">
+                <a href="/" class="hover:text-cf-primary transition-colors">← Back to Home</a>
+                <a href="/admin/login.php" class="hover:text-cf-primary transition-colors">Admin Login</a>
+            </div>
         </div>
     </div>
 
+    <!-- JavaScript -->
+    <script src="/assets/js/cornerfield.js"></script>
     <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('password-input');
-            const passwordIcon = document.getElementById('password-icon');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize login form handler
+            const loginForm = document.getElementById('login-form');
+            const loginBtn = document.getElementById('login-btn');
+            const btnContent = document.getElementById('btn-content');
+            const btnLoading = document.getElementById('btn-loading');
             
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                passwordIcon.className = 'fas fa-eye-slash';
-            } else {
-                passwordInput.type = 'password';
-                passwordIcon.className = 'fas fa-eye';
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Clear previous errors
+                clearFormErrors();
+                
+                // Show loading state
+                btnContent.classList.add('hidden');
+                btnLoading.classList.remove('hidden');
+                btnLoading.classList.add('flex');
+                loginBtn.disabled = true;
+                
+                try {
+                    const formData = new FormData(loginForm);
+                    
+                    const response = await fetch('/login.php', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Show success message
+                        showAlert('Login successful! Redirecting...', 'success');
+                        
+                        // Redirect after brief delay
+                        setTimeout(() => {
+                            window.location.href = result.redirect || '/users/dashboard.php';
+                        }, 1000);
+                    } else {
+                        // Show errors
+                        if (result.errors && Array.isArray(result.errors)) {
+                            result.errors.forEach(error => {
+                                showAlert(error, 'error');
+                            });
+                        } else if (result.error) {
+                            showAlert(result.error, 'error');
+                        } else {
+                            showAlert('Login failed. Please try again.', 'error');
+                        }
+                        
+                        // Reset form state
+                        btnContent.classList.remove('hidden');
+                        btnLoading.classList.add('hidden');
+                        btnLoading.classList.remove('flex');
+                        loginBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showAlert('Connection error. Please try again.', 'error');
+                    
+                    // Reset form state
+                    btnContent.classList.remove('hidden');
+                    btnLoading.classList.add('hidden');
+                    btnLoading.classList.remove('flex');
+                    loginBtn.disabled = false;
+                }
+            });
+            
+            // Password toggle
+            document.querySelector('.cf-password-toggle').addEventListener('click', function() {
+                togglePassword('password');
+            });
+            
+            // Auto-hide messages after 5 seconds
+            const loginMessage = document.getElementById('login-message');
+            if (loginMessage) {
+                setTimeout(() => {
+                    loginMessage.style.opacity = '0';
+                    setTimeout(() => loginMessage.remove(), 300);
+                }, 5000);
+            }
+            
+            // Form validation
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            
+            emailInput.addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value && !isValidEmailOrUsername(value)) {
+                    showFieldError('email', 'Please enter a valid email address or username');
+                } else {
+                    clearFieldError('email');
+                }
+            });
+            
+            passwordInput.addEventListener('blur', function() {
+                const value = this.value;
+                if (value && value.length < 1) {
+                    showFieldError('password', 'Password is required');
+                } else {
+                    clearFieldError('password');
+                }
+            });
+        });
+        
+        // Helper functions
+        function showAlert(message, type) {
+            const existingAlert = document.querySelector('.alert-dynamic');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            const alert = document.createElement('div');
+            const colorClasses = {
+                success: 'bg-cf-success/10 text-cf-success border-cf-success/20',
+                error: 'bg-cf-danger/10 text-cf-danger border-cf-danger/20',
+                info: 'bg-cf-info/10 text-cf-info border-cf-info/20'
+            };
+            
+            alert.className = `alert-dynamic p-4 rounded-xl border ${colorClasses[type] || colorClasses.info} mb-6`;
+            alert.textContent = message;
+            
+            const form = document.getElementById('login-form');
+            form.parentNode.insertBefore(alert, form);
+            
+            // Auto-hide after 5 seconds for success/error
+            if (type !== 'error') {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
             }
         }
-
-        // Add loading state to form submission
-        document.querySelector('form').addEventListener('submit', function() {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
-            submitBtn.disabled = true;
-        });
+        
+        function showFieldError(fieldName, message) {
+            const errorElement = document.getElementById(fieldName + '-error');
+            const inputElement = document.getElementById(fieldName);
+            
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.classList.remove('hidden');
+            }
+            
+            if (inputElement) {
+                inputElement.classList.add('border-cf-danger');
+                inputElement.classList.remove('border-gray-200', 'dark:border-slate-600');
+            }
+        }
+        
+        function clearFieldError(fieldName) {
+            const errorElement = document.getElementById(fieldName + '-error');
+            const inputElement = document.getElementById(fieldName);
+            
+            if (errorElement) {
+                errorElement.classList.add('hidden');
+            }
+            
+            if (inputElement) {
+                inputElement.classList.remove('border-cf-danger');
+                inputElement.classList.add('border-gray-200', 'dark:border-slate-600');
+            }
+        }
+        
+        function clearFormErrors() {
+            const errors = document.querySelectorAll('[id$="-error"]');
+            errors.forEach(error => error.classList.add('hidden'));
+            
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.classList.remove('border-cf-danger');
+                input.classList.add('border-gray-200', 'dark:border-slate-600');
+            });
+        }
+        
+        function togglePassword(fieldId) {
+            const input = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><path d="M1 1l22 22"></path>';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>';
+            }
+        }
+        
+        function isValidEmailOrUsername(value) {
+            // Simple email or username validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+            
+            return emailRegex.test(value) || usernameRegex.test(value);
+        }
     </script>
 </body>
 </html>

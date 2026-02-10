@@ -1,523 +1,332 @@
 <?php
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+declare(strict_types=1);
 
-use App\Config\Config;
-use App\Config\Database;
-use App\Models\User;
-use App\Utils\SessionManager;
+/**
+ * Cornerfield Investment Platform
+ * File: users/deposit.php
+ * Purpose: Complete deposit interface with Tailwind CSS
+ * Security Level: PROTECTED
+ * 
+ * @author Cornerfield Development Team
+ * @version 1.0.0
+ * @since 2026-02-10
+ */
 
-// Start session and check authentication
-SessionManager::start();
+// Set page metadata
+$pageTitle = 'Deposit';
+$pageDescription = 'Add funds to your account securely via cryptocurrency or bank transfer';
 
-if (!SessionManager::get('user_logged_in')) {
-    header('Location: ../login.php');
-    exit;
-}
+// Include header
+require_once __DIR__ . '/includes/header.php';
 
-$user_id = SessionManager::get('user_id');
+use App\Models\DepositModel;
+use App\Models\DepositMethodModel;
+use App\Utils\Security;
 
-try {
-    $database = new Database();
-    $userModel = new User($database);
-    $currentUser = $userModel->findById($user_id);
+// Get deposit methods
+$depositModel = new DepositModel();
+$methodModel = new DepositMethodModel();
+$depositMethods = $methodModel->findActive();
 
-    if (!$currentUser) {
-        header('Location: ../login.php');
-        exit;
-    }
-
-    $stats = $userModel->getUserStats($user_id);
-
-} catch (Exception $e) {
-    if (Config::isDebug()) {
-        die('Error: ' . $e->getMessage());
-    } else {
-        die('System error. Please try again later.');
-    }
-}
-
-$pageTitle = 'Deposit Funds';
-$currentPage = 'deposit';
-
-include __DIR__ . '/includes/header.php';
 ?>
 
-<style>
-    .deposit-container {
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    .balance-info {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        text-align: center;
-        box-shadow: var(--shadow-lg);
-    }
-
-    .balance-amount {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-    }
-
-    .balance-label {
-        opacity: 0.9;
-        font-size: 1.1rem;
-    }
-
-    .deposit-card {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        box-shadow: var(--shadow);
-        margin-bottom: 2rem;
-        border: 1px solid var(--border-color);
-    }
-
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-    }
-
-    .section-title i {
-        margin-right: 0.5rem;
-        color: var(--primary-color);
-    }
-
-    .payment-methods {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .payment-method {
-        background: var(--bg-primary);
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .payment-method:hover {
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .payment-method.selected {
-        border-color: var(--primary-color);
-        background: rgba(37, 99, 235, 0.05);
-    }
-
-    .payment-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-        color: var(--primary-color);
-    }
-
-    .payment-name {
-        font-weight: 600;
-        font-size: 0.875rem;
-        color: var(--text-primary);
-    }
-
-    .crypto-options {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .crypto-option {
-        background: var(--bg-primary);
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        color: var(--text-primary);
-    }
-
-    .crypto-option:hover {
-        border-color: var(--primary-color);
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-md);
-        color: var(--primary-color);
-        text-decoration: none;
-    }
-
-    .crypto-option.selected {
-        border-color: var(--primary-color);
-        background: rgba(37, 99, 235, 0.05);
-    }
-
-    .crypto-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin: 0 auto 1rem;
-            color: white;
-        }
-
-    .crypto-option.bitcoin .crypto-icon { background: linear-gradient(45deg, #f7931a, #ffd700); }
-    .crypto-option.ethereum .crypto-icon { background: linear-gradient(45deg, #627eea, #4f46e5); }
-    .crypto-option.usdt .crypto-icon { background: linear-gradient(45deg, #26a17b, #00d4aa); }
-    .crypto-option.usdc .crypto-icon { background: linear-gradient(45deg, #2775ca, #0052ff); }
-
-    .crypto-name {
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .crypto-symbol {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        display: block;
-    }
-
-    .form-input {
-        background: var(--bg-primary);
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1rem;
-        font-size: 1rem;
-        width: 100%;
-        transition: all 0.3s ease;
-        color: var(--text-primary);
-    }
-
-    .form-input:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .amount-suggestions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .amount-btn {
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        color: var(--text-primary);
-    }
-
-    .amount-btn:hover {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-    }
-
-    .deposit-summary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-    }
-
-    .summary-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .summary-row:last-child {
-        margin-bottom: 0;
-        font-weight: 700;
-        font-size: 1.1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        padding-top: 0.5rem;
-    }
-
-    .deposit-btn {
-        background: var(--success-color);
-        color: white;
-        border: none;
-        border-radius: var(--radius);
-        padding: 1rem 2rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        width: 100%;
-        margin-top: 1.5rem;
-        transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-    .deposit-btn:hover {
-        background: #059669;
-            transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .deposit-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .unavailable-message {
-        text-align: center;
-        padding: 3rem 2rem;
-        color: var(--text-secondary);
-    }
-
-    .unavailable-message i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: var(--text-muted);
-    }
-    </style>
-
-<div class="deposit-container">
-    <!-- Balance Info -->
-    <div class="balance-info">
-        <div class="balance-amount">$<?= number_format($stats['balance'] ?? 0, 2) ?></div>
-        <div class="balance-label">Current Balance</div>
-    </div>
-
-    <!-- Payment Methods -->
-    <div class="deposit-card">
-        <h2 class="section-title">
-            <i class="fas fa-credit-card"></i>
-            Choose Payment Method
-                        </h2>
-        <div class="payment-methods">
-            <div class="payment-method selected" data-method="crypto">
-                <div class="payment-icon">
-                    <i class="fab fa-bitcoin"></i>
-                    </div>
-                <div class="payment-name">Cryptocurrency</div>
-                    </div>
-            <div class="payment-method" data-method="card">
-                <div class="payment-icon">
-                    <i class="fas fa-credit-card"></i>
-                </div>
-                <div class="payment-name">Credit Card</div>
-            </div>
-            <div class="payment-method" data-method="bank">
-                <div class="payment-icon">
-                    <i class="fas fa-university"></i>
-                                </div>
-                <div class="payment-name">Bank Transfer</div>
-                        </div>
-                    </div>
-                </div>
-
-    <!-- Crypto Deposit -->
-    <div class="deposit-card" id="crypto-deposit">
-        <h2 class="section-title">
-            <i class="fas fa-coins"></i>
-            Deposit with Cryptocurrency
-        </h2>
+<!-- Deposit Content -->
+<div class="space-y-6">
+    <!-- Deposit Methods -->
+    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Choose Deposit Method</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Select your preferred deposit method to add funds to your account</p>
+        </div>
         
-        <div class="crypto-options">
-            <div class="crypto-option bitcoin selected" data-crypto="btc">
-                <div class="crypto-icon">
-                    <i class="fab fa-bitcoin"></i>
-                                                        </div>
-                <div class="crypto-name">Bitcoin</div>
-                <div class="crypto-symbol">BTC</div>
-                                                            </div>
-            <div class="crypto-option ethereum" data-crypto="eth">
-                <div class="crypto-icon">
-                    <i class="fab fa-ethereum"></i>
-                                                                </div>
-                <div class="crypto-name">Ethereum</div>
-                <div class="crypto-symbol">ETH</div>
-                                                        </div>
-            <div class="crypto-option usdt" data-crypto="usdt">
-                <div class="crypto-icon">
-                    <i class="fas fa-coins"></i>
-                                                        </div>
-                <div class="crypto-name">Tether</div>
-                <div class="crypto-symbol">USDT</div>
-                                                    </div>
-            <div class="crypto-option usdc" data-crypto="usdc">
-                <div class="crypto-icon">
-                    <i class="fas fa-dollar-sign"></i>
-                                                </div>
-                <div class="crypto-name">USD Coin</div>
-                <div class="crypto-symbol">USDC</div>
-                                    </div>
-                                </div>
-
-        <div class="form-group">
-            <label class="form-label">Amount (USD)</label>
-            <input type="number" class="form-input" id="deposit-amount" placeholder="Enter amount" min="10" step="0.01">
-            <div class="amount-suggestions">
-                <button class="amount-btn" data-amount="50">$50</button>
-                <button class="amount-btn" data-amount="100">$100</button>
-                <button class="amount-btn" data-amount="250">$250</button>
-                <button class="amount-btn" data-amount="500">$500</button>
-                <button class="amount-btn" data-amount="1000">$1,000</button>
-                                    </div>
-                                </div>
-
-        <div class="deposit-summary">
-            <div class="summary-row">
-                <span>Amount:</span>
-                <span id="summary-amount">$0.00</span>
-                                    </div>
-            <div class="summary-row">
-                <span>Network Fee:</span>
-                <span id="summary-fee">$0.00</span>
-                                </div>
-            <div class="summary-row">
-                <span>You will receive:</span>
-                <span id="summary-total">$0.00</span>
-                                    </div>
-                                </div>
-
-        <button class="deposit-btn" id="generate-address" disabled>
-            <i class="fas fa-qrcode me-2"></i>
-            Generate Deposit Address
-                                    </button>
-                </div>
-
-    <!-- Card Deposit -->
-    <div class="deposit-card" id="card-deposit" style="display: none;">
-        <h2 class="section-title">
-            <i class="fas fa-credit-card"></i>
-            Deposit with Credit Card
-        </h2>
-        <div class="unavailable-message">
-            <i class="fas fa-credit-card"></i>
-            <h3>Credit card deposits are temporarily unavailable.</h3>
-            <p>Please use cryptocurrency for instant deposits.</p>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="depositMethods">
+                <?php foreach ($depositMethods as $method): ?>
+                <div class="method-card relative border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary-500 hover:shadow-md transition-all duration-200 dark:border-gray-600 dark:hover:border-primary-400" 
+                     data-method-id="<?= $method['id'] ?>" 
+                     data-method-type="<?= Security::escape($method['type']) ?>"
+                     data-method-name="<?= Security::escape($method['name']) ?>"
+                     data-min-amount="<?= $method['minimum_deposit'] ?>"
+                     data-max-amount="<?= $method['maximum_deposit'] ?>"
+                     data-fee-type="<?= Security::escape($method['charge_type']) ?>"
+                     data-fee-rate="<?= $method['charge'] ?>">
+                    
+                    <!-- Method Type Badge -->
+                    <div class="absolute top-2 right-2">
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full 
+                            <?= $method['type'] === 'auto' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' ?>">
+                            <?= $method['type'] === 'auto' ? '⚡ Auto' : '👤 Manual' ?>
+                        </span>
+                    </div>
+                    
+                    <!-- Method Info -->
+                    <div class="mt-4">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white"><?= Security::escape($method['name']) ?></h3>
+                        
+                        <!-- Fee Info -->
+                        <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                            Fee: <?= $method['charge_type'] === 'percentage' ? number_format($method['charge'], 2) . '%' : '$' . number_format($method['charge'], 2) ?>
+                        </div>
+                        
+                        <!-- Limits -->
+                        <div class="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2"></path>
+                            </svg>
+                            Min: $<?= number_format($method['minimum_deposit'], 2) ?> • Max: $<?= number_format($method['maximum_deposit'], 0) ?>
+                        </div>
+                        
+                        <!-- Processing Time -->
+                        <div class="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <?= $method['type'] === 'auto' ? 'Instant' : '1-24 hours' ?>
                         </div>
                     </div>
-
-    <!-- Bank Transfer -->
-    <div class="deposit-card" id="bank-deposit" style="display: none;">
-        <h2 class="section-title">
-            <i class="fas fa-university"></i>
-            Bank Transfer
-        </h2>
-        <div class="unavailable-message">
-            <i class="fas fa-university"></i>
-            <h3>Bank transfers are temporarily unavailable.</h3>
-            <p>Please use cryptocurrency for instant deposits.</p>
-        </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
 
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const amountInput = document.getElementById('deposit-amount');
-    const summaryAmount = document.getElementById('summary-amount');
-    const summaryFee = document.getElementById('summary-fee');
-    const summaryTotal = document.getElementById('summary-total');
-    const generateBtn = document.getElementById('generate-address');
-    const cryptoOptions = document.querySelectorAll('.crypto-option');
-    const paymentMethods = document.querySelectorAll('.payment-method');
-    const amountBtns = document.querySelectorAll('.amount-btn');
+    <!-- Deposit Form -->
+    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800" id="depositFormContainer" style="display: none;">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Deposit Details</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" id="selectedMethodName">Complete your deposit information</p>
+        </div>
+        
+        <form id="depositForm" class="p-6 space-y-6">
+            <?= Security::getCsrfTokenInput() ?>
+            <input type="hidden" id="selectedMethodId" name="method_id" value="">
+            
+            <!-- Amount Input -->
+            <div>
+                <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deposit Amount (USD)</label>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="text-gray-500 sm:text-sm dark:text-gray-400">$</span>
+                    </div>
+                    <input type="number" 
+                           id="amount" 
+                           name="amount" 
+                           step="0.01" 
+                           min="0" 
+                           class="block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                           placeholder="0.00"
+                           required>
+                </div>
+                <div id="amountLimits" class="mt-1 text-sm text-gray-500 dark:text-gray-400"></div>
+            </div>
 
-    let selectedCrypto = 'btc';
-    let selectedMethod = 'crypto';
+            <!-- Fee Calculation Display -->
+            <div class="bg-gray-50 rounded-lg p-4 dark:bg-gray-700" id="feeCalculation" style="display: none;">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Deposit Amount:</span>
+                    <span id="displayAmount" class="text-sm text-gray-900 dark:text-white">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Processing Fee:</span>
+                    <span id="displayFee" class="text-sm text-gray-900 dark:text-white">$0.00</span>
+                </div>
+                <div class="border-t border-gray-200 mt-2 pt-2 dark:border-gray-600">
+                    <div class="flex justify-between items-center">
+                        <span class="text-base font-semibold text-gray-900 dark:text-white">You will receive:</span>
+                        <span id="displayNetAmount" class="text-base font-semibold text-green-600 dark:text-green-400">$0.00</span>
+                    </div>
+                </div>
+            </div>
 
-    // Payment method selection
-    paymentMethods.forEach(method => {
-        method.addEventListener('click', function() {
-            paymentMethods.forEach(m => m.classList.remove('selected'));
-            this.classList.add('selected');
-            selectedMethod = this.dataset.method;
+            <!-- Currency and Network Selection (for manual deposits) -->
+            <div id="currencySection" style="display: none;">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="currency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
+                        <select id="currency" 
+                                name="currency" 
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                            <option value="BTC">Bitcoin (BTC)</option>
+                            <option value="ETH">Ethereum (ETH)</option>
+                            <option value="USDT" selected>Tether (USDT)</option>
+                            <option value="LTC">Litecoin (LTC)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="network" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Network</label>
+                        <select id="network" 
+                                name="network" 
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                            <option value="TRC20">TRC20</option>
+                            <option value="ERC20">ERC20</option>
+                            <option value="BEP20">BEP20</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-            // Show/hide relevant sections
-            document.getElementById('crypto-deposit').style.display = selectedMethod === 'crypto' ? 'block' : 'none';
-            document.getElementById('card-deposit').style.display = selectedMethod === 'card' ? 'block' : 'none';
-            document.getElementById('bank-deposit').style.display = selectedMethod === 'bank' ? 'block' : 'none';
-        });
-    });
+            <!-- Manual Deposit Fields -->
+            <div id="manualFields" style="display: none;">
+                <!-- Transaction Hash -->
+                <div>
+                    <label for="transactionHash" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Transaction Hash</label>
+                    <input type="text" 
+                           id="transactionHash" 
+                           name="transaction_hash" 
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                           placeholder="Enter blockchain transaction hash">
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Optional: Provide the transaction hash after sending payment</p>
+                </div>
 
-    // Crypto selection
-    cryptoOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            cryptoOptions.forEach(o => o.classList.remove('selected'));
-            this.classList.add('selected');
-            selectedCrypto = this.dataset.crypto;
-        });
-    });
+                <!-- Proof of Payment Upload -->
+                <div>
+                    <label for="proofOfPayment" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Proof of Payment</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md dark:border-gray-600">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                <label for="proofOfPayment" class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500 dark:bg-gray-700 dark:text-primary-400">
+                                    <span>Upload a file</span>
+                                    <input id="proofOfPayment" name="proof_of_payment" type="file" accept="image/*,.pdf" class="sr-only">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, PDF up to 5MB</p>
+                        </div>
+                    </div>
+                    <div id="uploadedFileName" class="mt-2 text-sm text-green-600 dark:text-green-400" style="display: none;"></div>
+                </div>
 
-    // Amount buttons
-    amountBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const amount = this.dataset.amount;
-            amountInput.value = amount;
-            updateSummary();
-        });
-    });
+                <!-- Deposit Address Display -->
+                <div id="depositAddressSection" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 dark:bg-yellow-900 dark:border-yellow-600" style="display: none;">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Send payment to this address</h3>
+                            <div class="mt-2">
+                                <div class="bg-white p-3 rounded border font-mono text-sm break-all dark:bg-gray-800 dark:border-gray-600" id="displayDepositAddress"></div>
+                                <button type="button" id="copyAddressBtn" class="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-primary-700 bg-primary-100 hover:bg-primary-200 dark:text-primary-200 dark:bg-primary-800 dark:hover:bg-primary-700">
+                                    Copy Address
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    // Amount input
-    amountInput.addEventListener('input', updateSummary);
+            <!-- Auto Deposit Info -->
+            <div id="autoDepositInfo" class="bg-blue-50 border-l-4 border-blue-400 p-4 dark:bg-blue-900 dark:border-blue-600" style="display: none;">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">Automatic Processing</h3>
+                        <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">You will be redirected to our secure payment processor to complete the transaction. Funds are credited automatically upon successful payment.</p>
+                    </div>
+                </div>
+            </div>
 
-    function updateSummary() {
-        const amount = parseFloat(amountInput.value) || 0;
-        const fee = amount * 0.02; // 2% fee
-        const total = amount - fee;
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-3">
+                <button type="button" 
+                        id="cancelBtn" 
+                        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        id="submitBtn" 
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="submitText">Create Deposit</span>
+                    <svg id="submitSpinner" class="hidden animate-spin -mr-1 ml-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
 
-        summaryAmount.textContent = `$${amount.toFixed(2)}`;
-        summaryFee.textContent = `$${fee.toFixed(2)}`;
-        summaryTotal.textContent = `$${total.toFixed(2)}`;
+    <!-- Deposit History -->
+    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Recent Deposits</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track your deposit history and status</p>
+        </div>
+        
+        <div class="overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Method</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Fee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="depositHistory" class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                        <!-- Deposit history will be loaded here -->
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                <div class="flex items-center justify-center">
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Loading deposits...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
-        generateBtn.disabled = amount < 10;
-    }
+<!-- Success Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto hidden" id="successModal">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeSuccessModal()"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
+            <div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-800">
+                    <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Deposit Created Successfully!</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">Your deposit request has been created and is being processed.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-6">
+                <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm" onclick="closeSuccessModal()">
+                    Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-    // Generate address
-    generateBtn.addEventListener('click', function() {
-        if (selectedMethod === 'crypto') {
-            // Simulate generating address
-            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
-            this.disabled = true;
+<!-- JavaScript -->
+<script src="/assets/js/deposit.js"></script>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-            setTimeout(() => {
-                alert('Deposit address generated! Check your email for the details.');
-                this.innerHTML = '<i class="fas fa-qrcode me-2"></i>Generate Deposit Address';
-                this.disabled = false;
-            }, 2000);
-        }
-    });
-
-    // Initialize
-    updateSummary();
-        });
-    </script>
-
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

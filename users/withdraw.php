@@ -1,518 +1,335 @@
 <?php
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+declare(strict_types=1);
 
-use App\Config\Config;
-use App\Config\Database;
-use App\Models\User;
-use App\Utils\SessionManager;
+/**
+ * Cornerfield Investment Platform
+ * File: users/withdraw.php
+ * Purpose: Complete withdrawal interface with Tailwind CSS
+ * Security Level: PROTECTED
+ * 
+ * @author Cornerfield Development Team
+ * @version 1.0.0
+ * @since 2026-02-10
+ */
 
-// Start session and check authentication
-SessionManager::start();
+// Set page metadata
+$pageTitle = 'Withdraw';
+$pageDescription = 'Withdraw funds from your account securely via cryptocurrency';
 
-if (!SessionManager::get('user_logged_in')) {
-    header('Location: ../login.php');
-    exit;
-}
+// Include header
+require_once __DIR__ . '/includes/header.php';
 
-$user_id = SessionManager::get('user_id');
+use App\Models\WithdrawalModel;
+use App\Utils\Security;
 
-try {
-    $database = new Database();
-    $userModel = new User($database);
-    $currentUser = $userModel->findById($user_id);
+// Get user balance for display
+$withdrawalModel = new WithdrawalModel();
 
-    if (!$currentUser) {
-        header('Location: ../login.php');
-        exit;
-    }
-
-    $stats = $userModel->getUserStats($user_id);
-
-} catch (Exception $e) {
-    if (Config::isDebug()) {
-        die('Error: ' . $e->getMessage());
-    } else {
-        die('System error. Please try again later.');
-    }
-}
-
-$pageTitle = 'Withdraw Funds';
-$currentPage = 'withdraw';
-
-include __DIR__ . '/includes/header.php';
 ?>
 
-<style>
-    .withdraw-container {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .balance-info {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        text-align: center;
-        box-shadow: var(--shadow-lg);
-    }
-
-    .balance-amount {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-    }
-
-    .balance-label {
-        opacity: 0.9;
-        font-size: 1.1rem;
-    }
-
-    .withdraw-card {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        box-shadow: var(--shadow);
-        margin-bottom: 2rem;
-        border: 1px solid var(--border-color);
-    }
-
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-    }
-
-    .section-title i {
-        margin-right: 0.5rem;
-        color: var(--primary-color);
-    }
-
-    .crypto-options {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .crypto-option {
-        background: var(--bg-primary);
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .crypto-option:hover {
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .crypto-option.selected {
-        border-color: var(--primary-color);
-        background: rgba(37, 99, 235, 0.05);
-    }
-
-    .crypto-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        margin: 0 auto 0.5rem;
-        color: white;
-    }
-
-    .crypto-option.bitcoin .crypto-icon { background: linear-gradient(45deg, #f7931a, #ffd700); }
-    .crypto-option.ethereum .crypto-icon { background: linear-gradient(45deg, #627eea, #4f46e5); }
-    .crypto-option.usdt .crypto-icon { background: linear-gradient(45deg, #26a17b, #00d4aa); }
-
-    .crypto-symbol {
-        font-weight: 600;
-        font-size: 0.875rem;
-        color: var(--text-primary);
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        display: block;
-    }
-
-    .form-input {
-        background: var(--bg-primary);
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1rem;
-        font-size: 1rem;
-        width: 100%;
-        transition: all 0.3s ease;
-        color: var(--text-primary);
-    }
-
-    .form-input:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .amount-suggestions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .amount-btn {
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        color: var(--text-primary);
-    }
-
-    .amount-btn:hover {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-    }
-
-    .withdrawal-summary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-    }
-
-    .summary-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .summary-row:last-child {
-        margin-bottom: 0;
-        font-weight: 700;
-        font-size: 1.1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        padding-top: 0.5rem;
-    }
-
-    .withdraw-btn {
-        background: var(--warning-color);
-        color: white;
-        border: none;
-        border-radius: var(--radius);
-        padding: 1rem 2rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        width: 100%;
-        margin-top: 1.5rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .withdraw-btn:hover {
-        background: #d97706;
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .withdraw-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .withdrawal-history {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-    }
-
-    .history-item {
-        display: flex;
-        align-items: center;
-        padding: 1rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .history-item:last-child {
-        border-bottom: none;
-    }
-
-    .history-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--warning-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        color: white;
-    }
-
-    .history-content {
-        flex: 1;
-    }
-
-    .history-title {
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-        color: var(--text-primary);
-    }
-
-    .history-time {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-
-    .history-amount {
-        font-weight: 700;
-        color: var(--danger-color);
-    }
-
-    .status {
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .status.pending {
-        background: rgba(245, 158, 11, 0.1);
-        color: var(--warning-color);
-    }
-
-    .status.completed {
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--success-color);
-    }
-
-    .status.failed {
-        background: rgba(239, 68, 68, 0.1);
-        color: var(--danger-color);
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem 2rem;
-        color: var(--text-secondary);
-    }
-
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: var(--text-muted);
-    }
-</style>
-
-<div class="withdraw-container">
-    <!-- Balance Info -->
-    <div class="balance-info">
-        <div class="balance-amount">$<?= number_format($stats['balance'] ?? 0, 2) ?></div>
-        <div class="balance-label">Available for Withdrawal</div>
+<!-- Withdrawal Content -->
+<div class="space-y-6">
+    <!-- Balance Overview -->
+    <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg shadow-lg text-white">
+        <div class="px-6 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold">Available Balance</h2>
+                    <p class="text-lg opacity-90" id="userBalance">$<?= number_format((float)$currentUser['balance'], 2) ?></p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm opacity-75">Total Withdrawn</div>
+                    <div class="text-lg font-semibold">$<?= number_format((float)$currentUser['total_withdrawn'], 2) ?></div>
+                </div>
+            </div>
+            
+            <!-- Pending Withdrawals Alert -->
+            <div id="pendingAlert" class="mt-4 bg-white bg-opacity-10 rounded-lg p-3" style="display: none;">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span id="pendingText" class="text-sm">You have pending withdrawals totaling $0.00</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Withdrawal Form -->
-    <div class="withdraw-card">
-        <h2 class="section-title">
-            <i class="fas fa-paper-plane"></i>
-            Withdraw Funds
-        </h2>
+    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Create Withdrawal</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Withdraw funds to your cryptocurrency wallet</p>
+        </div>
         
-        <form class="withdraw-form" id="withdraw-form">
-            <div class="form-group">
-                <label class="form-label">Withdrawal Method</label>
-                <div class="crypto-options">
-                    <div class="crypto-option bitcoin selected" data-crypto="btc">
-                        <div class="crypto-icon">
-                            <i class="fab fa-bitcoin"></i>
-                        </div>
-                        <div class="crypto-symbol">BTC</div>
+        <form id="withdrawalForm" class="p-6 space-y-6">
+            <?= Security::getCsrfTokenInput() ?>
+            
+            <!-- Amount Input -->
+            <div>
+                <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Withdrawal Amount (USD)</label>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="text-gray-500 sm:text-sm dark:text-gray-400">$</span>
                     </div>
-                    <div class="crypto-option ethereum" data-crypto="eth">
-                        <div class="crypto-icon">
-                            <i class="fab fa-ethereum"></i>
-                        </div>
-                        <div class="crypto-symbol">ETH</div>
+                    <input type="number" 
+                           id="amount" 
+                           name="amount" 
+                           step="0.01" 
+                           min="10" 
+                           max="50000" 
+                           class="block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                           placeholder="0.00"
+                           required>
+                </div>
+                <div class="mt-1 flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                    <span>Min: $10.00</span>
+                    <span>Max: $50,000.00</span>
+                </div>
+            </div>
+
+            <!-- Currency and Network Selection -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="currency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
+                    <select id="currency" 
+                            name="currency" 
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            required>
+                        <option value="">Select currency</option>
+                        <option value="BTC">₿ Bitcoin (BTC)</option>
+                        <option value="ETH">Ξ Ethereum (ETH)</option>
+                        <option value="USDT" selected>₮ Tether (USDT)</option>
+                        <option value="LTC">Ł Litecoin (LTC)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="network" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Network</label>
+                    <select id="network" 
+                            name="network" 
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            required>
+                        <option value="">Select network</option>
+                        <option value="TRC20">TRC20 (Tron)</option>
+                        <option value="ERC20">ERC20 (Ethereum)</option>
+                        <option value="BEP20">BEP20 (BSC)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Wallet Address -->
+            <div>
+                <label for="walletAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Wallet Address</label>
+                <input type="text" 
+                       id="walletAddress" 
+                       name="wallet_address" 
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                       placeholder="Enter your wallet address"
+                       required>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Make sure the wallet address matches the selected currency and network</p>
+            </div>
+
+            <!-- Fee Calculation Display -->
+            <div class="bg-gray-50 rounded-lg p-4 dark:bg-gray-700" id="feeCalculation" style="display: none;">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Withdrawal Summary</h4>
+                
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Withdrawal Amount:</span>
+                        <span id="displayAmount" class="text-sm font-medium text-gray-900 dark:text-white">$0.00</span>
                     </div>
-                    <div class="crypto-option usdt" data-crypto="usdt">
-                        <div class="crypto-icon">
-                            <i class="fas fa-coins"></i>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Processing Fee (<span id="feeRate">5.0</span>%):</span>
+                        <span id="displayFee" class="text-sm font-medium text-gray-900 dark:text-white">$0.00</span>
+                    </div>
+                    <div class="border-t border-gray-200 pt-2 dark:border-gray-600">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Total Deducted:</span>
+                            <span id="displayTotalDeduction" class="text-sm font-medium text-red-600 dark:text-red-400">$0.00</span>
                         </div>
-                        <div class="crypto-symbol">USDT</div>
+                    </div>
+                    <div class="border-t border-gray-200 pt-2 dark:border-gray-600">
+                        <div class="flex justify-between items-center">
+                            <span class="text-base font-semibold text-gray-900 dark:text-white">You will receive:</span>
+                            <span id="displayNetAmount" class="text-base font-semibold text-green-600 dark:text-green-400">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    <p>Processing time: 1-24 hours</p>
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 dark:bg-yellow-900 dark:border-yellow-600">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Security Notice</h3>
+                        <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Double-check your wallet address before submitting</li>
+                                <li>Withdrawals are processed within 1-24 hours during business hours</li>
+                                <li>You will receive an email confirmation once processed</li>
+                                <li>All withdrawals are final and cannot be reversed</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Wallet Address</label>
-                <input type="text" class="form-input" id="wallet-address" placeholder="Enter your wallet address" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Amount (USD)</label>
-                <input type="number" class="form-input" id="withdraw-amount" placeholder="Enter amount" min="10" step="0.01" required>
-                <div class="amount-suggestions">
-                    <button type="button" class="amount-btn" data-amount="50">$50</button>
-                    <button type="button" class="amount-btn" data-amount="100">$100</button>
-                    <button type="button" class="amount-btn" data-amount="250">$250</button>
-                    <button type="button" class="amount-btn" data-amount="500">$500</button>
-                    <button type="button" class="amount-btn" data-amount="max">Max</button>
+            <!-- Account Restrictions (if any) -->
+            <div id="restrictionsAlert" class="bg-red-50 border-l-4 border-red-400 p-4 dark:bg-red-900 dark:border-red-600" style="display: none;">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Account Restrictions</h3>
+                        <div class="mt-2 text-sm text-red-700 dark:text-red-300" id="restrictionsList">
+                            <!-- Restrictions will be populated here -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="withdrawal-summary">
-                <div class="summary-row">
-                    <span>Withdrawal Amount:</span>
-                    <span id="summary-amount">$0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span>Network Fee:</span>
-                    <span id="summary-fee">$0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span>You will receive:</span>
-                    <span id="summary-total">$0.00</span>
-                </div>
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-3">
+                <button type="button" 
+                        id="cancelBtn" 
+                        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    Clear Form
+                </button>
+                <button type="submit" 
+                        id="submitBtn" 
+                        class="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="submitText">Create Withdrawal</span>
+                    <svg id="submitSpinner" class="hidden animate-spin -mr-1 ml-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
             </div>
-
-            <button type="submit" class="withdraw-btn" id="submit-withdrawal" disabled>
-                <i class="fas fa-paper-plane me-2"></i>
-                Submit Withdrawal Request
-            </button>
         </form>
     </div>
 
     <!-- Withdrawal History -->
-    <div class="withdrawal-history">
-        <h2 class="section-title">
-            <i class="fas fa-history"></i>
-            Recent Withdrawals
-        </h2>
-        <div class="empty-state">
-            <i class="fas fa-history"></i>
-            <h3>No withdrawal history available.</h3>
-            <p>Your withdrawal requests will appear here.</p>
+    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Withdrawal History</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track your withdrawal requests and their status</p>
+        </div>
+        
+        <div class="overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Fee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Currency</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Address</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawalHistory" class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                        <!-- Withdrawal history will be loaded here -->
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                <div class="flex items-center justify-center">
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Loading withdrawals...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('withdraw-form');
-    const amountInput = document.getElementById('withdraw-amount');
-    const walletInput = document.getElementById('wallet-address');
-    const summaryAmount = document.getElementById('summary-amount');
-    const summaryFee = document.getElementById('summary-fee');
-    const summaryTotal = document.getElementById('summary-total');
-    const submitBtn = document.getElementById('submit-withdrawal');
-    const cryptoOptions = document.querySelectorAll('.crypto-option');
-    const amountBtns = document.querySelectorAll('.amount-btn');
+<!-- Confirmation Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto hidden" id="confirmationModal">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
+            <div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-800">
+                    <svg class="h-6 w-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Confirm Withdrawal</h3>
+                    <div class="mt-2">
+                        <div class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
+                            <p><strong>Amount:</strong> <span id="confirmAmount">$0.00</span></p>
+                            <p><strong>Fee:</strong> <span id="confirmFee">$0.00</span></p>
+                            <p><strong>Total Deducted:</strong> <span id="confirmTotal" class="text-red-600">$0.00</span></p>
+                            <p><strong>Currency:</strong> <span id="confirmCurrency">USDT</span></p>
+                            <p><strong>Network:</strong> <span id="confirmNetwork">TRC20</span></p>
+                            <p><strong>Address:</strong> <span id="confirmAddress" class="font-mono text-xs">...</span></p>
+                        </div>
+                        <div class="mt-4 p-3 bg-red-50 rounded-md dark:bg-red-900">
+                            <p class="text-sm text-red-800 dark:text-red-200">⚠️ This withdrawal cannot be reversed. Please verify all details are correct.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button type="button" id="confirmWithdrawal" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm">
+                    Confirm Withdrawal
+                </button>
+                <button type="button" onclick="closeConfirmationModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:col-start-1 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-    let selectedCrypto = 'btc';
-    const maxBalance = <?= $stats['balance'] ?? 0 ?>;
+<!-- Success Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto hidden" id="successModal">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeSuccessModal()"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
+            <div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-800">
+                    <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Withdrawal Submitted!</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">Your withdrawal request has been submitted and will be processed within 1-24 hours.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-6">
+                <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm" onclick="closeSuccessModal()">
+                    Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-    // Crypto selection
-    cryptoOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            cryptoOptions.forEach(o => o.classList.remove('selected'));
-            this.classList.add('selected');
-            selectedCrypto = this.dataset.crypto;
-        });
-    });
+<!-- JavaScript -->
+<script src="/assets/js/withdraw.js"></script>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    // Amount buttons
-    amountBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const amount = this.dataset.amount;
-            if (amount === 'max') {
-                amountInput.value = maxBalance.toFixed(2);
-            } else {
-                amountInput.value = amount;
-            }
-            updateSummary();
-        });
-    });
-
-    // Amount input
-    amountInput.addEventListener('input', updateSummary);
-    walletInput.addEventListener('input', updateSummary);
-
-    function updateSummary() {
-        const amount = parseFloat(amountInput.value) || 0;
-        const fee = amount * 0.05; // 5% fee
-        const total = amount - fee;
-
-        summaryAmount.textContent = `$${amount.toFixed(2)}`;
-        summaryFee.textContent = `$${fee.toFixed(2)}`;
-        summaryTotal.textContent = `$${total.toFixed(2)}`;
-
-        const isValid = amount >= 10 && amount <= maxBalance && walletInput.value.trim().length > 0;
-        submitBtn.disabled = !isValid;
-    }
-
-    // Form submission
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const amount = parseFloat(amountInput.value);
-        const wallet = walletInput.value.trim();
-
-        if (amount < 10) {
-            alert('Minimum withdrawal amount is $10');
-            return;
-        }
-
-        if (amount > maxBalance) {
-            alert('Insufficient balance');
-            return;
-        }
-
-        if (!wallet) {
-            alert('Please enter a valid wallet address');
-            return;
-        }
-
-        // Simulate withdrawal request
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-        submitBtn.disabled = true;
-
-        setTimeout(() => {
-            alert('Withdrawal request submitted successfully! You will receive your funds within 24 hours.');
-            form.reset();
-            updateSummary();
-            submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Withdrawal Request';
-        }, 2000);
-    });
-
-    // Initialize
-    updateSummary();
-});
-</script>
-
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

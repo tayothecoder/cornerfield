@@ -1,30 +1,67 @@
+# Environment variables
 .env
 .env.local
 .env.production
 
-storage/logs/*.log
-storage/logs/*.txt
+# Log files
+/logs/*.log
+/logs/*.txt
+*.log
 
-storage/uploads/*
-!storage/uploads/.gitkeep
+# Uploads directory
+/uploads/*
+!/uploads/.gitkeep
 
-storage/cache/*
+# Vendor dependencies
+/vendor/
+composer.phar
 
-.vscode/
+# Session files
+sessions/
+
+# Cache files
+cache/
+temp/
+
+# IDE files
 .idea/
+.vscode/
 *.swp
 *.swo
+*~
 
+# OS files
 .DS_Store
-.AppleDouble
-.LSOverride
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
+# Backup files
+*.bak
+*.backup
 *.tmp
-*.temp
 
-*.sql
-*.sql.gz
+# Security sensitive files
+cookies.txt
+*.key
+*.pem
+*.crt
 
-vendor/
-
+# Node modules (if any)
 node_modules/
+npm-debug.log
+yarn-error.log
+
+# PHP specific
+.phpunit.cache/
+
+# Database dumps
+*.sql.gz
+*.sql.bz2
+
+# Temporary files
+tmp/
+temp/
