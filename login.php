@@ -74,28 +74,8 @@ if (isset($_GET['reset'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Cornerfield Investment Platform</title>
     
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwindcss.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        cf: {
-                            primary: '#667eea',
-                            'primary-dark': '#5a67d8',
-                            secondary: '#764ba2',
-                            success: '#10b981',
-                            warning: '#f59e0b',
-                            danger: '#ef4444',
-                            info: '#3b82f6',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind CSS (compiled) -->
+    <link rel="stylesheet" href="/assets/css/tailwind-compiled.css">
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">

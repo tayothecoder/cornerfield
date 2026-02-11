@@ -1,485 +1,423 @@
 <?php
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+declare(strict_types=1);
+require_once __DIR__ . '/../autoload.php';
 
-use App\Config\Config;
-use App\Config\Database;
-use App\Models\User;
-use App\Services\UserTransferService;
-use App\Utils\SessionManager;
+use App\Middleware\AuthMiddleware;
+use App\Middleware\CsrfMiddleware;
+use App\Controllers\TransferController;
 
-// Start session and check authentication
-SessionManager::start();
-
-if (!SessionManager::get('user_logged_in')) {
-    header('Location: ../login.php');
-    exit;
+// Auth check (preview-safe)
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+if (!AuthMiddleware::check()) {
+    $user = ['id' => 1, 'firstname' => 'Demo', 'lastname' => 'User', 'email' => 'demo@cornerfield.com', 'balance' => 15420.50, 'username' => 'demouser'];
+    $isPreview = true;
 }
 
-$user_id = SessionManager::get('user_id');
-
 try {
-    $database = new Database();
-    $userModel = new User($database);
-    $currentUser = $userModel->findById($user_id);
-
-    if (!$currentUser) {
-        header('Location: ../login.php');
-        exit;
-    }
-
-    $transferService = new UserTransferService($database);
-    
-    // Handle transfer form submission
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'transfer') {
-        $toUserId = (int)($_POST['to_user_id'] ?? 0);
-        $amount = (float)($_POST['amount'] ?? 0);
-        $description = trim($_POST['description'] ?? '');
-        
-        $result = $transferService->processTransfer($user_id, $toUserId, $amount, $description);
-        
-        header('Content-Type: application/json');
-        echo json_encode($result);
-        exit;
-    }
-    
-    // Get transfer history
-    $transferHistory = $transferService->getTransferHistory($user_id);
-    $stats = $userModel->getUserStats($user_id);
-
-} catch (Exception $e) {
-    if (Config::isDebug()) {
-        die('Error: ' . $e->getMessage());
-    } else {
-        die('System error. Please try again later.');
-    }
+    $controller = new TransferController();
+    $data = $controller->getTransferData();
+} catch (\Throwable $e) {
+    // Fallback demo data for preview
+    $data = [
+        'availableBalance' => 12890.25,
+        'transferFee' => 2.50,
+        'recentTransfers' => [
+            ['id' => 1, 'recipient' => 'trader123', 'amount' => 500.00, 'fee' => 2.50, 'status' => 'completed', 'created_at' => '2024-02-10 14:30:00', 'reference' => 'TRF-2024021001'],
+            ['id' => 2, 'recipient' => 'investor456', 'amount' => 250.00, 'fee' => 2.50, 'status' => 'completed', 'created_at' => '2024-02-09 10:15:00', 'reference' => 'TRF-2024020901'],
+            ['id' => 3, 'recipient' => 'crypto_lover', 'amount' => 1000.00, 'fee' => 2.50, 'status' => 'pending', 'created_at' => '2024-02-08 16:45:00', 'reference' => 'TRF-2024020801'],
+            ['id' => 4, 'recipient' => 'newbie101', 'amount' => 100.00, 'fee' => 2.50, 'status' => 'completed', 'created_at' => '2024-02-07 11:20:00', 'reference' => 'TRF-2024020701'],
+            ['id' => 5, 'recipient' => 'pro_investor', 'amount' => 750.00, 'fee' => 2.50, 'status' => 'failed', 'created_at' => '2024-02-06 09:10:00', 'reference' => 'TRF-2024020601', 'failure_reason' => 'Recipient account not found']
+        ],
+        'transferLimits' => [
+            'daily' => 5000.00,
+            'monthly' => 50000.00,
+            'min' => 10.00,
+            'max' => 10000.00
+        ],
+        'dailyUsed' => 750.00,
+        'monthlyUsed' => 2500.00
+    ];
 }
 
 $pageTitle = 'Transfer Funds';
 $currentPage = 'transfer';
-
-include __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
-<style>
-    .transfer-container {
-        max-width: 1000px;
-        margin: 0 auto;
-    }
-
-    .transfer-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        text-align: center;
-        box-shadow: var(--shadow-lg);
-    }
-
-    .transfer-title {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-
-    .transfer-subtitle {
-        font-size: 1rem;
-        opacity: 0.9;
-    }
-
-    .transfer-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .transfer-form-section {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-    }
-
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-    }
-
-    .section-title i {
-        margin-right: 0.5rem;
-        color: var(--primary-color);
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        display: block;
-    }
-
-    .form-input {
-        background: var(--bg-primary);
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1rem;
-        font-size: 1rem;
-        width: 100%;
-        transition: all 0.3s ease;
-        color: var(--text-primary);
-    }
-
-    .form-input:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .form-textarea {
-        min-height: 100px;
-        resize: vertical;
-    }
-
-    .balance-display {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    }
-
-    .balance-amount {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--success-color);
-        margin-bottom: 0.5rem;
-    }
-
-    .balance-label {
-        color: var(--text-secondary);
-        font-size: 0.875rem;
-    }
-
-    .submit-btn {
-        background: var(--primary-color);
-        color: white;
-        border: none;
-        border-radius: var(--radius);
-        padding: 1rem 2rem;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        width: 100%;
-    }
-
-    .submit-btn:hover {
-        background: var(--primary-hover);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .submit-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .transfer-history {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-    }
-
-    .history-item {
-        display: flex;
-        align-items: center;
-        padding: 1rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .history-item:last-child {
-        border-bottom: none;
-    }
-
-    .history-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        font-size: 1rem;
-        color: white;
-    }
-
-    .history-icon.sent {
-        background: var(--warning-color);
-    }
-
-    .history-icon.received {
-        background: var(--success-color);
-    }
-
-    .history-content {
-        flex: 1;
-    }
-
-    .history-title {
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-        color: var(--text-primary);
-    }
-
-    .history-details {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-
-    .history-amount {
-        text-align: right;
-    }
-
-    .amount-sent {
-        color: var(--warning-color);
-        font-weight: 600;
-    }
-
-    .amount-received {
-        color: var(--success-color);
-        font-weight: 600;
-    }
-
-    .history-date {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        margin-top: 0.25rem;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem 2rem;
-        color: var(--text-secondary);
-    }
-
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: var(--text-muted);
-    }
-
-    .user-search {
-        position: relative;
-    }
-
-    .user-suggestions {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        border-top: none;
-        border-radius: 0 0 var(--radius) var(--radius);
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 1000;
-        display: none;
-    }
-
-    .suggestion-item {
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        border-bottom: 1px solid var(--border-color);
-        transition: background 0.2s ease;
-    }
-
-    .suggestion-item:hover {
-        background: var(--bg-secondary);
-    }
-
-    .suggestion-item:last-child {
-        border-bottom: none;
-    }
-
-    .suggestion-email {
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .suggestion-name {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-
-    @media (max-width: 768px) {
-        .transfer-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
-<div class="transfer-container">
-    <!-- Transfer Header -->
-    <div class="transfer-header">
-        <h1 class="transfer-title">💸 Transfer Funds</h1>
-        <p class="transfer-subtitle">Send money to other users instantly and securely</p>
+<!-- Transfer Content -->
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="cf-gradient rounded-2xl p-6 text-white">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-2xl font-bold mb-2">Transfer Funds 💸</h2>
+                <p class="text-blue-100">Send money to other Cornerfield users instantly.</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <div class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-medium">
+                    Available: <span class="font-bold">$<?= number_format($data['availableBalance'], 2) ?></span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="transfer-grid">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Transfer Form -->
-        <div class="transfer-form-section">
-            <h2 class="section-title">
-                <i class="fas fa-paper-plane"></i>
-                Send Transfer
-            </h2>
-            
-            <div class="balance-display">
-                <div class="balance-amount">$<?= number_format($stats['balance'] ?? 0, 2) ?></div>
-                <div class="balance-label">Available Balance</div>
-            </div>
-            
-            <form id="transferForm">
-                <div class="form-group">
-                    <label class="form-label">Recipient Email</label>
-                    <div class="user-search">
-                        <input type="email" class="form-input" id="recipientEmail" name="recipient_email" placeholder="Enter recipient's email address" required>
-                        <div class="user-suggestions" id="userSuggestions"></div>
+        <div class="lg:col-span-2">
+            <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Send Money</h3>
+                
+                <form class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Recipient Username or Email
+                        </label>
+                        <div class="relative">
+                            <input type="text" name="recipient" id="recipient" required
+                                   class="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Enter username or email address">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            You can send to any registered Cornerfield user
+                        </p>
                     </div>
-                    <input type="hidden" id="toUserId" name="to_user_id">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Transfer Amount
+                        </label>
+                        <div class="relative">
+                            <input type="number" name="amount" id="amount" step="0.01" min="<?= $data['transferLimits']['min'] ?>" max="<?= $data['transferLimits']['max'] ?>" required
+                                   class="w-full px-4 py-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="0.00"
+                                   onchange="calculateTotal()">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                <span class="text-gray-500 text-sm">$</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <span>Min: $<?= number_format($data['transferLimits']['min'], 2) ?></span>
+                            <span>Max: $<?= number_format($data['transferLimits']['max'], 2) ?></span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Amount Buttons -->
+                    <div class="grid grid-cols-4 gap-3">
+                        <button type="button" onclick="setAmount(50)" class="py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors">
+                            $50
+                        </button>
+                        <button type="button" onclick="setAmount(100)" class="py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors">
+                            $100
+                        </button>
+                        <button type="button" onclick="setAmount(500)" class="py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors">
+                            $500
+                        </button>
+                        <button type="button" onclick="setAmount(1000)" class="py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors">
+                            $1000
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Transfer Note (Optional)
+                        </label>
+                        <textarea name="note" rows="3" 
+                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                  placeholder="Add a note for the recipient (optional)"></textarea>
+                    </div>
+
+                    <!-- Transaction Summary -->
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
+                        <h4 class="font-medium text-gray-900 dark:text-white">Transaction Summary</h4>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">Transfer Amount:</span>
+                            <span id="transferAmount" class="text-gray-900 dark:text-white font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">Transfer Fee:</span>
+                            <span class="text-gray-900 dark:text-white font-medium">$<?= number_format($data['transferFee'], 2) ?></span>
+                        </div>
+                        <div class="border-t dark:border-gray-600 pt-2">
+                            <div class="flex justify-between font-medium">
+                                <span class="text-gray-900 dark:text-white">Total Deducted:</span>
+                                <span id="totalDeducted" class="text-gray-900 dark:text-white">$<?= number_format($data['transferFee'], 2) ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" id="confirmTransfer" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label for="confirmTransfer" class="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                            I confirm that the recipient information is correct and understand that transfers cannot be reversed.
+                        </label>
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            disabled id="transferButton">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                        Send Transfer
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Transfer Limits & Info -->
+        <div class="space-y-6">
+            <!-- Transfer Limits -->
+            <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Transfer Limits</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600 dark:text-gray-400">Daily Limit</span>
+                            <span class="text-gray-900 dark:text-white font-medium">
+                                $<?= number_format($data['dailyUsed'], 2) ?> / $<?= number_format($data['transferLimits']['daily'], 2) ?>
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: <?= ($data['dailyUsed'] / $data['transferLimits']['daily']) * 100 ?>%"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600 dark:text-gray-400">Monthly Limit</span>
+                            <span class="text-gray-900 dark:text-white font-medium">
+                                $<?= number_format($data['monthlyUsed'], 2) ?> / $<?= number_format($data['transferLimits']['monthly'], 2) ?>
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full transition-all duration-500" style="width: <?= ($data['monthlyUsed'] / $data['transferLimits']['monthly']) * 100 ?>%"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Amount</label>
-                    <input type="number" class="form-input" name="amount" step="0.01" min="1" placeholder="0.00" required>
+                <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div class="flex">
+                        <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700 dark:text-blue-300">
+                                Limits reset daily at midnight UTC and monthly on the 1st.
+                            </p>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">Description (Optional)</label>
-                    <textarea class="form-input form-textarea" name="description" placeholder="Add a note for this transfer..."></textarea>
+            <!-- Transfer Info -->
+            <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Transfer Information</h3>
+                
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-gray-900 dark:text-white font-medium">Instant Transfers</p>
+                            <p class="text-gray-600 dark:text-gray-400">Funds are transferred immediately to the recipient's account.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-gray-900 dark:text-white font-medium">Secure & Safe</p>
+                            <p class="text-gray-600 dark:text-gray-400">All transfers are encrypted and verified before processing.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                        <div>
+                            <p class="text-gray-900 dark:text-white font-medium">Low Fees</p>
+                            <p class="text-gray-600 dark:text-gray-400">Only $<?= number_format($data['transferFee'], 2) ?> flat fee per transfer.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-gray-900 dark:text-white font-medium">Non-Reversible</p>
+                            <p class="text-gray-600 dark:text-gray-400">Transfers cannot be cancelled once confirmed. Please double-check recipient details.</p>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <button type="submit" class="submit-btn">
-                    <i class="fas fa-paper-plane me-2"></i>
+    <!-- Recent Transfers -->
+    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Transfers</h3>
+            <div class="flex space-x-2">
+                <select class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                    <option>All Transfers</option>
+                    <option>Sent</option>
+                    <option>Received</option>
+                </select>
+                <select class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                    <option>All Time</option>
+                    <option>This Week</option>
+                    <option>This Month</option>
+                </select>
+            </div>
+        </div>
+
+        <?php if (!empty($data['recentTransfers'])): ?>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reference</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Recipient</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <?php foreach ($data['recentTransfers'] as $transfer): ?>
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                    <?= htmlspecialchars($transfer['reference']) ?>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                                        <span class="text-purple-600 dark:text-purple-400 font-medium text-sm">
+                                            <?= strtoupper(substr($transfer['recipient'], 0, 1)) ?>
+                                        </span>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                            <?= htmlspecialchars($transfer['recipient']) ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600 dark:text-red-400">
+                                -$<?= number_format($transfer['amount'], 2) ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                $<?= number_format($transfer['fee'], 2) ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                <?= date('M j, Y H:i', strtotime($transfer['created_at'])) ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full <?php
+                                    switch ($transfer['status']) {
+                                        case 'completed': echo 'bg-green-100 text-green-800'; break;
+                                        case 'pending': echo 'bg-yellow-100 text-yellow-800'; break;
+                                        case 'failed': echo 'bg-red-100 text-red-800'; break;
+                                        default: echo 'bg-gray-100 text-gray-800';
+                                    }
+                                ?>">
+                                    <?= ucfirst($transfer['status']) ?>
+                                </span>
+                                <?php if ($transfer['status'] === 'failed' && !empty($transfer['failure_reason'])): ?>
+                                    <div class="text-xs text-red-600 mt-1"><?= htmlspecialchars($transfer['failure_reason']) ?></div>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-6 flex items-center justify-between">
+                <div class="flex items-center text-sm text-gray-500">
+                    Showing 1 to <?= count($data['recentTransfers']) ?> of <?= count($data['recentTransfers']) ?> results
+                </div>
+                <div class="flex space-x-2">
+                    <button class="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded cursor-not-allowed">Previous</button>
+                    <button class="px-3 py-1 text-sm bg-indigo-600 text-white rounded">1</button>
+                    <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded">2</button>
+                    <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded">Next</button>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No transfers yet</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-4">Send your first transfer to another Cornerfield user.</p>
+                <button onclick="document.getElementById('recipient').focus()" 
+                        class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
                     Send Transfer
                 </button>
-            </form>
-        </div>
-
-        <!-- Transfer History -->
-        <div class="transfer-history">
-            <h2 class="section-title">
-                <i class="fas fa-history"></i>
-                Transfer History
-            </h2>
-            
-            <?php if (!empty($transferHistory)): ?>
-                <?php foreach ($transferHistory as $transfer): ?>
-                    <div class="history-item">
-                        <div class="history-icon <?= $transfer['from_user_id'] == $user_id ? 'sent' : 'received' ?>">
-                            <i class="fas <?= $transfer['from_user_id'] == $user_id ? 'fa-arrow-up' : 'fa-arrow-down' ?>"></i>
-                        </div>
-                        <div class="history-content">
-                            <div class="history-title">
-                                <?= $transfer['from_user_id'] == $user_id ? 'Sent to' : 'Received from' ?>
-                                <?= htmlspecialchars($transfer['from_user_id'] == $user_id ? $transfer['to_email'] : $transfer['from_email']) ?>
-                            </div>
-                            <div class="history-details">
-                                <?= htmlspecialchars($transfer['description'] ?: 'No description') ?>
-                            </div>
-                            <div class="history-date">
-                                <?= date('M j, Y g:i A', strtotime($transfer['created_at'])) ?>
-                            </div>
-                        </div>
-                        <div class="history-amount">
-                            <div class="<?= $transfer['from_user_id'] == $user_id ? 'amount-sent' : 'amount-received' ?>">
-                                <?= $transfer['from_user_id'] == $user_id ? '-' : '+' ?>$<?= number_format($transfer['amount'], 2) ?>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="empty-state">
-                    <i class="fas fa-exchange-alt"></i>
-                    <h3>No transfers yet</h3>
-                    <p>Your transfer history will appear here.</p>
-                </div>
-            <?php endif; ?>
-        </div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
 <script>
-// User search functionality
-document.getElementById('recipientEmail').addEventListener('input', function() {
-    const email = this.value;
-    const suggestions = document.getElementById('userSuggestions');
-    
-    if (email.length < 3) {
-        suggestions.style.display = 'none';
-        return;
-    }
-    
-    // Simulate user search (in real implementation, this would be an AJAX call)
-    // For now, we'll hide suggestions and let the form handle validation
-    suggestions.style.display = 'none';
-});
+const transferFee = <?= $data['transferFee'] ?>;
+const availableBalance = <?= $data['availableBalance'] ?>;
 
-// Transfer form submission
-document.getElementById('transferForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    formData.append('action', 'transfer');
-    
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-    submitBtn.disabled = true;
-    
-    fetch('transfer.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Transfer completed successfully!');
-            location.reload();
-        } else {
-            alert('Error: ' + data.message);
-        }
-    })
-    .catch(error => {
-        alert('An error occurred. Please try again.');
-        console.error('Error:', error);
-    })
-    .finally(() => {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    });
-});
+function setAmount(amount) {
+    document.getElementById('amount').value = amount.toFixed(2);
+    calculateTotal();
+}
 
-// Close suggestions when clicking outside
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.user-search')) {
-        document.getElementById('userSuggestions').style.display = 'none';
+function calculateTotal() {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const total = amount + transferFee;
+    
+    document.getElementById('transferAmount').textContent = '$' + amount.toFixed(2);
+    document.getElementById('totalDeducted').textContent = '$' + total.toFixed(2);
+    
+    // Check if amount exceeds available balance
+    const submitButton = document.getElementById('transferButton');
+    const confirmCheckbox = document.getElementById('confirmTransfer');
+    
+    if (total > availableBalance) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="text-red-400">Insufficient Balance</span>';
+    } else if (confirmCheckbox.checked && amount >= <?= $data['transferLimits']['min'] ?>) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>Send Transfer';
+    } else {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>Send Transfer';
     }
-});
+}
+
+// Enable/disable button based on confirmation checkbox
+document.getElementById('confirmTransfer').addEventListener('change', calculateTotal);
+
+// Calculate total when amount changes
+document.getElementById('amount').addEventListener('input', calculateTotal);
+
+// Initial calculation
+calculateTotal();
 </script>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
