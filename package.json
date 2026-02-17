@@ -1,0 +1,27 @@
+{
+  "name": "cornerfield",
+  "version": "1.0.0",
+  "description": "Cornerfield is a professional enterprise-grade Bitcoin/cryptocurrency investment platform built with modern PHP 8.2+ architecture. The platform enables users to register, invest in cryptocurrency plans, earn automated daily profits, and manage their portfolios through a responsive dashboard. Administrators have complete control through an advanced admin panel with real-time financial management, user oversight, and comprehensive settings control.",
+  "main": "tailwind.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tayothecoder/cornerfield.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tayothecoder/cornerfield/issues"
+  },
+  "homepage": "https://github.com/tayothecoder/cornerfield#readme",
+  "dependencies": {
+    "tailwindcss": "^4.1.18"
+  }
+}
