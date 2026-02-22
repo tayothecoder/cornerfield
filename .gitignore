@@ -1,3 +1,11 @@
+# Dev/AI notes (never commit)
+ENFORCER.md
+AUDIT-REPORT.md
+CLEANUP-LOG.md
+PROJECT_ROADMAP.md
+UPDATE.md
+.cursor/
+
 # Environment variables
 .env
 .env.local
