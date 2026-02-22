@@ -38,6 +38,50 @@ class InvestmentController
      * Get all active investment plans
      * @return void
      */
+    /**
+     * Get investment plans data for template rendering
+     * @return array
+     */
+    public function getInvestmentPlans(): array
+    {
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $plans = $this->schemaModel->findActive();
+
+        // map plans to template format
+        $mappedPlans = [];
+        foreach ($plans as $plan) {
+            $mappedPlans[] = [
+                'id' => (int)$plan['id'],
+                'name' => $plan['name'],
+                'description' => $plan['description'] ?? '',
+                'min_amount' => (float)($plan['min_amount'] ?? 100),
+                'max_amount' => (float)($plan['max_amount'] ?? 10000),
+                'daily_return' => (float)($plan['daily_rate'] ?? 0),
+                'duration_days' => (int)($plan['duration_days'] ?? 30),
+                'total_return' => (float)($plan['total_return'] ?? 0),
+                'features' => ['Daily Payouts', '24/7 Support'],
+                'popular' => (bool)($plan['featured'] ?? false),
+                'color' => 'blue',
+            ];
+        }
+
+        $userBalance = 0.0;
+        $activeInvestments = 0;
+        if ($userId > 0) {
+            $userModel = new \App\Models\UserModel();
+            $user = $userModel->findById($userId);
+            $userBalance = $user ? (float)$user['balance'] : 0.0;
+            $stats = $this->investmentModel->getUserStats($userId);
+            $activeInvestments = $stats['active_investments'] ?? 0;
+        }
+
+        return [
+            'plans' => $mappedPlans,
+            'userBalance' => $userBalance,
+            'activeInvestments' => $activeInvestments,
+        ];
+    }
+
     public function getPlans(): void 
     {
         try {

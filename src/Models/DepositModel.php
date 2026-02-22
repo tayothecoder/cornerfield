@@ -253,7 +253,8 @@ class DepositModel extends BaseModel
                 null, // gateway_transaction_id
                 null, // gateway_response
                 $extra['proof_of_payment'] ?? null,
-                null  // admin_notes
+                null, // admin_notes
+                $expiresAt  // expires_at
             ]);
 
             if (!$success) {

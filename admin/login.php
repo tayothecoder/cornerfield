@@ -2,6 +2,17 @@
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
+// set session cookie path before any session starts
+if (session_status() === PHP_SESSION_NONE) {
+    $basePath = \App\Config\Config::getBasePath() ?: '/';
+    session_set_cookie_params([
+        'path' => $basePath,
+        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
+
 try {
     // Use the modern factory pattern
     $database = new \App\Config\Database();
@@ -24,9 +35,11 @@ $error = '';
 $success = '';
 
 // Handle login form submission
+error_log("Admin login attempt - method: " . $_SERVER['REQUEST_METHOD'] . " email: " . ($_POST['email'] ?? 'empty'));
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+    error_log("Admin login processing - email: $email, pass_len: " . strlen($password));
 
     if (empty($email) || empty($password)) {
         $error = 'Please fill in all fields';
@@ -56,16 +69,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="../assets/tabler/dist/css/tabler.min.css?1692870487" rel="stylesheet"/>
     <style>
         .login-page {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f3ff;
             min-height: 100vh;
         }
         .admin-badge {
-            background: linear-gradient(45deg, #f39c12, #e74c3c);
+            background: #1e0e62;
             color: white;
             padding: 0.25rem 0.75rem;
             border-radius: 1rem;
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }

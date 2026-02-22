@@ -574,7 +574,7 @@ include __DIR__ . '/includes/header.php';
                                                         class="text-secondary"><?= ucfirst($transaction['payment_method']) ?></span>
                                                     <?php if ($transaction['wallet_address']): ?>
                                                         <div class="text-secondary small td-truncate">
-                                                            <?= substr($transaction['wallet_address'], 0, 15) ?>...
+                                                            <?= substr($transaction['wallet_address'] ?? '', 0, 15) ?>...
                                                         </div>
                                                     <?php endif; ?>
                                                 </td>

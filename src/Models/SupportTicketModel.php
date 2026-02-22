@@ -51,8 +51,8 @@ class SupportTicketModel extends BaseModel
             $stmt = $this->db->prepare(
                 "SELECT st.*, 
                         a.full_name as assigned_admin_name,
-                        (SELECT COUNT(*) FROM support_ticket_replies str WHERE str.ticket_id = st.id) as reply_count,
-                        (SELECT MAX(str.created_at) FROM support_ticket_replies str WHERE str.ticket_id = st.id) as last_reply_at
+                        (SELECT COUNT(*) FROM ticket_replies str WHERE str.ticket_id = st.id) as reply_count,
+                        (SELECT MAX(str.created_at) FROM ticket_replies str WHERE str.ticket_id = st.id) as last_reply_at
                  FROM {$this->table} st
                  LEFT JOIN admins a ON st.assigned_to = a.id
                  WHERE st.user_id = ?
@@ -148,9 +148,9 @@ class SupportTicketModel extends BaseModel
             $category = 'general';
         }
         
-        $validPriorities = ['low', 'normal', 'high', 'urgent'];
+        $validPriorities = ['low', 'medium', 'high', 'urgent'];
         if (!in_array($priority, $validPriorities)) {
-            $priority = 'normal';
+            $priority = 'medium';
         }
         
         try {
@@ -249,7 +249,7 @@ class SupportTicketModel extends BaseModel
             
             // Add reply
             $stmt = $this->db->prepare(
-                "INSERT INTO support_ticket_replies (ticket_id, user_id, message, sender_type, created_at) 
+                "INSERT INTO ticket_replies (ticket_id, user_id, message, sender_type, created_at) 
                  VALUES (?, ?, ?, ?, NOW())"
             );
             
@@ -271,7 +271,7 @@ class SupportTicketModel extends BaseModel
             $this->db->commit();
             
             // Log reply
-            Security::logAudit($userId, 'support_ticket_reply', 'support_ticket_replies', $replyId, null, [
+            Security::logAudit($userId, 'support_ticket_reply', 'ticket_replies', $replyId, null, [
                 'ticket_id' => $ticketId,
                 'sender_type' => $senderType,
                 'message_length' => strlen($message)
@@ -380,7 +380,7 @@ class SupportTicketModel extends BaseModel
                 "SELECT str.*, 
                         u.username as user_username, u.first_name as user_first_name, u.last_name as user_last_name,
                         a.full_name as admin_name, a.username as admin_username
-                 FROM support_ticket_replies str
+                 FROM ticket_replies str
                  LEFT JOIN users u ON str.user_id = u.id AND str.sender_type = 'user'
                  LEFT JOIN admins a ON str.user_id = a.id AND str.sender_type = 'admin'
                  WHERE str.ticket_id = ?
@@ -465,7 +465,7 @@ class SupportTicketModel extends BaseModel
             
             $stmt = $this->db->prepare(
                 "SELECT st.*, 
-                        (SELECT COUNT(*) FROM support_ticket_replies str WHERE str.ticket_id = st.id) as reply_count
+                        (SELECT COUNT(*) FROM ticket_replies str WHERE str.ticket_id = st.id) as reply_count
                  FROM {$this->table} st
                  WHERE st.user_id = ? AND (st.subject LIKE ? OR st.message LIKE ?)
                  ORDER BY st.updated_at DESC"
@@ -491,7 +491,7 @@ class SupportTicketModel extends BaseModel
     {
         try {
             $stmt = $this->db->prepare(
-                "INSERT INTO support_ticket_replies (ticket_id, user_id, message, sender_type, created_at) 
+                "INSERT INTO ticket_replies (ticket_id, user_id, message, sender_type, created_at) 
                  VALUES (?, ?, ?, 'user', NOW())"
             );
             

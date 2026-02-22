@@ -192,8 +192,9 @@ class Validator
             return false;
         }
         
-        // Check decimal places (max 8 for crypto precision)
-        $decimalPlaces = strlen(substr(strrchr((string)$amount, '.'), 1));
+        // check decimal places (max 8 for crypto precision)
+        $decimalPart = strrchr((string)$amount, '.');
+        $decimalPlaces = $decimalPart !== false ? strlen(substr($decimalPart, 1)) : 0;
         if ($decimalPlaces > 8) {
             return false;
         }

@@ -299,14 +299,14 @@ class ReferralController
                 'referral_link' => $referralLink,
                 'short_link' => $this->generateShortLink($referralLink),
                 'social_messages' => [
-                    'facebook' => "🚀 Join me on Cornerfield Investment Platform and start earning today! Get a $50 welcome bonus when you sign up through my link: {$referralLink}",
-                    'twitter' => "💰 Earning passive income with @Cornerfield! Join me and get $50 welcome bonus: {$referralLink} #InvestmentPlatform #PassiveIncome",
+                    'facebook' => "Join me on Cornerfield Investment Platform and start earning today! Get a $50 welcome bonus when you sign up through my link: {$referralLink}",
+                    'twitter' => "Earning passive income with @Cornerfield! Join me and get $50 welcome bonus: {$referralLink} #InvestmentPlatform #PassiveIncome",
                     'linkedin' => "I've been using Cornerfield Investment Platform for my cryptocurrency investments. Great returns and professional service. Join through my referral link and get a $50 bonus: {$referralLink}",
                     'whatsapp' => "Hey! I found this amazing investment platform called Cornerfield. They're giving $50 bonus to new users. Check it out: {$referralLink}"
                 ],
                 'email_template' => [
                     'subject' => 'Start Your Investment Journey with Cornerfield',
-                    'body' => "Hi there!\n\nI wanted to share with you an investment platform I've been using called Cornerfield. They offer:\n\n✅ Professional cryptocurrency investment management\n✅ Transparent daily profits\n✅ Secure and regulated platform\n✅ $50 welcome bonus for new users\n\nYou can join through my referral link and get started: {$referralLink}\n\nFeel free to reach out if you have any questions!\n\nBest regards"
+                    'body' => "Hi there!\n\nI wanted to share with you an investment platform I've been using called Cornerfield. They offer:\n\n- Professional cryptocurrency investment management\n- Transparent daily profits\n- Secure and regulated platform\n- $50 welcome bonus for new users\n\nYou can join through my referral link and get started: {$referralLink}\n\nFeel free to reach out if you have any questions!\n\nBest regards"
                 ],
                 'banners' => [
                     [

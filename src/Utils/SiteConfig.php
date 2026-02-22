@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Utils;
 
@@ -150,7 +151,7 @@ class SiteConfig
         $css .= "
         .site-name { color: {$colors['primary']}; }
         .site-tagline { color: {$colors['secondary']}; }
-        .btn-primary { background: linear-gradient(135deg, {$colors['primary']} 0%, {$colors['secondary']} 100%); }
+        .btn-primary { background: #1e0e62; }
         .btn-success { background: {$colors['success']}; }
         .btn-warning { background: {$colors['warning']}; }
         .btn-danger { background: {$colors['danger']}; }
@@ -205,7 +206,7 @@ class SiteConfig
             <style>
                 body { 
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    background: linear-gradient(135deg, {$colors['primary']} 0%, {$colors['secondary']} 100%);
+                    background: #1e0e62;
                     margin: 0; padding: 0; min-height: 100vh;
                     display: flex; align-items: center; justify-content: center;
                 }
@@ -221,7 +222,7 @@ class SiteConfig
         </head>
         <body>
             <div class='maintenance-container'>
-                <div class='maintenance-icon'>🔧</div>
+                <div class='maintenance-icon'><svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' width='48' height='48'><path stroke-linecap='round' stroke-linejoin='round' d='M11.42 15.17l-5.59 5.59a2.12 2.12 0 01-3-3l5.59-5.59m4.17-1.83a5.25 5.25 0 10-7.43-7.43L6.34 6.34l4.24 4.24 4.83-4.83z'/></svg></div>
                 <h1 class='maintenance-title'>Under Maintenance</h1>
                 <p class='maintenance-message'>{$message}</p>
             </div>

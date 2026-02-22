@@ -49,22 +49,22 @@ class DailyProfitDistributor
                 $total_profits_distributed += $profit_distributed;
                 $investments_processed++;
 
-                echo "✅ Processed investment ID " . $investment['id'] . ": +$" . number_format($profit_distributed, 2) . " for user " . $investment['user_id'] . "\n";
+                echo "[OK] Processed investment ID " . $investment['id'] . ": +$" . number_format($profit_distributed, 2) . " for user " . $investment['user_id'] . "\n";
 
                 // Small delay to prevent overwhelming the database
                 usleep(100000); // 0.1 second delay
 
             } catch (Exception $e) {
                 $errors++;
-                echo "❌ Error processing investment ID " . $investment['id'] . ": " . $e->getMessage() . "\n";
+                echo "[ERROR] Error processing investment ID " . $investment['id'] . ": " . $e->getMessage() . "\n";
                 error_log("Daily Profit Error - Investment " . $investment['id'] . ": " . $e->getMessage());
             }
         }
 
         echo "[" . date('Y-m-d H:i:s') . "] Distribution complete!\n";
-        echo "📊 Investments processed: " . $investments_processed . "\n";
-        echo "💰 Total profits distributed: $" . number_format($total_profits_distributed, 2) . "\n";
-        echo "⚠️ Errors encountered: " . $errors . "\n\n";
+        echo "[STATS] Investments processed: " . $investments_processed . "\n";
+        echo "[PROFIT] Total profits distributed: $" . number_format($total_profits_distributed, 2) . "\n";
+        echo "[WARN] Errors encountered: " . $errors . "\n\n";
 
         return [
             'investments_processed' => $investments_processed,
@@ -117,13 +117,13 @@ class DailyProfitDistributor
                     'total_earned' => $this->database->raw('total_earned + ' . $final_profit)
                 ], 'id = ?', [$investment['user_id']]);
                 
-                echo "   🎉 Released all locked profits + final profit + principal for user " . $investment['user_id'] . "\n";
+                echo "   [DONE] Released all locked profits + final profit + principal for user " . $investment['user_id'] . "\n";
             } else {
 
                 $this->userModel->addToBalance($investment['user_id'], $total_payout);
                 $this->userModel->addToTotalEarned($investment['user_id'], $final_profit);
                 
-                echo "   🎉 Added final profit + principal to available balance for user " . $investment['user_id'] . "\n";
+                echo "   [DONE] Added final profit + principal to available balance for user " . $investment['user_id'] . "\n";
             }
 
             // Create final profit transaction
@@ -154,7 +154,7 @@ class DailyProfitDistributor
 
             $profit_formatted = number_format($final_profit, 2);
             $principal_formatted = number_format($principal_return, 2);
-            echo "🎉 COMPLETED: Investment " . $investment['id'] . " finished. User " . $investment['user_id'] . " received $" . $profit_formatted . " profit + $" . $principal_formatted . " principal\n";
+            echo "[DONE] COMPLETED: Investment " . $investment['id'] . " finished. User " . $investment['user_id'] . " received $" . $profit_formatted . " profit + $" . $principal_formatted . " principal\n";
 
             return $total_payout;
 
@@ -197,14 +197,14 @@ class DailyProfitDistributor
                     'total_earned' => $this->database->raw('total_earned + ' . $daily_profit)
                 ], 'id = ?', [$investment['user_id']]);
 
-                echo "   💰 Locked Mode: Added $" . number_format($daily_profit, 2) . " to locked balance for user " . $investment['user_id'] . "\n";
+                echo "   [PROFIT] Locked Mode: Added $" . number_format($daily_profit, 2) . " to locked balance for user " . $investment['user_id'] . "\n";
             } else {
                 $this->database->update('users', [
                     'balance' => $this->database->raw('balance + ' . $daily_profit),
                     'total_earned' => $this->database->raw('total_earned + ' . $daily_profit)
                 ], 'id = ?', [$investment['user_id']]);
 
-                echo "   💰 Immediate Mode: Added $" . number_format($daily_profit, 2) . " to available balance for user " . $investment['user_id'] . "\n";
+                echo "   [PROFIT] Immediate Mode: Added $" . number_format($daily_profit, 2) . " to available balance for user " . $investment['user_id'] . "\n";
             }
 
             // Update investment next profit time
@@ -232,7 +232,7 @@ class DailyProfitDistributor
      */
     public function generateSummaryReport()
     {
-        echo "\n📈 DAILY PROFIT SUMMARY REPORT\n";
+        echo "\n[REPORT] DAILY PROFIT SUMMARY REPORT\n";
         echo "================================\n";
 
         try {
@@ -248,9 +248,9 @@ class DailyProfitDistributor
             ");
 
             if ($today_profits && $today_profits[0]['profit_transactions'] > 0) {
-                echo "💰 Today's Profits: $" . number_format($today_profits[0]['total_profit_paid'], 2) . "\n";
-                echo "👥 Users Benefited: " . $today_profits[0]['users_benefited'] . "\n";
-                echo "📊 Transactions: " . $today_profits[0]['profit_transactions'] . "\n";
+                echo "[PROFIT] Today's Profits: $" . number_format($today_profits[0]['total_profit_paid'], 2) . "\n";
+                echo "[USERS] Users Benefited: " . $today_profits[0]['users_benefited'] . "\n";
+                echo "[STATS] Transactions: " . $today_profits[0]['profit_transactions'] . "\n";
             } else {
                 echo "No profits distributed today.\n";
             }
@@ -272,11 +272,11 @@ class DailyProfitDistributor
             ");
 
             if ($locked_balances && $locked_balances['total_locked'] > 0) {
-                echo "🔒 Locked Profits: $" . number_format($locked_balances['total_locked'], 2) . "\n";
-                echo "👥 Users with Locked: " . $locked_balances['users_with_locked'] . "\n";
+                echo "[LOCKED] Locked Profits: $" . number_format($locked_balances['total_locked'], 2) . "\n";
+                echo "[USERS] Users with Locked: " . $locked_balances['users_with_locked'] . "\n";
             }
 
-            echo "📈 Active Investments: " . ($active_investments['count'] ?? 0) . "\n";
+            echo "[REPORT] Active Investments: " . ($active_investments['count'] ?? 0) . "\n";
             echo "================================\n\n";
 
         } catch (Exception $e) {
@@ -287,7 +287,7 @@ class DailyProfitDistributor
 
 // Execute the profit distribution
 if (php_sapi_name() === 'cli') {
-    echo "🚀 CORNERFIELD DAILY PROFIT DISTRIBUTION\n";
+    echo "[START] CORNERFIELD DAILY PROFIT DISTRIBUTION\n";
     echo "========================================\n\n";
 
     $distributor = new DailyProfitDistributor();
@@ -311,11 +311,11 @@ if (php_sapi_name() === 'cli') {
 
     file_put_contents($logsDir . '/daily-profits.log', $log_entry, FILE_APPEND | LOCK_EX);
 
-    echo "📝 Log written to: " . $logsDir . "/daily-profits.log\n";
-    echo "✅ Daily profit distribution completed!\n\n";
+    echo "[LOG] Log written to: " . $logsDir . "/daily-profits.log\n";
+    echo "[OK] Daily profit distribution completed!\n\n";
 
 } else {
-    echo "❌ This script must be run from command line\n";
+    echo "[ERROR] This script must be run from command line\n";
     echo "Usage: php daily-profits.php\n";
 }
 ?>

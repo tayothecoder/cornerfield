@@ -45,6 +45,21 @@ class JsonResponse
     }
 
     /**
+     * Send validation error response with field-level errors
+     * @param array $errors associative array of field => message
+     * @param int $httpCode
+     * @return void
+     */
+    public static function validationError(array $errors, int $httpCode = 422): void
+    {
+        self::send([
+            'success' => false,
+            'error' => 'Validation failed',
+            'errors' => $errors
+        ], $httpCode);
+    }
+
+    /**
      * Send unauthorized response
      * @param string $message
      * @return void

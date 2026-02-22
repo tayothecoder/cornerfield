@@ -12,6 +12,32 @@ declare(strict_types=1);
  * @since 2026-02-10
  */
 
+use App\Models\WithdrawalModel;
+use App\Models\UserModel;
+use App\Controllers\WithdrawalController;
+use App\Utils\Security;
+
+// handle ajax post before any html output
+if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
+    isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+    $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+    // need session and autoloader but not the html header
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    require_once dirname(__DIR__) . '/autoload.php';
+    try {
+        $controller = new WithdrawalController();
+        $controller->create();
+    } catch (\Throwable $e) {
+        error_log('Withdrawal POST failed: ' . $e->getMessage());
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Server error processing withdrawal']);
+    }
+    exit;
+}
+
 // Set page metadata
 $pageTitle = 'Withdraw';
 $pageDescription = 'Withdraw funds from your account securely via cryptocurrency';
@@ -19,10 +45,12 @@ $pageDescription = 'Withdraw funds from your account securely via cryptocurrency
 // Include header
 require_once __DIR__ . '/includes/header.php';
 
-use App\Models\WithdrawalModel;
-use App\Utils\Security;
-
-// Get user balance for display
+// get current user data for display
+$userModel = new UserModel();
+$currentUser = $userModel->findById((int)($_SESSION['user_id'] ?? 0)) ?? [
+    'balance' => 0,
+    'total_withdrawn' => 0,
+];
 $withdrawalModel = new WithdrawalModel();
 
 ?>
@@ -30,11 +58,11 @@ $withdrawalModel = new WithdrawalModel();
 <!-- Withdrawal Content -->
 <div class="space-y-6">
     <!-- Balance Overview -->
-    <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg shadow-lg text-white">
+    <div class="bg-[#1e0e62] rounded-3xl text-white">
         <div class="px-6 py-8">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-2xl font-bold">Available Balance</h2>
+                    <h2 class="text-xl font-medium tracking-tight">Available Balance</h2>
                     <p class="text-lg opacity-90" id="userBalance">$<?= number_format((float)$currentUser['balance'], 2) ?></p>
                 </div>
                 <div class="text-right">
@@ -56,7 +84,7 @@ $withdrawalModel = new WithdrawalModel();
     </div>
 
     <!-- Withdrawal Form -->
-    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800">
+    <div class="bg-white rounded-3xl dark:bg-[#1a1145]">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium text-gray-900 dark:text-white">Create Withdrawal</h2>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Withdraw funds to your cryptocurrency wallet</p>
@@ -94,7 +122,7 @@ $withdrawalModel = new WithdrawalModel();
                     <label for="currency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
                     <select id="currency" 
                             name="currency" 
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            class="mt-1 block w-full border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             required>
                         <option value="">Select currency</option>
                         <option value="BTC">₿ Bitcoin (BTC)</option>
@@ -107,7 +135,7 @@ $withdrawalModel = new WithdrawalModel();
                     <label for="network" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Network</label>
                     <select id="network" 
                             name="network" 
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            class="mt-1 block w-full border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             required>
                         <option value="">Select network</option>
                         <option value="TRC20">TRC20 (Tron)</option>
@@ -123,14 +151,14 @@ $withdrawalModel = new WithdrawalModel();
                 <input type="text" 
                        id="walletAddress" 
                        name="wallet_address" 
-                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                       class="mt-1 block w-full border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
                        placeholder="Enter your wallet address"
                        required>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Make sure the wallet address matches the selected currency and network</p>
             </div>
 
             <!-- Fee Calculation Display -->
-            <div class="bg-gray-50 rounded-lg p-4 dark:bg-gray-700" id="feeCalculation" style="display: none;">
+            <div class="bg-[#f5f3ff] rounded-lg p-4 dark:bg-gray-700" id="feeCalculation" style="display: none;">
                 <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Withdrawal Summary</h4>
                 
                 <div class="space-y-2">
@@ -204,12 +232,12 @@ $withdrawalModel = new WithdrawalModel();
             <div class="flex justify-end space-x-3">
                 <button type="button" 
                         id="cancelBtn" 
-                        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-[#f5f3ff] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                     Clear Form
                 </button>
                 <button type="submit" 
                         id="submitBtn" 
-                        class="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="px-6 py-3 bg-[#1e0e62] text-white rounded-full border-2 border-[#1e0e62] hover:bg-transparent hover:text-[#1e0e62] duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                     <span id="submitText">Create Withdrawal</span>
                     <svg id="submitSpinner" class="hidden animate-spin -mr-1 ml-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -221,7 +249,7 @@ $withdrawalModel = new WithdrawalModel();
     </div>
 
     <!-- Withdrawal History -->
-    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800">
+    <div class="bg-white rounded-3xl dark:bg-[#1a1145]">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium text-gray-900 dark:text-white">Withdrawal History</h2>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track your withdrawal requests and their status</p>
@@ -230,7 +258,7 @@ $withdrawalModel = new WithdrawalModel();
         <div class="overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-700">
+                    <thead class="bg-[#f5f3ff] dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Amount</th>
@@ -264,8 +292,8 @@ $withdrawalModel = new WithdrawalModel();
 <!-- Confirmation Modal -->
 <div class="fixed inset-0 z-50 overflow-y-auto hidden" id="confirmationModal">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
+        <div class="fixed inset-0 bg-[#f5f3ff]0 bg-opacity-75 transition-opacity"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hiddentransition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
             <div>
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-800">
                     <svg class="h-6 w-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,16 +312,16 @@ $withdrawalModel = new WithdrawalModel();
                             <p><strong>Address:</strong> <span id="confirmAddress" class="font-mono text-xs">...</span></p>
                         </div>
                         <div class="mt-4 p-3 bg-red-50 rounded-md dark:bg-red-900">
-                            <p class="text-sm text-red-800 dark:text-red-200">⚠️ This withdrawal cannot be reversed. Please verify all details are correct.</p>
+                            <p class="text-sm text-red-800 dark:text-red-200">This withdrawal cannot be reversed. Please verify all details are correct.</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                <button type="button" id="confirmWithdrawal" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm">
+                <button type="button" id="confirmWithdrawal" class="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm">
                     Confirm Withdrawal
                 </button>
-                <button type="button" onclick="closeConfirmationModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:col-start-1 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                <button type="button" onclick="closeConfirmationModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-[#f5f3ff] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:col-start-1 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                     Cancel
                 </button>
             </div>
@@ -304,8 +332,8 @@ $withdrawalModel = new WithdrawalModel();
 <!-- Success Modal -->
 <div class="fixed inset-0 z-50 overflow-y-auto hidden" id="successModal">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeSuccessModal()"></div>
-        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
+        <div class="fixed inset-0 bg-[#f5f3ff]0 bg-opacity-75 transition-opacity" onclick="closeSuccessModal()"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hiddentransition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
             <div>
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-800">
                     <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,7 +348,7 @@ $withdrawalModel = new WithdrawalModel();
                 </div>
             </div>
             <div class="mt-5 sm:mt-6">
-                <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm" onclick="closeSuccessModal()">
+                <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-[#1e0e62] text-base font-medium text-white hover:bg-transparent hover:text-[#1e0e62] border-2 border-[#1e0e62] rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm" onclick="closeSuccessModal()">
                     Continue
                 </button>
             </div>

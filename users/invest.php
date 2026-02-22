@@ -8,15 +8,48 @@ use App\Controllers\InvestmentController;
 
 // Auth check (preview-safe)
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// handle ajax investment creation
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!AuthMiddleware::check()) {
+        header('Content-Type: application/json');
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+        exit;
+    }
+    // parse json body into $_POST so the controller can read it
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    if (stripos($contentType, 'application/json') !== false) {
+        $jsonBody = json_decode(file_get_contents('php://input'), true);
+        if (is_array($jsonBody)) {
+            $_POST = array_merge($_POST, $jsonBody);
+        }
+    }
+    // inject csrf token from session if not provided (js sends json without it)
+    if (empty($_POST['csrf_token']) && !empty($_SESSION['csrf_token'])) {
+        $_POST['csrf_token'] = $_SESSION['csrf_token'];
+    }
+    try {
+        $controller = new InvestmentController();
+        $controller->invest();
+    } catch (\Throwable $e) {
+        error_log('Investment POST failed: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString());
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Server error processing investment']);
+    }
+    exit;
+}
+
 if (!AuthMiddleware::check()) {
     $user = ['id' => 1, 'firstname' => 'Demo', 'lastname' => 'User', 'email' => 'demo@cornerfield.com', 'balance' => 15420.50, 'username' => 'demouser'];
     $isPreview = true;
 }
 
-// Initialize controller and get data
+// initialize controller and get data
 // For demo/preview: wrap in try/catch so pages render even without DB
 try {
-
+    $controller = new InvestmentController();
     $data = $controller->getInvestmentPlans();
 } catch (\Throwable $e) {
     // Fallback demo data for preview
@@ -84,33 +117,33 @@ require_once __DIR__ . '/includes/header.php';
 
     <!-- Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="text-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+        <div class="text-center p-6 bg-white dark:bg-[#1a1145] rounded-3xl">
             <div class="inline-flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full mb-4">
                 <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                 </svg>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">$<?= number_format($data['userBalance'], 2) ?></h3>
+            <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">$<?= number_format($data['userBalance'], 2) ?></h3>
             <p class="text-gray-600 dark:text-gray-300">Available Balance</p>
         </div>
         
-        <div class="text-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
-            <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
-                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="text-center p-6 bg-white dark:bg-[#1a1145] rounded-3xl">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-[#f5f3ff] rounded-full mb-4">
+                <svg class="w-6 h-6 text-[#1e0e62]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                 </svg>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white"><?= $data['activeInvestments'] ?></h3>
+            <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white"><?= $data['activeInvestments'] ?></h3>
             <p class="text-gray-600 dark:text-gray-300">Active Investments</p>
         </div>
         
-        <div class="text-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
-            <div class="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full mb-4">
-                <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="text-center p-6 bg-white dark:bg-[#1a1145] rounded-3xl">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-[#f5f3ff] rounded-full mb-4">
+                <svg class="w-6 h-6 text-[#1e0e62]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                 </svg>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Up to 4.0%</h3>
+            <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">Up to 4.0%</h3>
             <p class="text-gray-600 dark:text-gray-300">Daily Returns</p>
         </div>
     </div>
@@ -118,9 +151,9 @@ require_once __DIR__ . '/includes/header.php';
     <!-- Investment Plans Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <?php foreach ($data['plans'] as $plan): ?>
-        <div class="relative cf-card bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transform hover:scale-105 transition-all duration-300" data-hover>
+        <div class="relative cf-card bg-white dark:bg-[#1a1145] rounded-3xl overflow-hiddentransition-all duration-300" data-hover>
             <?php if ($plan['popular']): ?>
-            <div class="absolute top-0 right-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 text-sm font-semibold rounded-bl-lg">
+            <div class="absolute top-0 right-0 bg-[#1e0e62] text-white px-3 py-1 text-sm font-medium rounded-bl-xl">
                 Most Popular
             </div>
             <?php endif; ?>
@@ -129,19 +162,19 @@ require_once __DIR__ . '/includes/header.php';
                 <!-- Plan Header -->
                 <div class="text-center mb-6">
                     <div class="inline-flex items-center justify-center w-16 h-16 <?= 
-                        $plan['color'] === 'blue' ? 'bg-blue-100 dark:bg-blue-900' : 
-                        ($plan['color'] === 'indigo' ? 'bg-indigo-100 dark:bg-indigo-900' : 
-                        'bg-purple-100 dark:bg-purple-900') 
-                    ?> rounded-2xl mb-4">
+                        $plan['color'] === 'blue' ? 'bg-[#f5f3ff]' : 
+                        ($plan['color'] === 'indigo' ? 'bg-[#f5f3ff]' : 
+                        'bg-[#f5f3ff]') 
+                    ?> rounded-3xl mb-4">
                         <svg class="w-8 h-8 <?= 
-                            $plan['color'] === 'blue' ? 'text-blue-600 dark:text-blue-400' : 
-                            ($plan['color'] === 'indigo' ? 'text-indigo-600 dark:text-indigo-400' : 
-                            'text-purple-600 dark:text-purple-400') 
+                            $plan['color'] === 'blue' ? 'text-[#1e0e62]' : 
+                            ($plan['color'] === 'indigo' ? 'text-[#1e0e62]' : 
+                            'text-[#1e0e62]') 
                         ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                         </svg>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2"><?= htmlspecialchars($plan['name']) ?></h3>
+                    <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white mb-2"><?= htmlspecialchars($plan['name']) ?></h3>
                     <p class="text-gray-600 dark:text-gray-300"><?= htmlspecialchars($plan['description']) ?></p>
                 </div>
 
@@ -149,9 +182,9 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="space-y-4 mb-6">
                     <div class="text-center">
                         <div class="text-4xl font-bold <?= 
-                            $plan['color'] === 'blue' ? 'text-blue-600' : 
-                            ($plan['color'] === 'indigo' ? 'text-indigo-600' : 
-                            'text-purple-600') 
+                            $plan['color'] === 'blue' ? 'text-[#1e0e62]' : 
+                            ($plan['color'] === 'indigo' ? 'text-[#1e0e62]' : 
+                            'text-[#1e0e62]') 
                         ?> mb-2">
                             <?= number_format($plan['daily_return'], 1) ?>%
                         </div>
@@ -160,18 +193,18 @@ require_once __DIR__ . '/includes/header.php';
 
                     <div class="grid grid-cols-2 gap-4 text-center">
                         <div>
-                            <div class="text-lg font-semibold text-gray-900 dark:text-white"><?= $plan['duration_days'] ?> days</div>
+                            <div class="text-lg font-medium text-gray-900 dark:text-white"><?= $plan['duration_days'] ?> days</div>
                             <p class="text-sm text-gray-600 dark:text-gray-300">Duration</p>
                         </div>
                         <div>
-                            <div class="text-lg font-semibold text-gray-900 dark:text-white"><?= number_format($plan['total_return'], 1) ?>%</div>
+                            <div class="text-lg font-medium text-gray-900 dark:text-white"><?= number_format($plan['total_return'], 1) ?>%</div>
                             <p class="text-sm text-gray-600 dark:text-gray-300">Total Return</p>
                         </div>
                     </div>
 
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                         <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Investment Range:</p>
-                        <p class="font-semibold text-gray-900 dark:text-white">
+                        <p class="font-medium text-gray-900 dark:text-white">
                             $<?= number_format($plan['min_amount']) ?> - $<?= number_format($plan['max_amount']) ?>
                         </p>
                     </div>
@@ -179,7 +212,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <!-- Features -->
                 <div class="mb-6">
-                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Plan Features:</h4>
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-3">Plan Features:</h4>
                     <ul class="space-y-2">
                         <?php foreach ($plan['features'] as $feature): ?>
                         <li class="flex items-center text-sm text-gray-600 dark:text-gray-300">
@@ -195,10 +228,10 @@ require_once __DIR__ . '/includes/header.php';
                 <!-- Action Button -->
                 <button onclick="openInvestModal(<?= $plan['id'] ?>, '<?= htmlspecialchars($plan['name']) ?>', <?= $plan['min_amount'] ?>, <?= $plan['max_amount'] ?>, <?= $plan['daily_return'] ?>)" 
                     class="w-full <?= 
-                        $plan['color'] === 'blue' ? 'bg-blue-600 hover:bg-blue-700' : 
-                        ($plan['color'] === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-700' : 
-                        'bg-purple-600 hover:bg-purple-700') 
-                    ?> text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 <?= $plan['popular'] ? 'shadow-lg' : '' ?>">
+                        $plan['color'] === 'blue' ? 'bg-[#1e0e62] hover:bg-[#2d1b8a] rounded-full' : 
+                        ($plan['color'] === 'indigo' ? 'bg-[#1e0e62] hover:bg-[#2d1b8a] rounded-full' : 
+                        'bg-[#1e0e62] hover:bg-[#2d1b8a] rounded-full') 
+                    ?> text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 <?= $plan['popular'] ? '' : '' ?>">
                     Start Investment
                 </button>
             </div>
@@ -207,8 +240,8 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <!-- ROI Calculator -->
-    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">ROI Calculator</h3>
+    <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
+        <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white mb-6 text-center">ROI Calculator</h3>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Calculator Inputs -->
@@ -231,47 +264,47 @@ require_once __DIR__ . '/includes/header.php';
                         placeholder="Enter amount">
                 </div>
 
-                <button onclick="calculateROI()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                <button onclick="calculateROI()" class="w-full bg-[#1e0e62] hover:bg-[#2d1b8a] text-white font-medium py-3 px-4 rounded-full transition-colors">
                     Calculate Returns
                 </button>
             </div>
 
             <!-- Calculator Results -->
-            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Projected Returns</h4>
+            <div class="bg-[#f5f3ff] dark:bg-gray-700 rounded-lg p-6">
+                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Projected Returns</h4>
                 
                 <div class="space-y-4">
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600 dark:text-gray-300">Investment Amount:</span>
-                        <span id="calc-investment" class="font-semibold text-gray-900 dark:text-white">$1,000.00</span>
+                        <span id="calc-investment" class="font-medium text-gray-900 dark:text-white">$1,000.00</span>
                     </div>
                     
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600 dark:text-gray-300">Daily Return:</span>
-                        <span id="calc-daily" class="font-semibold text-green-600">$35.00</span>
+                        <span id="calc-daily" class="font-medium text-green-600">$35.00</span>
                     </div>
                     
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600 dark:text-gray-300">Duration:</span>
-                        <span id="calc-duration" class="font-semibold text-gray-900 dark:text-white">25 days</span>
+                        <span id="calc-duration" class="font-medium text-gray-900 dark:text-white">25 days</span>
                     </div>
                     
                     <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600 dark:text-gray-300">Total Return:</span>
-                            <span id="calc-total" class="font-semibold text-green-600">$875.00</span>
+                            <span id="calc-total" class="font-medium text-green-600">$875.00</span>
                         </div>
                         
                         <div class="flex justify-between items-center mt-2">
                             <span class="text-gray-600 dark:text-gray-300">Final Amount:</span>
-                            <span id="calc-final" class="text-xl font-bold text-green-600">$1,875.00</span>
+                            <span id="calc-final" class="text-xl font-medium tracking-tight text-green-600">$1,875.00</span>
                         </div>
                     </div>
                     
                     <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mt-4">
-                        <p class="text-sm text-blue-600 dark:text-blue-400">
-                            💡 Your profit of <span id="calc-profit" class="font-semibold">$875.00</span> represents a 
-                            <span id="calc-percentage" class="font-semibold">87.5%</span> return on investment!
+                        <p class="text-sm text-[#1e0e62]">
+                           Your profit of <span id="calc-profit" class="font-medium">$875.00</span> represents a 
+                            <span id="calc-percentage" class="font-medium">87.5%</span> return on investment!
                         </p>
                     </div>
                 </div>
@@ -283,17 +316,17 @@ require_once __DIR__ . '/includes/header.php';
 <!-- Investment Modal -->
 <div id="investModal" class="fixed inset-0 z-50 overflow-y-auto hidden">
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="fixed inset-0 bg-[#f5f3ff]0 bg-opacity-75 transition-opacity"></div>
         
-        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="inline-block align-bottom bg-white dark:bg-[#1a1145] rounded-3xl text-left overflow-hiddentransition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
             <form id="investForm" method="POST" action="/users/invest.php" class="p-6" data-validate>
                 <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2" id="modalPlanName">Premium Plan</h3>
+                    <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white mb-2" id="modalPlanName">Premium Plan</h3>
                     <p class="text-gray-600 dark:text-gray-300">Enter your investment amount to get started.</p>
                 </div>
 
                 <input type="hidden" id="modalPlanId" name="plan_id" value="">
-                <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::generateToken() ?>">
+                <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::getToken() ?>">
 
                 <div class="mb-6">
                     <label for="investment-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -309,26 +342,26 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                 </div>
 
-                <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div class="mb-6 p-4 bg-[#f5f3ff] dark:bg-gray-700 rounded-lg">
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <span class="text-gray-600 dark:text-gray-300">Daily Return Rate:</span>
-                            <div class="font-semibold text-gray-900 dark:text-white" id="modalDailyRate">3.5%</div>
+                            <div class="font-medium text-gray-900 dark:text-white" id="modalDailyRate">3.5%</div>
                         </div>
                         <div>
                             <span class="text-gray-600 dark:text-gray-300">Expected Daily Profit:</span>
-                            <div class="font-semibold text-green-600" id="modalDailyProfit">$0.00</div>
+                            <div class="font-medium text-green-600" id="modalDailyProfit">$0.00</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex space-x-3">
                     <button type="button" onclick="closeInvestModal()" 
-                        class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-[#f5f3ff]0 text-gray-700 dark:text-white font-medium py-3 px-4 rounded-lg transition-colors">
                         Cancel
                     </button>
                     <button type="submit" 
-                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                        class="flex-1 bg-[#1e0e62] hover:bg-[#2d1b8a] text-white font-medium py-3 px-4 rounded-full transition-colors"
                         data-original-text="Confirm Investment">
                         Confirm Investment
                     </button>
@@ -401,17 +434,20 @@ document.getElementById('calc-amount').addEventListener('input', calculateROI);
 document.getElementById('calc-plan').addEventListener('change', calculateROI);
 
 // Form submission
-document.getElementById('investForm').addEventListener('submit', function(e) {
+document.getElementById('investForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const submitBtn = this.querySelector('button[type="submit"]');
     const amount = parseFloat(document.getElementById('investment-amount').value);
+    const planId = document.getElementById('modalPlanId').value;
     const minAmount = parseFloat(document.getElementById('investment-amount').min);
     const maxAmount = parseFloat(document.getElementById('investment-amount').max);
     const userBalance = <?= $data['userBalance'] ?>;
+    const csrfToken = this.querySelector('input[name="csrf_token"]').value;
+    const base = '<?= $base ?>';
     
     if (amount < minAmount || amount > maxAmount) {
-        showNotification(`Amount must be between $${minAmount.toLocaleString()} and $${maxAmount.toLocaleString()}`, 'error');
+        showNotification('Amount must be between $' + minAmount.toLocaleString() + ' and $' + maxAmount.toLocaleString(), 'error');
         return;
     }
     
@@ -422,17 +458,34 @@ document.getElementById('investForm').addEventListener('submit', function(e) {
     
     setLoading(submitBtn, true);
     
-    // Simulate API call (in real app, this would be actual AJAX)
-    setTimeout(() => {
+    try {
+        const response = await fetch(base + '/users/invest.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                csrf_token: csrfToken,
+                schema_id: parseInt(planId),
+                amount: amount
+            })
+        });
+        const result = await response.json();
         setLoading(submitBtn, false);
-        showNotification('Investment created successfully!', 'success');
-        closeInvestModal();
-        
-        // Refresh page or update UI
-        setTimeout(() => {
-            window.location.href = '/users/dashboard.php';
-        }, 1500);
-    }, 2000);
+        if (result.success) {
+            showNotification(result.data?.message || 'Investment created successfully', 'success');
+            closeInvestModal();
+            setTimeout(() => {
+                window.location.href = base + '/users/dashboard.php';
+            }, 1500);
+        } else {
+            showNotification(result.error || 'Investment failed', 'error');
+        }
+    } catch (err) {
+        setLoading(submitBtn, false);
+        showNotification('Network error. Please try again.', 'error');
+    }
 });
 
 // Initialize calculator on page load

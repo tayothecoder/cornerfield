@@ -67,9 +67,9 @@ if ($autoApproveDeposits) {
                 'admin_notes' => 'Auto-approved by system'
             ], 'id = ?', [$deposit['id']]);
 
-            $database->update('users', [
-                'balance' => $database->raw('balance + ' . $deposit['requested_amount'])
-            ], 'id = ?', [$deposit['user_id']]);
+            $database->query('UPDATE users SET balance = balance + ? WHERE id = ?', [
+                $deposit['requested_amount'], $deposit['user_id']
+            ]);
 
             $database->commit();
         } catch (Exception $e) {
@@ -115,9 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ], 'id = ?', [$depositId]);
 
                 // Update user balance
-                $database->update('users', [
-                    'balance' => $database->raw('balance + ' . $amount)
-                ], 'id = ?', [$userId]);
+                $database->query('UPDATE users SET balance = balance + ? WHERE id = ?', [$amount, $userId]);
 
                 $database->commit();
                 $success = "Deposit approved successfully. User balance updated.";
@@ -201,9 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $database->insert('deposits', $depositData);
 
                 // Update user balance
-                $database->update('users', [
-                    'balance' => $database->raw('balance + ' . $amount)
-                ], 'id = ?', [$userId]);
+                $database->query('UPDATE users SET balance = balance + ? WHERE id = ?', [$amount, $userId]);
 
                 $database->commit();
                 $success = "Manual deposit created successfully. User balance updated.";
@@ -455,7 +451,7 @@ include __DIR__ . '/includes/header.php';
                                         <div class="fw-bold"><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($deposit['requested_amount'], 2) ?></div>
                                     </td>
                                     <td>
-                                        <span class="badge bg-info"><?= htmlspecialchars($deposit['payment_method']) ?></span>
+                                        <span class="badge bg-info"><?= htmlspecialchars($deposit['payment_method'] ?? 'N/A') ?></span>
                                     </td>
                                     <td>
                                         <?php

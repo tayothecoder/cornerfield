@@ -314,7 +314,7 @@ class DepositManager {
         try {
             const formData = new FormData(e.target);
             
-            const response = await fetch('/api/deposit/create.php', {
+            const response = await fetch('deposit.php', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -347,7 +347,9 @@ class DepositManager {
         if (!tbody) return;
 
         try {
-            const response = await fetch('/api/deposit/history.php');
+            const response = await fetch('deposit.php?action=history', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
             const result = await response.json();
 
             if (result.success) {
@@ -509,7 +511,7 @@ function closeSuccessModal() {
 
 function showDepositDetails(depositId) {
     // Placeholder for deposit details modal
-    console.log('Show deposit details for ID:', depositId);
+    
 }
 
 // Initialize when DOM is loaded

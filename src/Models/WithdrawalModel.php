@@ -464,7 +464,7 @@ class WithdrawalModel extends BaseModel
         try {
             // Get fee settings from admin settings
             $stmt = $this->db->prepare(
-                "SELECT setting_value FROM admin_settings 
+                "SELECT setting_key, setting_value FROM admin_settings 
                  WHERE setting_key IN ('withdrawal_fee_rate', 'min_withdrawal_amount', 'max_withdrawal_amount')"
             );
             $stmt->execute();

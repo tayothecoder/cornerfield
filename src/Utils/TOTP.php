@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 class TOTP 
 {
     public static function verify($secret, $code) 

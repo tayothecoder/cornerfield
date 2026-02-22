@@ -313,13 +313,13 @@ function testPaymentGateway(gateway) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            resultDiv.innerHTML = '<div class="text-success">✓ ' + data.message + '</div>';
+            resultDiv.innerHTML = '<div class="text-success"><svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> ' + data.message + '</div>';
         } else {
-            resultDiv.innerHTML = '<div class="text-danger">✗ ' + data.message + '</div>';
+            resultDiv.innerHTML = '<div class="text-danger"><svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> ' + data.message + '</div>';
         }
     })
     .catch(error => {
-        resultDiv.innerHTML = '<div class="text-danger">✗ Error: ' + error.message + '</div>';
+        resultDiv.innerHTML = '<div class="text-danger"><svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Error: ' + error.message + '</div>';
     });
 }
 
@@ -337,13 +337,13 @@ function testEmailSystem() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            resultDiv.innerHTML = '<div class="text-success">✓ ' + data.message + '</div>';
+            resultDiv.innerHTML = '<div class="text-success"><svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> ' + data.message + '</div>';
         } else {
-            resultDiv.innerHTML = '<div class="text-danger">✗ ' + data.message + '</div>';
+            resultDiv.innerHTML = '<div class="text-danger"><svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> ' + data.message + '</div>';
         }
     })
     .catch(error => {
-        resultDiv.innerHTML = '<div class="text-danger">✗ Error: ' + error.message + '</div>';
+        resultDiv.innerHTML = '<div class="text-danger"><svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Error: ' + error.message + '</div>';
     });
 }
 

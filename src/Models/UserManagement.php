@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace App\Models;
 
 use App\Config\Database;
@@ -143,7 +144,7 @@ class UserManagement {
             
             // Handle password update separately if provided
             if (isset($updateData['password']) && !empty($updateData['password'])) {
-                $updateData['password_hash'] = password_hash($updateData['password'], PASSWORD_DEFAULT);
+                $updateData['password_hash'] = password_hash($updateData['password'], PASSWORD_ARGON2ID);
                 unset($updateData['password']);
             }
             
@@ -326,6 +327,11 @@ class UserManagement {
             SessionManager::set('impersonated_username', $user['username']);
             SessionManager::set('impersonated_email', $user['email']);
             
+            // set the user auth session vars so AuthMiddleware::check() passes
+            SessionManager::set('authenticated', true);
+            SessionManager::set('user_id', $user['id']);
+            SessionManager::set('last_activity', time());
+            
             // Log the impersonation for security audit
             $this->logImpersonation($adminId, $userId, 'started');
             
@@ -355,17 +361,32 @@ class UserManagement {
             
             // Clear user session data
             SessionManager::remove('user_id');
+            SessionManager::remove('authenticated');
+            SessionManager::remove('last_activity');
             SessionManager::remove('user_logged_in');
             SessionManager::remove('username');
             SessionManager::remove('user_email');
+            SessionManager::remove('impersonated_user_id');
+            SessionManager::remove('impersonated_username');
+            SessionManager::remove('impersonated_email');
             SessionManager::remove('impersonating_user_id');
             SessionManager::remove('is_impersonating');
             
             // Restore admin session
             SessionManager::set('admin_id', $adminId);
             SessionManager::set('admin_logged_in', true);
+            SessionManager::set('admin_login_time', time());
+            
+            // restore admin username/email from the stored originals
+            $origUsername = SessionManager::get('original_admin_username');
+            $origEmail = SessionManager::get('original_admin_email');
+            if ($origUsername) SessionManager::set('admin_username', $origUsername);
+            if ($origEmail) SessionManager::set('admin_email', $origEmail);
+            
             SessionManager::remove('original_admin_id');
             SessionManager::remove('original_admin_logged_in');
+            SessionManager::remove('original_admin_username');
+            SessionManager::remove('original_admin_email');
             
             return true;
         } catch (Exception $e) {

@@ -8,6 +8,25 @@ use App\Controllers\TransferController;
 
 // Auth check (preview-safe)
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// handle transfer POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!AuthMiddleware::check()) {
+        header('Location: ' . \App\Config\Config::getBasePath() . '/login.php');
+        exit;
+    }
+    try {
+        $controller = new TransferController();
+        $controller->transfer();
+    } catch (\Throwable $e) {
+        error_log('Transfer POST failed: ' . $e->getMessage());
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Server error processing transfer']);
+    }
+    exit;
+}
+
 if (!AuthMiddleware::check()) {
     $user = ['id' => 1, 'firstname' => 'Demo', 'lastname' => 'User', 'email' => 'demo@cornerfield.com', 'balance' => 15420.50, 'username' => 'demouser'];
     $isPreview = true;
@@ -47,10 +66,10 @@ require_once __DIR__ . '/includes/header.php';
 <!-- Transfer Content -->
 <div class="space-y-6">
     <!-- Page Header -->
-    <div class="cf-gradient rounded-2xl p-6 text-white">
+    <div class="bg-[#1e0e62] rounded-3xl p-6 text-white">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-                <h2 class="text-2xl font-bold mb-2">Transfer Funds 💸</h2>
+                <h2 class="text-xl font-medium tracking-tight mb-2">Transfer Funds</h2>
                 <p class="text-blue-100">Send money to other Cornerfield users instantly.</p>
             </div>
             <div class="mt-4 md:mt-0">
@@ -64,17 +83,18 @@ require_once __DIR__ . '/includes/header.php';
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Transfer Form -->
         <div class="lg:col-span-2">
-            <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Send Money</h3>
                 
-                <form class="space-y-6">
+                <form method="POST" class="space-y-6">
+                    <?= \App\Utils\Security::getCsrfTokenInput() ?>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Recipient Username or Email
                         </label>
                         <div class="relative">
                             <input type="text" name="recipient" id="recipient" required
-                                   class="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   class="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#f5f3ff] dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                    placeholder="Enter username or email address">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
                                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +113,7 @@ require_once __DIR__ . '/includes/header.php';
                         </label>
                         <div class="relative">
                             <input type="number" name="amount" id="amount" step="0.01" min="<?= $data['transferLimits']['min'] ?>" max="<?= $data['transferLimits']['max'] ?>" required
-                                   class="w-full px-4 py-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   class="w-full px-4 py-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#f5f3ff] dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                    placeholder="0.00"
                                    onchange="calculateTotal()">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
@@ -127,12 +147,12 @@ require_once __DIR__ . '/includes/header.php';
                             Transfer Note (Optional)
                         </label>
                         <textarea name="note" rows="3" 
-                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#f5f3ff] dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                   placeholder="Add a note for the recipient (optional)"></textarea>
                     </div>
 
                     <!-- Transaction Summary -->
-                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
+                    <div class="bg-[#f5f3ff] dark:bg-gray-700 rounded-lg p-4 space-y-2">
                         <h4 class="font-medium text-gray-900 dark:text-white">Transaction Summary</h4>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600 dark:text-gray-400">Transfer Amount:</span>
@@ -158,7 +178,7 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
 
                     <button type="submit" 
-                            class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            class="w-full py-3 bg-[#1e0e62] text-white font-medium rounded-full border-2 border-[#1e0e62] hover:bg-transparent hover:text-[#1e0e62] duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled id="transferButton">
                         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
@@ -172,7 +192,7 @@ require_once __DIR__ . '/includes/header.php';
         <!-- Transfer Limits & Info -->
         <div class="space-y-6">
             <!-- Transfer Limits -->
-            <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Transfer Limits</h3>
                 
                 <div class="space-y-4">
@@ -216,7 +236,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <!-- Transfer Info -->
-            <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Transfer Information</h3>
                 
                 <div class="space-y-3 text-sm">
@@ -265,16 +285,16 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <!-- Recent Transfers -->
-    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+    <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Transfers</h3>
             <div class="flex space-x-2">
-                <select class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                <select class="px-3 py-2 bg-[#f5f3ff] dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
                     <option>All Transfers</option>
                     <option>Sent</option>
                     <option>Received</option>
                 </select>
-                <select class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                <select class="px-3 py-2 bg-[#f5f3ff] dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
                     <option>All Time</option>
                     <option>This Week</option>
                     <option>This Month</option>
@@ -285,7 +305,7 @@ require_once __DIR__ . '/includes/header.php';
         <?php if (!empty($data['recentTransfers'])): ?>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-700">
+                    <thead class="bg-[#f5f3ff] dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reference</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Recipient</th>
@@ -297,7 +317,7 @@ require_once __DIR__ . '/includes/header.php';
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <?php foreach ($data['recentTransfers'] as $transfer): ?>
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <tr class="hover:bg-[#f5f3ff] dark:hover:bg-gray-700">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">
                                     <?= htmlspecialchars($transfer['reference']) ?>
@@ -418,6 +438,40 @@ document.getElementById('amount').addEventListener('input', calculateTotal);
 
 // Initial calculation
 calculateTotal();
+
+// intercept form submission for ajax
+const transferForm = document.querySelector('form[method="POST"]');
+if (transferForm) {
+    transferForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('transferButton');
+        const originalHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Processing...';
+
+        try {
+            const formData = new FormData(transferForm);
+            const response = await fetch('transfer.php', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert(result.data?.message || 'Transfer completed successfully');
+                location.reload();
+            } else {
+                alert(result.error || 'Transfer failed');
+            }
+        } catch (err) {
+            console.error('Transfer error:', err);
+            alert('Network error. Please try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHtml;
+        }
+    });
+}
 </script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

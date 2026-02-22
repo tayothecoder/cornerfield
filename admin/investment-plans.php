@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Admin get_schema called with ID: " . $schemaId);
             
             $schema = $database->fetchOne("SELECT * FROM investment_schemas WHERE id = ?", [$schemaId]);
-            error_log("Schema data: " . print_r($schema, true));
+
             
             if ($schema) {
                 header('Content-Type: application/json');

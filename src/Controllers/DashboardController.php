@@ -37,6 +37,62 @@ class DashboardController
     }
 
     /**
+     * Get dashboard data in the format expected by the template
+     * @return array
+     */
+    public function getDashboardData(): array
+    {
+        $raw = $this->index();
+        if (!($raw['success'] ?? false)) {
+            throw new \RuntimeException($raw['error'] ?? 'Failed to load dashboard data');
+        }
+
+        $balance = $raw['balance'] ?? [];
+        $stats = $raw['dashboard_stats'] ?? [];
+        $investmentStats = $raw['investment_stats'] ?? [];
+        $quickStats = $raw['quick_stats'] ?? [];
+
+        // map recent transactions to the template format
+        $recentTransactions = [];
+        foreach (($raw['recent_transactions'] ?? []) as $tx) {
+            $recentTransactions[] = [
+                'id' => $tx['id'],
+                'type' => $tx['type'],
+                'amount' => $tx['amount'],
+                'status' => $tx['status'],
+                'date' => $tx['created_at'],
+                'description' => $tx['description'] ?? $tx['type_display'] ?? '',
+            ];
+        }
+
+        // map active investments to the template format
+        $activeInvestmentList = [];
+        foreach (($raw['active_investments'] ?? []) as $inv) {
+            $activeInvestmentList[] = [
+                'id' => $inv['id'],
+                'plan' => $inv['schema_name'],
+                'amount' => $inv['invest_amount'],
+                'daily_return' => $inv['expected_daily_profit'],
+                'total_return' => $inv['total_profit_amount'],
+                'progress' => $inv['progress_percentage'],
+                'expires' => date('Y-m-d', strtotime($inv['created_at'] . ' +' . $inv['duration_days'] . ' days')),
+            ];
+        }
+
+        return [
+            'totalBalance' => $balance['total_balance'] ?? 0,
+            'availableBalance' => $balance['available_balance'] ?? 0,
+            'totalEarned' => $balance['total_earned'] ?? 0,
+            'activeInvestments' => $investmentStats['active_investments'] ?? 0,
+            'balanceChange' => $stats['monthly_growth'] ?? 0,
+            'earningsChange' => $stats['weekly_growth'] ?? 0,
+            'recentTransactions' => $recentTransactions,
+            'activeInvestmentList' => $activeInvestmentList,
+            'chartData' => [150, 280, 220, 340, 290, 410, 380, 450, 420, 510, 480, 520],
+        ];
+    }
+
+    /**
      * Gather all dashboard data for the authenticated user
      * @return array
      */

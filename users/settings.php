@@ -8,6 +8,69 @@ use App\Controllers\SettingsController;
 
 // Auth check (preview-safe)
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// handle settings POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!AuthMiddleware::check()) {
+        header('Location: ' . \App\Config\Config::getBasePath() . '/login.php');
+        exit;
+    }
+    try {
+        $controller = new SettingsController();
+        $action = $_POST['action'] ?? '';
+        switch ($action) {
+            case 'change_password':
+                $controller->changePassword();
+                break;
+            case 'update_profile':
+                // handle profile update inline since controller may not have this method
+                $userId = (int)($_SESSION['user_id'] ?? 0);
+                if ($userId > 0) {
+                    $userModel = new \App\Models\UserModel();
+                    $fields = [];
+                    if (isset($_POST['phone'])) {
+                        $fields['phone'] = $_POST['phone'];
+                    }
+                    if (isset($_POST['first_name'])) {
+                        $fields['first_name'] = $_POST['first_name'];
+                    }
+                    if (isset($_POST['last_name'])) {
+                        $fields['last_name'] = $_POST['last_name'];
+                    }
+                    if (isset($_POST['country'])) {
+                        $fields['country'] = $_POST['country'];
+                    }
+                    if (!empty($fields)) {
+                        $userModel->updateProfile($userId, $fields);
+                        // clear cached user in session
+                        unset($_SESSION['user']);
+                    }
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'data' => ['message' => 'Profile updated successfully']]);
+                } else {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+                }
+                break;
+            case 'update_notifications':
+                $controller->updateNotificationPrefs();
+                break;
+            case 'add_wallet':
+                $controller->addWallet();
+                break;
+            default:
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => 'Unknown action']);
+        }
+    } catch (\Throwable $e) {
+        error_log('Settings POST failed: ' . $e->getMessage());
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Server error']);
+    }
+    exit;
+}
+
 if (!AuthMiddleware::check()) {
     $user = ['id' => 1, 'firstname' => 'Demo', 'lastname' => 'User', 'email' => 'demo@cornerfield.com', 'balance' => 15420.50, 'username' => 'demouser'];
     $isPreview = true;
@@ -16,8 +79,32 @@ if (!AuthMiddleware::check()) {
 // Initialize controller and get data
 // For demo/preview: wrap in try/catch so pages render even without DB
 try {
-
-    $data = $controller->getSettingsData();
+    $userId = (int)($_SESSION['user_id'] ?? 0);
+    $userModel = new \App\Models\UserModel();
+    $settingsUser = $userModel->findById($userId) ?? [];
+    $data = [
+        'user' => array_merge([
+            'email' => '',
+            'username' => '',
+            'two_factor_enabled' => false,
+            'email_verified' => false,
+            'email_notifications' => true,
+            'sms_notifications' => false,
+            'security_notifications' => true,
+        ], $settingsUser),
+        'security_log' => [],
+        'sessions' => [],
+        'wallets' => [],
+        'notification_prefs' => [
+            'email_notifications' => true,
+            'sms_notifications' => false,
+            'security_notifications' => true,
+            'login_alerts' => true,
+            'transaction_alerts' => true,
+            'marketing_emails' => false,
+        ],
+        'active_sessions' => [],
+    ];
 } catch (\Throwable $e) {
     // Fallback demo data for preview
     $data = [
@@ -52,7 +139,7 @@ require_once __DIR__ . '/includes/header.php';
 <!-- Settings Content -->
 <div class="space-y-6">
     <!-- Settings Navigation -->
-    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div class="border-b border-gray-200 dark:border-gray-700">
             <nav class="-mb-px flex" id="settingsTabs">
                 <button class="settings-tab active whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600 dark:text-indigo-400" 
@@ -86,7 +173,7 @@ require_once __DIR__ . '/includes/header.php';
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Change Password</h3>
                     
                     <form id="passwordForm" method="POST" action="/users/settings.php" data-validate class="max-w-md">
-                        <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::generateToken() ?>">
+                        <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::getToken() ?>">
                         <input type="hidden" name="action" value="change_password">
                         
                         <div class="space-y-4">
@@ -173,7 +260,7 @@ require_once __DIR__ . '/includes/header.php';
                     
                     <div class="space-y-3">
                         <?php foreach (array_slice($data['security_log'], 0, 5) as $log): ?>
-                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-center justify-between p-3 bg-[#f5f3ff] dark:bg-gray-700 rounded-lg">
                             <div class="flex items-center">
                                 <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mr-3">
                                     <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,16 +295,16 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="space-y-4">
                     <?php foreach ($data['wallets'] as $wallet): ?>
-                    <div class="cf-card bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600" data-hover>
+                    <div class="cf-card bg-[#f5f3ff] dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600" data-hover>
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
                                     <?php if ($wallet['type'] === 'bitcoin'): ?>
-                                    <span class="text-orange-600 dark:text-orange-400 text-xl font-bold">₿</span>
+                                    <span class="text-orange-600 dark:text-orange-400 text-xl font-medium tracking-tight">₿</span>
                                     <?php elseif ($wallet['type'] === 'ethereum'): ?>
-                                    <span class="text-blue-600 dark:text-blue-400 text-xl font-bold">Ξ</span>
+                                    <span class="text-blue-600 dark:text-blue-400 text-xl font-medium tracking-tight">Ξ</span>
                                     <?php else: ?>
-                                    <span class="text-gray-600 dark:text-gray-400 text-xl font-bold">$</span>
+                                    <span class="text-gray-600 dark:text-gray-400 text-xl font-medium tracking-tight">$</span>
                                     <?php endif; ?>
                                 </div>
                                 <div>
@@ -273,12 +360,12 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
 
                 <form id="notificationsForm" method="POST" action="/users/settings.php">
-                    <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::generateToken() ?>">
+                    <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::getToken() ?>">
                     <input type="hidden" name="action" value="update_notifications">
                     
                     <div class="space-y-6">
                         <!-- Email Notifications -->
-                        <div class="flex items-start justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-start justify-between p-4 bg-[#f5f3ff] dark:bg-gray-700 rounded-lg">
                             <div class="flex-1">
                                 <h4 class="font-medium text-gray-900 dark:text-white">Email Notifications</h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
@@ -292,7 +379,7 @@ require_once __DIR__ . '/includes/header.php';
                         </div>
 
                         <!-- SMS Notifications -->
-                        <div class="flex items-start justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-start justify-between p-4 bg-[#f5f3ff] dark:bg-gray-700 rounded-lg">
                             <div class="flex-1">
                                 <h4 class="font-medium text-gray-900 dark:text-white">SMS Notifications</h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
@@ -306,7 +393,7 @@ require_once __DIR__ . '/includes/header.php';
                         </div>
 
                         <!-- Security Notifications -->
-                        <div class="flex items-start justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-start justify-between p-4 bg-[#f5f3ff] dark:bg-gray-700 rounded-lg">
                             <div class="flex-1">
                                 <h4 class="font-medium text-gray-900 dark:text-white">Security Notifications</h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
@@ -341,7 +428,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="space-y-4">
                     <?php foreach ($data['active_sessions'] as $session): ?>
-                    <div class="cf-card bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                    <div class="cf-card bg-[#f5f3ff] dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -425,16 +512,16 @@ require_once __DIR__ . '/includes/header.php';
 <!-- Add Wallet Modal -->
 <div id="addWalletModal" class="fixed inset-0 z-50 overflow-y-auto hidden">
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="fixed inset-0 bg-[#f5f3ff]0 bg-opacity-75 transition-opacity"></div>
         
-        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hiddentransition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
             <form id="walletForm" method="POST" action="/users/settings.php" class="p-6" data-validate>
                 <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Add Withdrawal Wallet</h3>
+                    <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white mb-2">Add Withdrawal Wallet</h3>
                     <p class="text-gray-600 dark:text-gray-300">Add a new cryptocurrency address for withdrawals.</p>
                 </div>
 
-                <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::generateToken() ?>">
+                <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::getToken() ?>">
                 <input type="hidden" name="action" value="add_wallet">
 
                 <div class="space-y-4">
@@ -473,7 +560,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="flex space-x-3 mt-6">
                     <button type="button" onclick="closeAddWalletModal()" 
-                        class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-[#f5f3ff]0 text-gray-700 dark:text-white font-medium py-3 px-4 rounded-lg transition-colors">
                         Cancel
                     </button>
                     <button type="submit" 
@@ -536,34 +623,44 @@ document.getElementById('new_password').addEventListener('input', function() {
 });
 
 // Form submissions
+async function submitSettingsForm(form, successMsg) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setLoading(submitBtn, true);
+    try {
+        const formData = new FormData(form);
+        const response = await fetch('settings.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+            showNotification(result.data?.message || successMsg, 'success');
+        } else {
+            showNotification(result.error || 'Operation failed', 'error');
+        }
+    } catch (err) {
+        console.error('Settings error:', err);
+        showNotification('Network error. Please try again.', 'error');
+    } finally {
+        setLoading(submitBtn, false);
+    }
+}
+
 document.getElementById('passwordForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    const submitBtn = this.querySelector('button[type="submit"]');
-    
     const newPassword = document.getElementById('new_password').value;
     const confirmPassword = document.getElementById('confirm_password').value;
-    
     if (newPassword !== confirmPassword) {
         showNotification('Passwords do not match', 'error');
         return;
     }
-    
-    setLoading(submitBtn, true);
-    setTimeout(() => {
-        setLoading(submitBtn, false);
-        showNotification('Password updated successfully!', 'success');
-    }, 2000);
+    submitSettingsForm(this, 'Password updated successfully');
 });
 
 document.getElementById('notificationsForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    const submitBtn = this.querySelector('button[type="submit"]');
-    
-    setLoading(submitBtn, true);
-    setTimeout(() => {
-        setLoading(submitBtn, false);
-        showNotification('Notification preferences saved!', 'success');
-    }, 1000);
+    submitSettingsForm(this, 'Notification preferences saved');
 });
 
 // Wallet modal functions
@@ -637,21 +734,31 @@ function exportData() {
 }
 
 // Wallet form submission
-document.getElementById('walletForm').addEventListener('submit', function(e) {
+document.getElementById('walletForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const submitBtn = this.querySelector('button[type="submit"]');
-    
     setLoading(submitBtn, true);
-    setTimeout(() => {
+    try {
+        const formData = new FormData(this);
+        formData.set('action', 'add_wallet');
+        const response = await fetch('settings.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+            showNotification(result.data?.message || 'Wallet added successfully', 'success');
+            closeAddWalletModal();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(result.error || 'Failed to add wallet', 'error');
+        }
+    } catch (err) {
+        showNotification('Network error. Please try again.', 'error');
+    } finally {
         setLoading(submitBtn, false);
-        showNotification('Wallet added successfully!', 'success');
-        closeAddWalletModal();
-        
-        // Refresh page to show new wallet
-        setTimeout(() => {
-            location.reload();
-        }, 1500);
-    }, 2000);
+    }
 });
 
 // Close modal on outside click

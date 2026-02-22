@@ -166,7 +166,11 @@ class TransactionModel extends BaseModel
         }
 
         try {
-            $this->db->beginTransaction();
+            // only start a transaction if one isn't already active (avoids nesting issues)
+            $ownTransaction = !$this->db->inTransaction();
+            if ($ownTransaction) {
+                $this->db->beginTransaction();
+            }
 
             // Set default values
             $transactionData = [
@@ -237,7 +241,9 @@ class TransactionModel extends BaseModel
                 $stmt->execute([$referenceId, $transactionId]);
             }
 
-            $this->db->commit();
+            if ($ownTransaction) {
+                $this->db->commit();
+            }
 
             // Log transaction creation
             Security::logAudit(
@@ -260,7 +266,9 @@ class TransactionModel extends BaseModel
             ];
 
         } catch (PDOException $e) {
-            $this->db->rollBack();
+            if ($ownTransaction && $this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             error_log("Transaction creation failed: " . $e->getMessage());
             
             return [

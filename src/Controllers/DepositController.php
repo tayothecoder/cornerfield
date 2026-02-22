@@ -93,7 +93,7 @@ class DepositController
         }
 
         // Input validation
-        $methodId = Validator::sanitizeInt($_POST['method_id'] ?? 0);
+        $methodId = Validator::sanitizeInt($_POST['method_id'] ?? $_POST['deposit_method_id'] ?? 0);
         $amount = Validator::sanitizeFloat($_POST['amount'] ?? 0);
         $currency = Validator::sanitizeString($_POST['currency'] ?? 'USD', 10);
         $network = Validator::sanitizeString($_POST['network'] ?? '', 50);
@@ -252,7 +252,7 @@ class DepositController
             return;
         }
 
-        $methodId = Validator::sanitizeInt($_POST['method_id'] ?? 0);
+        $methodId = Validator::sanitizeInt($_POST['method_id'] ?? $_POST['deposit_method_id'] ?? 0);
         $amount = Validator::sanitizeFloat($_POST['amount'] ?? 0);
 
         if ($methodId <= 0 || !Validator::isValidAmount($amount)) {

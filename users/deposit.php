@@ -12,16 +12,67 @@ declare(strict_types=1);
  * @since 2026-02-10
  */
 
+use App\Models\DepositModel;
+use App\Models\DepositMethodModel;
+use App\Controllers\DepositController;
+use App\Middleware\AuthMiddleware;
+use App\Utils\Security;
+
+// handle ajax requests before including header (which outputs html)
+require_once __DIR__ . '/../autoload.php';
+\App\Config\Config::init();
+
+$isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+
+if ($isAjax) {
+    // start session for auth check
+    $basePath = \App\Config\Config::getBasePath();
+    if (session_status() === PHP_SESSION_NONE) {
+        $cookiePath = $basePath ?: '/';
+        session_set_cookie_params(['path' => $cookiePath, 'httponly' => true, 'samesite' => 'Lax']);
+        session_start();
+    }
+
+    if (!AuthMiddleware::check()) {
+        header('Content-Type: application/json');
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            $controller = new DepositController();
+            $controller->create();
+        } catch (\Throwable $e) {
+            error_log('Deposit POST failed: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString());
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Server error processing deposit']);
+        }
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'history') {
+        try {
+            $controller = new DepositController();
+            $controller->getHistory();
+        } catch (\Throwable $e) {
+            error_log('Deposit history failed: ' . $e->getMessage());
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Server error loading history']);
+        }
+        exit;
+    }
+}
+
 // Set page metadata
 $pageTitle = 'Deposit';
 $pageDescription = 'Add funds to your account securely via cryptocurrency or bank transfer';
 
 // Include header
 require_once __DIR__ . '/includes/header.php';
-
-use App\Models\DepositModel;
-use App\Models\DepositMethodModel;
-use App\Utils\Security;
 
 // Get deposit methods
 $depositModel = new DepositModel();
@@ -33,7 +84,7 @@ $depositMethods = $methodModel->findActive();
 <!-- Deposit Content -->
 <div class="space-y-6">
     <!-- Deposit Methods -->
-    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800">
+    <div class="bg-white rounded-lg dark:bg-gray-800">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium text-gray-900 dark:text-white">Choose Deposit Method</h2>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Select your preferred deposit method to add funds to your account</p>
@@ -42,7 +93,7 @@ $depositMethods = $methodModel->findActive();
         <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="depositMethods">
                 <?php foreach ($depositMethods as $method): ?>
-                <div class="method-card relative border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary-500 hover:shadow-md transition-all duration-200 dark:border-gray-600 dark:hover:border-primary-400" 
+                <div class="method-card relative border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary-500 transition-all duration-200 dark:border-gray-600 dark:hover:border-primary-400" 
                      data-method-id="<?= $method['id'] ?>" 
                      data-method-type="<?= Security::escape($method['type']) ?>"
                      data-method-name="<?= Security::escape($method['name']) ?>"
@@ -55,7 +106,7 @@ $depositMethods = $methodModel->findActive();
                     <div class="absolute top-2 right-2">
                         <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full 
                             <?= $method['type'] === 'auto' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' ?>">
-                            <?= $method['type'] === 'auto' ? '⚡ Auto' : '👤 Manual' ?>
+                            <?= $method['type'] === 'auto' ? 'Auto' : 'Manual' ?>
                         </span>
                     </div>
                     
@@ -94,7 +145,7 @@ $depositMethods = $methodModel->findActive();
     </div>
 
     <!-- Deposit Form -->
-    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800" id="depositFormContainer" style="display: none;">
+    <div class="bg-white rounded-lg dark:bg-gray-800" id="depositFormContainer" style="display: none;">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium text-gray-900 dark:text-white">Deposit Details</h2>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" id="selectedMethodName">Complete your deposit information</p>
@@ -124,7 +175,7 @@ $depositMethods = $methodModel->findActive();
             </div>
 
             <!-- Fee Calculation Display -->
-            <div class="bg-gray-50 rounded-lg p-4 dark:bg-gray-700" id="feeCalculation" style="display: none;">
+            <div class="bg-[#f5f3ff] rounded-lg p-4 dark:bg-gray-700" id="feeCalculation" style="display: none;">
                 <div class="flex justify-between items-center">
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Deposit Amount:</span>
                     <span id="displayAmount" class="text-sm text-gray-900 dark:text-white">$0.00</span>
@@ -148,7 +199,7 @@ $depositMethods = $methodModel->findActive();
                         <label for="currency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
                         <select id="currency" 
                                 name="currency" 
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                                class="mt-1 block w-full border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             <option value="BTC">Bitcoin (BTC)</option>
                             <option value="ETH">Ethereum (ETH)</option>
                             <option value="USDT" selected>Tether (USDT)</option>
@@ -159,7 +210,7 @@ $depositMethods = $methodModel->findActive();
                         <label for="network" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Network</label>
                         <select id="network" 
                                 name="network" 
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                                class="mt-1 block w-full border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             <option value="TRC20">TRC20</option>
                             <option value="ERC20">ERC20</option>
                             <option value="BEP20">BEP20</option>
@@ -176,7 +227,7 @@ $depositMethods = $methodModel->findActive();
                     <input type="text" 
                            id="transactionHash" 
                            name="transaction_hash" 
-                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                           class="mt-1 block w-full border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
                            placeholder="Enter blockchain transaction hash">
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Optional: Provide the transaction hash after sending payment</p>
                 </div>
@@ -242,12 +293,12 @@ $depositMethods = $methodModel->findActive();
             <div class="flex justify-end space-x-3">
                 <button type="button" 
                         id="cancelBtn" 
-                        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-[#f5f3ff] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
                     Cancel
                 </button>
                 <button type="submit" 
                         id="submitBtn" 
-                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="px-6 py-3 bg-[#1e0e62] text-white rounded-full border-2 border-[#1e0e62] hover:bg-transparent hover:text-[#1e0e62] duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                     <span id="submitText">Create Deposit</span>
                     <svg id="submitSpinner" class="hidden animate-spin -mr-1 ml-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -259,7 +310,7 @@ $depositMethods = $methodModel->findActive();
     </div>
 
     <!-- Deposit History -->
-    <div class="bg-white shadow-sm rounded-lg dark:bg-gray-800">
+    <div class="bg-white rounded-lg dark:bg-gray-800">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium text-gray-900 dark:text-white">Recent Deposits</h2>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track your deposit history and status</p>
@@ -268,7 +319,7 @@ $depositMethods = $methodModel->findActive();
         <div class="overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-700">
+                    <thead class="bg-[#f5f3ff] dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Method</th>
@@ -301,8 +352,8 @@ $depositMethods = $methodModel->findActive();
 <!-- Success Modal -->
 <div class="fixed inset-0 z-50 overflow-y-auto hidden" id="successModal">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeSuccessModal()"></div>
-        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
+        <div class="fixed inset-0 bg-[#f5f3ff]0 bg-opacity-75 transition-opacity" onclick="closeSuccessModal()"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hiddentransition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 dark:bg-gray-800">
             <div>
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-800">
                     <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,7 +368,7 @@ $depositMethods = $methodModel->findActive();
                 </div>
             </div>
             <div class="mt-5 sm:mt-6">
-                <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm" onclick="closeSuccessModal()">
+                <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-[#1e0e62] text-base font-medium text-white hover:bg-transparent hover:text-[#1e0e62] border-2 border-[#1e0e62] rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm" onclick="closeSuccessModal()">
                     Continue
                 </button>
             </div>

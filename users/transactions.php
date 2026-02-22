@@ -16,8 +16,30 @@ if (!AuthMiddleware::check()) {
 // Initialize controller and get data
 // For demo/preview: wrap in try/catch so pages render even without DB
 try {
-
-    $data = $controller->getTransactionHistory();
+    $transactionModel = new \App\Models\TransactionModel();
+    $userId = (int)($_SESSION['user_id'] ?? 0);
+    $rawTransactions = $transactionModel->findByUserId($userId);
+    $stats = $transactionModel->getStats($userId);
+    // map created_at to date for template compatibility
+    $transactions = array_map(function ($tx) {
+        $tx['date'] = $tx['created_at'] ?? '';
+        $tx['description'] = $tx['description'] ?? ucwords(str_replace('_', ' ', $tx['type'] ?? ''));
+        return $tx;
+    }, $rawTransactions);
+    // compute per-type totals from the by_type breakdown
+    $typeMap = [];
+    foreach (($stats['by_type'] ?? []) as $row) {
+        $typeMap[$row['type']] = (float)($row['total_amount'] ?? 0);
+    }
+    $data = [
+        'transactions' => $transactions,
+        'stats' => [
+            'total_deposits' => $typeMap['deposit'] ?? 0.0,
+            'total_withdrawals' => abs($typeMap['withdrawal'] ?? 0.0),
+            'total_earnings' => ($typeMap['profit'] ?? 0.0) + ($typeMap['bonus'] ?? 0.0) + ($typeMap['referral'] ?? 0.0),
+            'total_investments' => abs($typeMap['investment'] ?? 0.0),
+        ]
+    ];
 } catch (\Throwable $e) {
     // Fallback demo data for preview
     $data = [
@@ -52,7 +74,7 @@ require_once __DIR__ . '/includes/header.php';
     <!-- Header with Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <!-- Total Deposits -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700" data-hover>
+        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700" data-hover>
             <div class="flex items-center">
                 <div class="p-3 bg-green-100 dark:bg-green-900 rounded-lg mr-4">
                     <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,13 +83,13 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Deposits</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">$<?= number_format($data['stats']['total_deposits'], 2) ?></p>
+                    <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">$<?= number_format($data['stats']['total_deposits'], 2) ?></p>
                 </div>
             </div>
         </div>
 
         <!-- Total Withdrawals -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700" data-hover>
+        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700" data-hover>
             <div class="flex items-center">
                 <div class="p-3 bg-red-100 dark:bg-red-900 rounded-lg mr-4">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,13 +98,13 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Withdrawals</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">$<?= number_format($data['stats']['total_withdrawals'], 2) ?></p>
+                    <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">$<?= number_format($data['stats']['total_withdrawals'], 2) ?></p>
                 </div>
             </div>
         </div>
 
         <!-- Total Earnings -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700" data-hover>
+        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700" data-hover>
             <div class="flex items-center">
                 <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg mr-4">
                     <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,13 +113,13 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Earnings</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">$<?= number_format($data['stats']['total_earnings'], 2) ?></p>
+                    <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">$<?= number_format($data['stats']['total_earnings'], 2) ?></p>
                 </div>
             </div>
         </div>
 
         <!-- Total Investments -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700" data-hover>
+        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700" data-hover>
             <div class="flex items-center">
                 <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg mr-4">
                     <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,14 +128,14 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Invested</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">$<?= number_format($data['stats']['total_investments'], 2) ?></p>
+                    <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">$<?= number_format($data['stats']['total_investments'], 2) ?></p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Filters and Search -->
-    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 flex-1">
                 <!-- Search -->
@@ -164,14 +186,14 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <!-- Transactions Table -->
-    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All Transactions</h3>
         </div>
 
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" id="transactionsTable">
-                <thead class="bg-gray-50 dark:bg-gray-700">
+                <thead class="bg-[#f5f3ff] dark:bg-gray-700">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Transaction
@@ -195,7 +217,7 @@ require_once __DIR__ . '/includes/header.php';
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" id="transactionsBody">
                     <?php foreach ($data['transactions'] as $transaction): ?>
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors transaction-row" 
+                    <tr class="hover:bg-[#f5f3ff] dark:hover:bg-gray-700 transition-colors transaction-row" 
                         data-type="<?= $transaction['type'] ?>" 
                         data-status="<?= $transaction['status'] ?>"
                         data-date="<?= $transaction['date'] ?>"
@@ -249,8 +271,8 @@ require_once __DIR__ . '/includes/header.php';
                                     </svg>
                                 </div>
                                 <div>
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white"><?= htmlspecialchars($transaction['description']) ?></div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">ID: <?= htmlspecialchars($transaction['id']) ?></div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white"><?= htmlspecialchars((string)($transaction['description'] ?? '')) ?></div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">ID: <?= htmlspecialchars((string)$transaction['id']) ?></div>
                                 </div>
                             </div>
                         </td>
@@ -283,8 +305,8 @@ require_once __DIR__ . '/includes/header.php';
                         </td>
 
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-semibold <?= $transaction['amount'] > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' ?>">
-                                <?= $transaction['amount'] > 0 ? '+' : '' ?>$<?= number_format(abs($transaction['amount']), 2) ?>
+                            <div class="text-sm font-semibold <?= (float)$transaction['amount'] > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' ?>">
+                                <?= (float)$transaction['amount'] > 0 ? '+' : '' ?>$<?= number_format(abs((float)$transaction['amount']), 2) ?>
                             </div>
                         </td>
 
@@ -317,7 +339,7 @@ require_once __DIR__ . '/includes/header.php';
                         </td>
 
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="viewTransaction('<?= htmlspecialchars($transaction['id']) ?>')" 
+                            <button onclick="viewTransaction('<?= htmlspecialchars((string)$transaction['id']) ?>')" 
                                 class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
                                 View Details
                             </button>
@@ -340,10 +362,10 @@ require_once __DIR__ . '/includes/header.php';
         <!-- Pagination -->
         <div class="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
             <div class="flex-1 flex justify-between sm:hidden">
-                <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-[#f5f3ff] dark:hover:bg-gray-600">
                     Previous
                 </button>
-                <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-[#f5f3ff] dark:hover:bg-gray-600">
                     Next
                 </button>
             </div>
@@ -355,13 +377,13 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
                 <div>
                     <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-gray-600">
                             Previous
                         </button>
                         <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-sm font-medium text-indigo-600 dark:text-indigo-400">
                             1
                         </button>
-                        <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-gray-600">
                             Next
                         </button>
                     </nav>

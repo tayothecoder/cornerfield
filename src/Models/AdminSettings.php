@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace App\Models;
 
 use App\Config\Database;
@@ -158,7 +159,7 @@ class AdminSettings
             $this->db->beginTransaction();
 
             foreach ($settings as $key => $data) {
-                error_log("AdminSettings: Updating setting '$key' with value: " . print_r($data, true));
+
 
                 if (!$this->updateSetting($key, $data['value'], $data['type'])) {
                     error_log("AdminSettings: Failed to update setting '$key'");

@@ -437,7 +437,7 @@ include __DIR__ . '/includes/header.php';
                                                 <td>
                                                     <?php if ($email['error_message']): ?>
                                                         <span class="text-danger" title="<?= htmlspecialchars($email['error_message']) ?>">
-                                                            <?= htmlspecialchars(substr($email['error_message'], 0, 50)) ?>...
+                                                            <?= htmlspecialchars(substr($email['error_message'] ?? '', 0, 50)) ?>...
                                                         </span>
                                                     <?php endif; ?>
                                                 </td>
@@ -457,7 +457,7 @@ include __DIR__ . '/includes/header.php';
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">📝 Email Template Editor</h3>
+                        <h3 class="card-title">Email Template Editor</h3>
                         <p class="card-subtitle">Edit and customize email templates</p>
                     </div>
                     <div class="card-body">
@@ -544,9 +544,9 @@ function testEmailConfig() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ ' + data.message);
+            alert('Success: ' + data.message);
         } else {
-            alert('❌ ' + data.message);
+            alert('Error: ' + data.message);
         }
     })
     .catch(error => {
@@ -577,9 +577,9 @@ function saveEmailConfig() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ ' + data.message);
+            alert('Success: ' + data.message);
         } else {
-            alert('❌ ' + data.message);
+            alert('Error: ' + data.message);
         }
     })
     .catch(error => {
@@ -635,10 +635,10 @@ document.getElementById('testEmailForm').addEventListener('submit', function(e) 
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ ' + data.message);
+            alert('Success: ' + data.message);
             this.reset();
         } else {
-            alert('❌ ' + data.message);
+            alert('Error: ' + data.message);
         }
     })
     .catch(error => {
@@ -673,10 +673,10 @@ document.getElementById('templateEmailForm').addEventListener('submit', function
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ ' + data.message);
+            alert('Success: ' + data.message);
             this.reset();
         } else {
-            alert('❌ ' + data.message);
+            alert('Error: ' + data.message);
         }
     })
     .catch(error => {
@@ -774,9 +774,9 @@ function saveTemplate() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('✅ ' + data.message);
+                alert('Success: ' + data.message);
             } else {
-                alert('❌ ' + data.message);
+                alert('Error: ' + data.message);
             }
         })
         .catch(error => {

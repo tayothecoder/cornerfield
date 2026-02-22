@@ -8,21 +8,52 @@ use App\Controllers\SupportController;
 
 // Auth check (preview-safe)
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// handle support POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!AuthMiddleware::check()) {
+        header('Location: ' . \App\Config\Config::getBasePath() . '/login.php');
+        exit;
+    }
+    try {
+        $controller = new SupportController();
+        // map description field to message for ticket creation
+        if (!empty($_POST['description']) && empty($_POST['message'])) {
+            $_POST['message'] = $_POST['description'];
+        }
+        $ticketIdPost = $_GET['ticket_id'] ?? $_POST['ticket_id'] ?? null;
+        if ($ticketIdPost && !empty($_POST['message']) && empty($_POST['subject'])) {
+            // this is a reply
+            $_POST['ticket_id'] = (int)$ticketIdPost;
+            $controller->replyToTicket();
+        } else {
+            // this is a new ticket
+            $controller->createTicket();
+        }
+    } catch (\Throwable $e) {
+        error_log('Support POST failed: ' . $e->getMessage());
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Server error']);
+    }
+    exit;
+}
+
 if (!AuthMiddleware::check()) {
     $user = ['id' => 1, 'firstname' => 'Demo', 'lastname' => 'User', 'email' => 'demo@cornerfield.com', 'balance' => 15420.50, 'username' => 'demouser'];
     $isPreview = true;
 }
 
-// Get ticket ID from URL for detail view
+// get ticket id from url for detail view
 $ticketId = $_GET['ticket_id'] ?? null;
 $view = $ticketId ? 'detail' : 'list';
 
 try {
     $controller = new SupportController();
     if ($ticketId) {
-        $data = $controller->getTicketDetail($ticketId);
+        $data = $controller->viewTicket((int)$ticketId);
     } else {
-        $data = $controller->getSupportData();
+        $data = $controller->getTickets();
     }
 } catch (\Throwable $e) {
     // Fallback demo data for preview
@@ -74,10 +105,10 @@ require_once __DIR__ . '/includes/header.php';
 <div class="space-y-6">
     <?php if ($view === 'list'): ?>
         <!-- Page Header -->
-        <div class="cf-gradient rounded-2xl p-6 text-white">
+        <div class="bg-[#1e0e62] rounded-3xl p-6 text-white">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h2 class="text-2xl font-bold mb-2">Support Center 🎧</h2>
+                    <h2 class="text-xl font-medium tracking-tight mb-2">Support Center</h2>
                     <p class="text-blue-100">Get help with your account and investments.</p>
                 </div>
                 <div class="mt-4 md:mt-0">
@@ -94,7 +125,7 @@ require_once __DIR__ . '/includes/header.php';
 
         <!-- Support Stats -->
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4">
                 <div class="flex items-center">
                     <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
                         <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,12 +134,12 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                     <div class="ml-3">
                         <p class="text-sm text-gray-500 dark:text-gray-400">Total</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white"><?= $data['stats']['total'] ?></p>
+                        <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white"><?= ($data['stats']['total'] ?? 0) ?></p>
                     </div>
                 </div>
             </div>
 
-            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4">
                 <div class="flex items-center">
                     <div class="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
                         <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,12 +148,12 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                     <div class="ml-3">
                         <p class="text-sm text-gray-500 dark:text-gray-400">Open</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white"><?= $data['stats']['open'] ?></p>
+                        <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white"><?= ($data['stats']['open'] ?? 0) ?></p>
                     </div>
                 </div>
             </div>
 
-            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4">
                 <div class="flex items-center">
                     <div class="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
                         <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,12 +162,12 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                     <div class="ml-3">
                         <p class="text-sm text-gray-500 dark:text-gray-400">Pending</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white"><?= $data['stats']['pending'] ?></p>
+                        <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white"><?= ($data['stats']['pending'] ?? 0) ?></p>
                     </div>
                 </div>
             </div>
 
-            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4">
                 <div class="flex items-center">
                     <div class="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                         <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,12 +176,12 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                     <div class="ml-3">
                         <p class="text-sm text-gray-500 dark:text-gray-400">Resolved</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white"><?= $data['stats']['resolved'] ?></p>
+                        <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white"><?= ($data['stats']['resolved'] ?? 0) ?></p>
                     </div>
                 </div>
             </div>
 
-            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="cf-card bg-white dark:bg-gray-800 rounded-xl p-4">
                 <div class="flex items-center">
                     <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
                         <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,25 +190,25 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                     <div class="ml-3">
                         <p class="text-sm text-gray-500 dark:text-gray-400">Closed</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white"><?= $data['stats']['closed'] ?></p>
+                        <p class="text-xl font-medium tracking-tight text-gray-900 dark:text-white"><?= ($data['stats']['closed'] ?? 0) ?></p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Tickets List -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Your Support Tickets</h3>
                 <div class="flex space-x-2">
-                    <select class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                    <select class="px-3 py-2 bg-[#f5f3ff] dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
                         <option>All Status</option>
                         <option>Open</option>
                         <option>Pending</option>
                         <option>Resolved</option>
                         <option>Closed</option>
                     </select>
-                    <select class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                    <select class="px-3 py-2 bg-[#f5f3ff] dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
                         <option>All Categories</option>
                         <option>Account</option>
                         <option>Investment</option>
@@ -191,7 +222,7 @@ require_once __DIR__ . '/includes/header.php';
             <?php if (!empty($data['tickets'])): ?>
                 <div class="space-y-4">
                     <?php foreach ($data['tickets'] as $ticket): ?>
-                    <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer" 
+                    <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-[#f5f3ff] dark:hover:bg-gray-700 transition-colors cursor-pointer" 
                          onclick="window.location.href='/users/support.php?ticket_id=<?= $ticket['id'] ?>'">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-1">
@@ -224,7 +255,7 @@ require_once __DIR__ . '/includes/header.php';
                                 <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 space-x-4">
                                     <span>Category: <?= ucfirst($ticket['category']) ?></span>
                                     <span>Created: <?= date('M j, Y H:i', strtotime($ticket['created_at'])) ?></span>
-                                    <span>Last reply: <?= date('M j, Y H:i', strtotime($ticket['last_reply'])) ?></span>
+                                    <span>Last reply: <?= !empty($ticket['last_reply']) ? date('M j, Y H:i', strtotime($ticket['last_reply'])) : 'N/A' ?></span>
                                 </div>
                             </div>
                             <div class="flex items-center">
@@ -256,7 +287,7 @@ require_once __DIR__ . '/includes/header.php';
 
     <?php else: // Ticket Detail View ?>
         <!-- Ticket Detail Header -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-4">
                     <a href="/users/support.php" class="text-indigo-600 hover:text-indigo-700">
@@ -264,7 +295,7 @@ require_once __DIR__ . '/includes/header.php';
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
                     </a>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                    <h2 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">
                         #<?= $data['ticket']['id'] ?> - <?= htmlspecialchars($data['ticket']['subject']) ?>
                     </h2>
                 </div>
@@ -300,7 +331,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Ticket Messages -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Conversation</h3>
             <div class="space-y-6">
                 <?php foreach ($data['messages'] as $message): ?>
@@ -341,10 +372,11 @@ require_once __DIR__ . '/includes/header.php';
             <?php if ($data['ticket']['status'] !== 'closed'): ?>
             <div class="mt-8 border-t dark:border-gray-700 pt-6">
                 <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">Add Reply</h4>
-                <form class="space-y-4">
+                <form method="POST" class="space-y-4">
+                    <?= \App\Utils\Security::getCsrfTokenInput() ?>
                     <div>
                         <textarea name="message" rows="4" 
-                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#f5f3ff] dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
                                   placeholder="Type your reply here..."></textarea>
                     </div>
                     <div class="flex items-center justify-between">
@@ -378,7 +410,7 @@ require_once __DIR__ . '/includes/header.php';
 
 <!-- New Ticket Modal -->
 <div id="newTicketModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-lg bg-white dark:bg-gray-800">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 rounded-lg bg-white dark:bg-gray-800">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Create New Support Ticket</h3>
             <button onclick="document.getElementById('newTicketModal').classList.add('hidden')" 
@@ -389,18 +421,19 @@ require_once __DIR__ . '/includes/header.php';
             </button>
         </div>
 
-        <form class="space-y-4">
+        <form method="POST" class="space-y-4">
+                    <?= \App\Utils\Security::getCsrfTokenInput() ?>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject</label>
                 <input type="text" name="subject" required
-                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#f5f3ff] dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                        placeholder="Brief description of your issue">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                 <select name="category" required
-                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#f5f3ff] dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                     <option value="">Select a category</option>
                     <option value="account">Account Issues</option>
                     <option value="investment">Investment Questions</option>
@@ -416,7 +449,7 @@ require_once __DIR__ . '/includes/header.php';
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
                 <select name="priority" required
-                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#f5f3ff] dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                     <option value="low">Low - General question</option>
                     <option value="medium" selected>Medium - Issue affecting account</option>
                     <option value="high">High - Urgent issue</option>
@@ -426,7 +459,7 @@ require_once __DIR__ . '/includes/header.php';
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
                 <textarea name="description" rows="6" required
-                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#f5f3ff] dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                           placeholder="Please describe your issue in detail..."></textarea>
             </div>
 

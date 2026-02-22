@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Config\Database;
@@ -76,7 +77,7 @@ class AdminController {
         \App\Utils\SessionManager::set('admin_login_time', time());
 
         // Regenerate session ID for security
-        \App\Utils\SessionManager::regenerateId();
+        \App\Utils\SessionManager::regenerate();
 
         // Store in database
         $this->adminModel->createSession(

@@ -21,7 +21,7 @@ use App\Config\Database;
 
 abstract class BaseModel 
 {
-    protected PDO $db;
+    public PDO $db;
     protected string $table;
     protected array $fillable = [];
     protected array $guarded = ['id', 'created_at', 'updated_at'];

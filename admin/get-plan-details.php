@@ -46,7 +46,7 @@ try {
             SUM(invest_amount) as total_amount,
             SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_investments,
             SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_investments
-        FROM user_investments 
+        FROM investments 
         WHERE schema_id = ?
     ", [$schemaId]);
 
@@ -64,8 +64,8 @@ try {
                 <tr><td><strong>Min Amount:</strong></td><td><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schema['min_amount'], 2) ?></td></tr>
                 <tr><td><strong>Max Amount:</strong></td><td><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schema['max_amount'], 2) ?></td></tr>
                 <tr><td><strong>Status:</strong></td><td>
-                    <span class="badge bg-<?= $schema['is_active'] ? 'success' : 'danger' ?>">
-                        <?= $schema['is_active'] ? 'Active' : 'Inactive' ?>
+                    <span class="badge bg-<?= $schema['status'] ? 'success' : 'danger' ?>">
+                        <?= $schema['status'] ? 'Active' : 'Inactive' ?>
                     </span>
                 </td></tr>
                 <tr><td><strong>Created:</strong></td><td><?= date('M j, Y g:i A', strtotime($schema['created_at'])) ?></td></tr>
@@ -83,7 +83,7 @@ try {
         </div>
     </div>
     
-    <?php if ($schema['is_active']): ?>
+    <?php if ($schema['status']): ?>
     <div class="row mt-3">
         <div class="col-12">
             <div class="d-flex gap-2">

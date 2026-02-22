@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Payment Gateway Service
  * Handles Cryptomus and NOWPayments integration

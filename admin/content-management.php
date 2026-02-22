@@ -1,4 +1,8 @@
 <?php
+if (!defined('ADMIN_AREA')) {
+    define('ADMIN_AREA', true);
+}
+
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Config\Database;
@@ -207,7 +211,7 @@ include __DIR__ . '/includes/header.php';
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1e0e62;
     color: white;
 }
 

@@ -211,9 +211,9 @@ class SupportController
             $category = 'general';
         }
         
-        $validPriorities = ['low', 'normal', 'high', 'urgent'];
+        $validPriorities = ['low', 'medium', 'high', 'urgent'];
         if (!in_array($priority, $validPriorities)) {
-            $priority = 'normal';
+            $priority = 'medium';
         }
         
         if (!empty($errors)) {

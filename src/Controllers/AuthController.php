@@ -133,7 +133,7 @@ class AuthController
             $this->jsonResponse([
                 'success' => true,
                 'message' => 'Account created successfully! You can now log in.',
-                'redirect' => '/login.php?registered=1'
+                'redirect' => \App\Config\Config::getBasePath() . '/login.php?registered=1'
             ]);
         } else {
             $this->jsonResponse([
@@ -250,7 +250,7 @@ class AuthController
         $this->jsonResponse([
             'success' => true,
             'message' => 'Login successful',
-            'redirect' => '/users/dashboard.php'
+            'redirect' => \App\Config\Config::getBasePath() . '/users/dashboard.php'
         ]);
     }
 
@@ -273,7 +273,7 @@ class AuthController
         AuthMiddleware::logout();
 
         // Redirect to login page
-        header('Location: /login.php?logged_out=1');
+        header('Location: ' . \App\Config\Config::getBasePath() . '/login.php?logged_out=1');
         exit;
     }
 
@@ -445,7 +445,7 @@ class AuthController
                 $this->jsonResponse([
                     'success' => true,
                     'message' => 'Password has been reset successfully. You can now log in.',
-                    'redirect' => '/login.php?reset=1'
+                    'redirect' => \App\Config\Config::getBasePath() . '/login.php?reset=1'
                 ]);
             } else {
                 $this->jsonResponse([
@@ -647,7 +647,7 @@ class AuthController
         if ($result['success']) {
             // Force re-authentication for security
             AuthMiddleware::logout();
-            $result['redirect'] = '/login.php?password_changed=1';
+            $result['redirect'] = \App\Config\Config::getBasePath() . '/login.php?password_changed=1';
         }
 
         $this->jsonResponse($result);

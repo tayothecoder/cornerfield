@@ -140,9 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ], 'id = ?', [$withdrawalId]);
 
                 // Refund user balance
-                $database->update('users', [
-                    'balance' => $database->raw('balance + ' . $amount)
-                ], 'id = ?', [$userId]);
+                $database->query('UPDATE users SET balance = balance + ? WHERE id = ?', [$amount, $userId]);
 
                 $database->commit();
                 $success = "Withdrawal rejected and user balance refunded.";
@@ -371,7 +369,7 @@ include __DIR__ . '/includes/header.php';
                                         <div class="fw-bold"><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($withdrawal['requested_amount'], 2) ?></div>
                                     </td>
                                     <td>
-                                        <span class="badge bg-info"><?= htmlspecialchars($withdrawal['payment_method']) ?></span>
+                                        <span class="badge bg-info"><?= htmlspecialchars($withdrawal['payment_method'] ?? 'N/A') ?></span>
                                     </td>
                                     <td>
                                         <?php

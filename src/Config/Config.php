@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace App\Config;
 
 // config/Config.php - Working version for admin files
@@ -23,11 +24,11 @@ class Config {
     }
     
     public static function getDbUser() {
-        return EnvLoader::get('DB_USER', 'root');
+        return EnvLoader::get('DB_USER', 'cornerfield');
     }
     
     public static function getDbPassword() {
-        return EnvLoader::get('DB_PASSWORD', '');
+        return EnvLoader::get('DB_PASS', '');
     }
 
     public static function getDatabaseConfig() {

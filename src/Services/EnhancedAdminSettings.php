@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Enhanced Admin Settings Service
  * Manages all integrated settings for the admin panel
@@ -305,11 +306,11 @@ class EnhancedAdminSettings {
             $stats = [];
             
             // User statistics
-            $userStats = $this->database->fetchOne("SELECT COUNT(*) as total, COUNT(CASE WHEN status = 'active' THEN 1 END) as active FROM users");
+            $userStats = $this->database->fetchOne("SELECT COUNT(*) as total, COUNT(CASE WHEN is_active = 1 THEN 1 END) as active FROM users");
             $stats['users'] = $userStats;
             
             // Investment statistics
-            $investmentStats = $this->database->fetchOne("SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as total_amount FROM investments WHERE status = 'active'");
+            $investmentStats = $this->database->fetchOne("SELECT COUNT(*) as total, COALESCE(SUM(invest_amount), 0) as total_amount FROM investments WHERE status = 'active'");
             $stats['investments'] = $investmentStats;
             
             // Transaction statistics

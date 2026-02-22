@@ -357,7 +357,7 @@ class WithdrawalController
     private function hasRecentSimilarWithdrawal(int $userId, float $amount, string $walletAddress): bool
     {
         try {
-            $stmt = $this->withdrawalModel->getDb()->prepare(
+            $stmt = $this->withdrawalModel->db->prepare(
                 "SELECT COUNT(*) as count 
                  FROM withdrawals 
                  WHERE user_id = ? 

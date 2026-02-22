@@ -60,7 +60,7 @@ class TransferController
         // Validate inputs
         $recipient = Validator::sanitizeString($_POST['recipient'] ?? '', 255);
         $amount = Validator::sanitizeFloat($_POST['amount'] ?? 0);
-        $description = Validator::sanitizeString($_POST['description'] ?? '', 500);
+        $description = Validator::sanitizeString($_POST['description'] ?? $_POST['note'] ?? '', 500);
         
         $errors = [];
         
@@ -158,6 +158,59 @@ class TransferController
     }
     
     /**
+     * Get transfer page data including balance, limits, and recent transfers
+     * @return array
+     */
+    public function getTransferData(): array
+    {
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        if ($userId <= 0) {
+            throw new \RuntimeException('Not authenticated');
+        }
+
+        $user = $this->userModel->findById($userId);
+        $balance = $user ? (float)$user['balance'] : 0.0;
+
+        // get daily used
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(ABS(amount)), 0) as daily_total
+             FROM transactions
+             WHERE user_id = ? AND type = 'transfer' AND amount < 0
+             AND DATE(created_at) = CURDATE()"
+        );
+        $stmt->execute([$userId]);
+        $dailyUsed = (float)$stmt->fetchColumn();
+
+        // get monthly used
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(ABS(amount)), 0) as monthly_total
+             FROM transactions
+             WHERE user_id = ? AND type = 'transfer' AND amount < 0
+             AND YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())"
+        );
+        $stmt->execute([$userId]);
+        $monthlyUsed = (float)$stmt->fetchColumn();
+
+        // get recent transfers
+        $history = $this->getTransferHistory();
+        $recentTransfers = $history['transfers'] ?? [];
+
+        return [
+            'availableBalance' => $balance,
+            'transferFee' => $this->calculateTransferFee(100), // sample fee
+            'recentTransfers' => array_slice($recentTransfers, 0, 10),
+            'transferLimits' => [
+                'daily' => 5000.00,
+                'monthly' => 50000.00,
+                'min' => 1.00,
+                'max' => 50000.00,
+            ],
+            'dailyUsed' => $dailyUsed,
+            'monthlyUsed' => $monthlyUsed,
+        ];
+    }
+
+    /**
      * Get transfer history for current user
      * @return array
      */
@@ -243,12 +296,20 @@ class TransferController
      */
     private function findRecipient(string $identifier): ?array 
     {
-        // Try to find by username first
-        $user = $this->userModel->findByUsername($identifier);
-        
-        // If not found by username, try email
-        if (!$user && filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+        $user = null;
+
+        // try email first if it looks like one
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
             $user = $this->userModel->findByEmail($identifier);
+        }
+
+        // fall back to username lookup
+        if (!$user) {
+            try {
+                $user = $this->userModel->findByUsername($identifier);
+            } catch (\InvalidArgumentException $e) {
+                // identifier is not a valid username format, skip
+            }
         }
         
         return $user;

@@ -387,7 +387,7 @@ class InvestmentSchemaModel extends BaseModel
             return [
                 'can_invest' => true,
                 'remaining_daily_limit' => max(0, $maxDailyInvestment - $todayTotal),
-                'active_investments_in_schema' => (int)$result['active_count'] ?? 0,
+                'active_investments_in_schema' => (int)($result['active_count'] ?? 0),
                 'max_active_investments' => $maxActiveInvestments
             ];
             
@@ -479,16 +479,16 @@ class InvestmentSchemaModel extends BaseModel
         // Investment tier based on minimum amount
         if ($minAmount < 1000) {
             $schema['tier'] = 'Starter';
-            $schema['tier_icon'] = '🌱';
+            $schema['tier_icon'] = 'starter';
         } elseif ($minAmount < 5000) {
             $schema['tier'] = 'Standard';
-            $schema['tier_icon'] = '⭐';
+            $schema['tier_icon'] = 'growth';
         } elseif ($minAmount < 20000) {
             $schema['tier'] = 'Premium';
-            $schema['tier_icon'] = '💎';
+            $schema['tier_icon'] = 'premium';
         } else {
             $schema['tier'] = 'Elite';
-            $schema['tier_icon'] = '👑';
+            $schema['tier_icon'] = 'elite';
         }
         
         // Format for display

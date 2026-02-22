@@ -42,10 +42,10 @@ require_once __DIR__ . '/includes/header.php';
 <!-- Referrals Content -->
 <div class="space-y-6">
     <!-- Page Header -->
-    <div class="cf-gradient rounded-2xl p-6 text-white">
+    <div class="bg-[#1e0e62] rounded-3xl p-6 text-white">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-                <h2 class="text-2xl font-bold mb-2">Referral Program 🚀</h2>
+                <h2 class="text-xl font-medium tracking-tight mb-2">Referral Program</h2>
                 <p class="text-blue-100">Earn commissions by inviting friends to invest.</p>
             </div>
             <div class="mt-4 md:mt-0">
@@ -57,12 +57,12 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <!-- Referral Link Section -->
-    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+    <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Referral Link</h3>
         <div class="flex flex-col sm:flex-row gap-3">
             <div class="flex-1">
                 <input type="text" id="referralLink" value="<?= htmlspecialchars($data['referralLink']) ?>" 
-                       class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                       class="w-full px-4 py-3 bg-[#f5f3ff] dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
                        readonly>
             </div>
             <button onclick="copyReferralLink()" 
@@ -96,7 +96,7 @@ require_once __DIR__ . '/includes/header.php';
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Referrals -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700" data-hover>
+        <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6" data-hover>
             <div class="flex items-center justify-between mb-4">
                 <div class="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                     <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Active Referrals -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700" data-hover>
+        <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6" data-hover>
             <div class="flex items-center justify-between mb-4">
                 <div class="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                     <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +124,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Total Earnings -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700" data-hover>
+        <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6" data-hover>
             <div class="flex items-center justify-between mb-4">
                 <div class="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
                     <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +138,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Monthly Earnings -->
-        <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700" data-hover>
+        <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6" data-hover>
             <div class="flex items-center justify-between mb-4">
                 <div class="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
                     <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,16 +159,16 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <!-- Referral Commission Table -->
-    <div class="cf-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+    <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Commission History</h3>
             <div class="flex space-x-2">
-                <select class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                <select class="px-3 py-2 bg-[#f5f3ff] dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
                     <option>All Levels</option>
                     <option>Level 1</option>
                     <option>Level 2</option>
                 </select>
-                <select class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                <select class="px-3 py-2 bg-[#f5f3ff] dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
                     <option>All Time</option>
                     <option>This Month</option>
                     <option>Last Month</option>
@@ -179,7 +179,7 @@ require_once __DIR__ . '/includes/header.php';
         <?php if (!empty($data['referralCommissions'])): ?>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-700">
+                    <thead class="bg-[#f5f3ff] dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Level</th>
@@ -191,7 +191,7 @@ require_once __DIR__ . '/includes/header.php';
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <?php foreach ($data['referralCommissions'] as $commission): ?>
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <tr class="hover:bg-[#f5f3ff] dark:hover:bg-gray-700">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
