@@ -6,7 +6,7 @@ use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use App\Controllers\InvestmentController;
 
-// Auth check (preview-safe)
+// auth check (preview-safe)
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 // handle ajax investment creation
@@ -47,12 +47,11 @@ if (!AuthMiddleware::check()) {
 }
 
 // initialize controller and get data
-// For demo/preview: wrap in try/catch so pages render even without DB
 try {
     $controller = new InvestmentController();
     $data = $controller->getInvestmentPlans();
 } catch (\Throwable $e) {
-    // Fallback demo data for preview
+    // fallback demo data for preview
     $data = [
         'plans' => [
             [
@@ -65,8 +64,7 @@ try {
                 'duration_days' => 30,
                 'total_return' => 75,
                 'features' => ['24/7 Support', 'Daily Payouts', 'Mobile App Access'],
-                'popular' => false,
-                'color' => 'blue'
+                'popular' => false
             ],
             [
                 'id' => 2,
@@ -78,8 +76,7 @@ try {
                 'duration_days' => 25,
                 'total_return' => 87.5,
                 'features' => ['Priority Support', 'Daily Payouts', 'VIP Features', 'Dedicated Manager'],
-                'popular' => true,
-                'color' => 'indigo'
+                'popular' => true
             ],
             [
                 'id' => 3,
@@ -91,8 +88,7 @@ try {
                 'duration_days' => 20,
                 'total_return' => 80,
                 'features' => ['Personal Assistant', 'Instant Payouts', 'All VIP Features', 'Custom Strategies'],
-                'popular' => false,
-                'color' => 'purple'
+                'popular' => false
             ]
         ],
         'userBalance' => 12890.25,
@@ -105,150 +101,124 @@ $currentPage = 'invest';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Investment Plans Content -->
 <div class="space-y-6">
-    <!-- Header Section -->
+    <!-- header -->
     <div class="text-center">
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Choose Your Investment Plan</h2>
-        <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Select from our carefully crafted investment plans designed to maximize your returns while minimizing risks.
-        </p>
+        <h2 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white mb-2">Investment Plans</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">choose from our carefully crafted investment plans designed to maximize your returns</p>
     </div>
 
-    <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="text-center p-6 bg-white dark:bg-[#1a1145] rounded-3xl">
-            <div class="inline-flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full mb-4">
-                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+    <!-- stats overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-xl mb-3">
+                <svg class="w-6 h-6 text-[#1e0e62] dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">$<?= number_format($data['userBalance'], 2) ?></h3>
-            <p class="text-gray-600 dark:text-gray-300">Available Balance</p>
+            <p class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white mb-1">$<?= number_format($data['userBalance'], 2) ?></p>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Available Balance</p>
         </div>
         
-        <div class="text-center p-6 bg-white dark:bg-[#1a1145] rounded-3xl">
-            <div class="inline-flex items-center justify-center w-12 h-12 bg-[#f5f3ff] rounded-full mb-4">
-                <svg class="w-6 h-6 text-[#1e0e62]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-xl mb-3">
+                <svg class="w-6 h-6 text-[#1e0e62] dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white"><?= $data['activeInvestments'] ?></h3>
-            <p class="text-gray-600 dark:text-gray-300">Active Investments</p>
+            <p class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white mb-1"><?= $data['activeInvestments'] ?></p>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Investments</p>
         </div>
         
-        <div class="text-center p-6 bg-white dark:bg-[#1a1145] rounded-3xl">
-            <div class="inline-flex items-center justify-center w-12 h-12 bg-[#f5f3ff] rounded-full mb-4">
-                <svg class="w-6 h-6 text-[#1e0e62]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-xl mb-3">
+                <svg class="w-6 h-6 text-[#1e0e62] dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white">Up to 4.0%</h3>
-            <p class="text-gray-600 dark:text-gray-300">Daily Returns</p>
+            <p class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white mb-1">Up to 4.0%</p>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Daily Returns</p>
         </div>
     </div>
 
-    <!-- Investment Plans Grid -->
+    <!-- investment plans -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <?php foreach ($data['plans'] as $plan): ?>
-        <div class="relative cf-card bg-white dark:bg-[#1a1145] rounded-3xl overflow-hiddentransition-all duration-300" data-hover>
+        <div class="relative bg-white dark:bg-[#1a1145] rounded-3xl p-6 <?= $plan['popular'] ? 'ring-2 ring-[#1e0e62] dark:ring-indigo-400' : '' ?>">
             <?php if ($plan['popular']): ?>
-            <div class="absolute top-0 right-0 bg-[#1e0e62] text-white px-3 py-1 text-sm font-medium rounded-bl-xl">
-                Most Popular
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span class="inline-block px-3 py-1 bg-[#1e0e62] text-white text-xs font-medium rounded-full">
+                    Most Popular
+                </span>
             </div>
             <?php endif; ?>
             
-            <div class="p-6">
-                <!-- Plan Header -->
-                <div class="text-center mb-6">
-                    <div class="inline-flex items-center justify-center w-16 h-16 <?= 
-                        $plan['color'] === 'blue' ? 'bg-[#f5f3ff]' : 
-                        ($plan['color'] === 'indigo' ? 'bg-[#f5f3ff]' : 
-                        'bg-[#f5f3ff]') 
-                    ?> rounded-3xl mb-4">
-                        <svg class="w-8 h-8 <?= 
-                            $plan['color'] === 'blue' ? 'text-[#1e0e62]' : 
-                            ($plan['color'] === 'indigo' ? 'text-[#1e0e62]' : 
-                            'text-[#1e0e62]') 
-                        ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white mb-2"><?= htmlspecialchars($plan['name']) ?></h3>
-                    <p class="text-gray-600 dark:text-gray-300"><?= htmlspecialchars($plan['description']) ?></p>
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-2xl mb-4">
+                    <svg class="w-8 h-8 text-[#1e0e62] dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
                 </div>
-
-                <!-- Plan Details -->
-                <div class="space-y-4 mb-6">
-                    <div class="text-center">
-                        <div class="text-4xl font-bold <?= 
-                            $plan['color'] === 'blue' ? 'text-[#1e0e62]' : 
-                            ($plan['color'] === 'indigo' ? 'text-[#1e0e62]' : 
-                            'text-[#1e0e62]') 
-                        ?> mb-2">
-                            <?= number_format($plan['daily_return'], 1) ?>%
-                        </div>
-                        <p class="text-gray-600 dark:text-gray-300">Daily Return</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 text-center">
-                        <div>
-                            <div class="text-lg font-medium text-gray-900 dark:text-white"><?= $plan['duration_days'] ?> days</div>
-                            <p class="text-sm text-gray-600 dark:text-gray-300">Duration</p>
-                        </div>
-                        <div>
-                            <div class="text-lg font-medium text-gray-900 dark:text-white"><?= number_format($plan['total_return'], 1) ?>%</div>
-                            <p class="text-sm text-gray-600 dark:text-gray-300">Total Return</p>
-                        </div>
-                    </div>
-
-                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Investment Range:</p>
-                        <p class="font-medium text-gray-900 dark:text-white">
-                            $<?= number_format($plan['min_amount']) ?> - $<?= number_format($plan['max_amount']) ?>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Features -->
-                <div class="mb-6">
-                    <h4 class="font-medium text-gray-900 dark:text-white mb-3">Plan Features:</h4>
-                    <ul class="space-y-2">
-                        <?php foreach ($plan['features'] as $feature): ?>
-                        <li class="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                            <svg class="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            <?= htmlspecialchars($feature) ?>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-
-                <!-- Action Button -->
-                <button onclick="openInvestModal(<?= $plan['id'] ?>, '<?= htmlspecialchars($plan['name']) ?>', <?= $plan['min_amount'] ?>, <?= $plan['max_amount'] ?>, <?= $plan['daily_return'] ?>)" 
-                    class="w-full <?= 
-                        $plan['color'] === 'blue' ? 'bg-[#1e0e62] hover:bg-[#2d1b8a] rounded-full' : 
-                        ($plan['color'] === 'indigo' ? 'bg-[#1e0e62] hover:bg-[#2d1b8a] rounded-full' : 
-                        'bg-[#1e0e62] hover:bg-[#2d1b8a] rounded-full') 
-                    ?> text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 <?= $plan['popular'] ? '' : '' ?>">
-                    Start Investment
-                </button>
+                <h3 class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-2"><?= htmlspecialchars($plan['name']) ?></h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400"><?= htmlspecialchars($plan['description']) ?></p>
             </div>
+
+            <div class="text-center mb-6">
+                <div class="text-4xl font-light tracking-tighter text-[#1e0e62] dark:text-indigo-400 mb-1">
+                    <?= number_format($plan['daily_return'], 1) ?>%
+                </div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Daily Return</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="text-center">
+                    <p class="text-lg font-medium text-gray-900 dark:text-white"><?= $plan['duration_days'] ?></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Days</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-lg font-medium text-gray-900 dark:text-white"><?= number_format($plan['total_return'], 1) ?>%</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Return</p>
+                </div>
+            </div>
+
+            <div class="space-y-2 mb-6">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Investment Range:</p>
+                <p class="text-lg font-light text-gray-900 dark:text-white">
+                    $<?= number_format($plan['min_amount']) ?> - $<?= number_format($plan['max_amount']) ?>
+                </p>
+            </div>
+
+            <div class="space-y-3 mb-6">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Features:</p>
+                <ul class="space-y-2">
+                    <?php foreach ($plan['features'] as $feature): ?>
+                    <li class="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <svg class="w-4 h-4 text-emerald-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <?= htmlspecialchars($feature) ?>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <button onclick="openInvestModal(<?= $plan['id'] ?>, '<?= htmlspecialchars($plan['name']) ?>', <?= $plan['min_amount'] ?>, <?= $plan['max_amount'] ?>, <?= $plan['daily_return'] ?>)" 
+                    class="w-full bg-[#1e0e62] text-white rounded-full px-6 py-2.5 text-sm font-medium hover:bg-[#2d1b8a] transition-colors">
+                Start Investment
+            </button>
         </div>
         <?php endforeach; ?>
     </div>
 
-    <!-- ROI Calculator -->
-    <div class="cf-card bg-white dark:bg-[#1a1145] rounded-3xl p-6">
-        <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white mb-6 text-center">ROI Calculator</h3>
+    <!-- roi calculator -->
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6">
+        <h3 class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-6 text-center">ROI Calculator</h3>
         
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Calculator Inputs -->
-            <div class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-4">
                 <div>
                     <label for="calc-plan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Plan</label>
-                    <select id="calc-plan" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white">
+                    <select id="calc-plan" class="block w-full py-2.5 px-3 text-sm border border-gray-200 dark:border-[#2d1b6e] rounded-xl bg-white dark:bg-[#0f0a2e] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#1e0e62] focus:border-[#1e0e62]">
                         <?php foreach ($data['plans'] as $plan): ?>
                         <option value="<?= $plan['id'] ?>" data-return="<?= $plan['daily_return'] ?>" data-duration="<?= $plan['duration_days'] ?>">
                             <?= htmlspecialchars($plan['name']) ?> (<?= $plan['daily_return'] ?>% daily)
@@ -258,53 +228,57 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
 
                 <div>
-                    <label for="calc-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Investment Amount ($)</label>
-                    <input type="number" id="calc-amount" min="100" max="50000" value="1000" 
-                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white" 
-                        placeholder="Enter amount">
+                    <label for="calc-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Investment Amount (USD)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 text-sm dark:text-gray-400">$</span>
+                        </div>
+                        <input type="number" id="calc-amount" min="100" max="50000" value="1000" 
+                               class="block w-full pl-7 pr-3 py-2.5 text-sm border border-gray-200 dark:border-[#2d1b6e] rounded-xl bg-white dark:bg-[#0f0a2e] text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#1e0e62] focus:border-[#1e0e62]" 
+                               placeholder="0.00">
+                    </div>
                 </div>
 
-                <button onclick="calculateROI()" class="w-full bg-[#1e0e62] hover:bg-[#2d1b8a] text-white font-medium py-3 px-4 rounded-full transition-colors">
+                <button onclick="calculateROI()" class="w-full bg-[#1e0e62] text-white rounded-full px-6 py-2.5 text-sm font-medium hover:bg-[#2d1b8a] transition-colors">
                     Calculate Returns
                 </button>
             </div>
 
-            <!-- Calculator Results -->
-            <div class="bg-[#f5f3ff] dark:bg-gray-700 rounded-lg p-6">
-                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Projected Returns</h4>
+            <div class="bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-2xl p-4">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Projected Returns</h4>
                 
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <div class="flex justify-between items-center">
-                        <span class="text-gray-600 dark:text-gray-300">Investment Amount:</span>
-                        <span id="calc-investment" class="font-medium text-gray-900 dark:text-white">$1,000.00</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Investment Amount:</span>
+                        <span id="calc-investment" class="text-sm font-medium text-gray-900 dark:text-white">$1,000.00</span>
                     </div>
                     
                     <div class="flex justify-between items-center">
-                        <span class="text-gray-600 dark:text-gray-300">Daily Return:</span>
-                        <span id="calc-daily" class="font-medium text-green-600">$35.00</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Daily Return:</span>
+                        <span id="calc-daily" class="text-sm font-medium text-emerald-600 dark:text-emerald-400">$35.00</span>
                     </div>
                     
                     <div class="flex justify-between items-center">
-                        <span class="text-gray-600 dark:text-gray-300">Duration:</span>
-                        <span id="calc-duration" class="font-medium text-gray-900 dark:text-white">25 days</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Duration:</span>
+                        <span id="calc-duration" class="text-sm font-medium text-gray-900 dark:text-white">25 days</span>
                     </div>
                     
-                    <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-300">Total Return:</span>
-                            <span id="calc-total" class="font-medium text-green-600">$875.00</span>
+                    <div class="border-t border-gray-200 dark:border-[#2d1b6e] pt-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Total Return:</span>
+                            <span id="calc-total" class="text-sm font-medium text-emerald-600 dark:text-emerald-400">$875.00</span>
                         </div>
                         
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="text-gray-600 dark:text-gray-300">Final Amount:</span>
-                            <span id="calc-final" class="text-xl font-medium tracking-tight text-green-600">$1,875.00</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">Final Amount:</span>
+                            <span id="calc-final" class="text-lg font-medium text-emerald-600 dark:text-emerald-400">$1,875.00</span>
                         </div>
                     </div>
                     
-                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mt-4">
-                        <p class="text-sm text-[#1e0e62]">
+                    <div class="bg-blue-100 dark:bg-blue-900/30 rounded-xl p-3">
+                        <p class="text-xs text-blue-800 dark:text-blue-200">
                            Your profit of <span id="calc-profit" class="font-medium">$875.00</span> represents a 
-                            <span id="calc-percentage" class="font-medium">87.5%</span> return on investment!
+                            <span id="calc-percentage" class="font-medium">87.5%</span> return on investment
                         </p>
                     </div>
                 </div>
@@ -313,57 +287,73 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- Investment Modal -->
+<!-- investment modal -->
 <div id="investModal" class="fixed inset-0 z-50 overflow-y-auto hidden">
-    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-[#f5f3ff]0 bg-opacity-75 transition-opacity"></div>
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
         
-        <div class="inline-block align-bottom bg-white dark:bg-[#1a1145] rounded-3xl text-left overflow-hiddentransition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <form id="investForm" method="POST" action="/users/invest.php" class="p-6" data-validate>
-                <div class="mb-6">
-                    <h3 class="text-xl font-medium tracking-tight text-gray-900 dark:text-white mb-2" id="modalPlanName">Premium Plan</h3>
-                    <p class="text-gray-600 dark:text-gray-300">Enter your investment amount to get started.</p>
+        <div class="inline-block align-bottom bg-white dark:bg-[#1a1145] rounded-3xl px-6 pt-6 pb-6 text-left overflow-hidden shadow-xl transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="investForm" method="POST" action="/users/invest.php" class="space-y-6" data-validate>
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[#f5f3ff] dark:bg-[#0f0a2e]">
+                        <svg class="h-6 w-6 text-[#1e0e62] dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mt-3" id="modalPlanName">Premium Plan</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Enter your investment amount to get started</p>
                 </div>
 
                 <input type="hidden" id="modalPlanId" name="plan_id" value="">
                 <input type="hidden" name="csrf_token" value="<?= CsrfMiddleware::getToken() ?>">
 
-                <div class="mb-6">
+                <div>
                     <label for="investment-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Investment Amount ($)
+                        Investment Amount (USD)
                     </label>
-                    <input type="number" id="investment-amount" name="amount" required 
-                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                        placeholder="Enter amount">
-                    <div class="mt-2 flex justify-between text-sm text-gray-500">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 text-sm dark:text-gray-400">$</span>
+                        </div>
+                        <input type="number" id="investment-amount" name="amount" required 
+                               class="block w-full pl-7 pr-3 py-2.5 text-sm border border-gray-200 dark:border-[#2d1b6e] rounded-xl bg-white dark:bg-[#0f0a2e] text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#1e0e62] focus:border-[#1e0e62]"
+                               placeholder="0.00">
+                    </div>
+                    <div class="mt-2 flex justify-between text-sm text-gray-500 dark:text-gray-400">
                         <span>Min: $<span id="modalMinAmount">1000</span></span>
                         <span>Max: $<span id="modalMaxAmount">10000</span></span>
-                        <span>Available: $<?= number_format($data['userBalance'], 2) ?></span>
+                    </div>
+                    <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Available: $<?= number_format($data['userBalance'], 2) ?>
                     </div>
                 </div>
 
-                <div class="mb-6 p-4 bg-[#f5f3ff] dark:bg-gray-700 rounded-lg">
-                    <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-2xl p-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <span class="text-gray-600 dark:text-gray-300">Daily Return Rate:</span>
-                            <div class="font-medium text-gray-900 dark:text-white" id="modalDailyRate">3.5%</div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Daily Return Rate:</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white" id="modalDailyRate">3.5%</p>
                         </div>
                         <div>
-                            <span class="text-gray-600 dark:text-gray-300">Expected Daily Profit:</span>
-                            <div class="font-medium text-green-600" id="modalDailyProfit">$0.00</div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Expected Daily Profit:</p>
+                            <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400" id="modalDailyProfit">$0.00</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex space-x-3">
                     <button type="button" onclick="closeInvestModal()" 
-                        class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-[#f5f3ff]0 text-gray-700 dark:text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                            class="flex-1 px-4 py-2 border border-gray-200 dark:border-[#2d1b6e] rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#0f0a2e] hover:border-[#1e0e62] hover:text-[#1e0e62] dark:hover:text-white transition-colors">
                         Cancel
                     </button>
                     <button type="submit" 
-                        class="flex-1 bg-[#1e0e62] hover:bg-[#2d1b8a] text-white font-medium py-3 px-4 rounded-full transition-colors"
-                        data-original-text="Confirm Investment">
-                        Confirm Investment
+                            class="flex-1 bg-[#1e0e62] text-white rounded-full px-6 py-2 text-sm font-medium hover:bg-[#2d1b8a] transition-colors"
+                            data-original-text="Confirm Investment">
+                        <span id="submitText">Confirm Investment</span>
+                        <svg id="submitSpinner" class="hidden animate-spin -mr-1 ml-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </button>
                 </div>
             </form>
@@ -371,8 +361,35 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 </div>
 
+<!-- success modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto hidden" id="successModal">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="closeSuccessModal()"></div>
+        <div class="inline-block align-bottom bg-white dark:bg-[#1a1145] rounded-3xl px-6 pt-6 pb-6 text-left overflow-hidden shadow-xl transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                    <svg class="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-4 text-center">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Investment Created Successfully</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">your investment has been created and is now active</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6">
+                <button type="button" class="w-full inline-flex justify-center rounded-full px-4 py-2 bg-[#1e0e62] text-base font-medium text-white hover:bg-[#2d1b8a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e0e62] transition-colors" onclick="closeSuccessModal()">
+                    Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-// Investment modal functionality
+// investment modal functionality
 function openInvestModal(planId, planName, minAmount, maxAmount, dailyRate) {
     document.getElementById('modalPlanId').value = planId;
     document.getElementById('modalPlanName').textContent = planName;
@@ -401,7 +418,7 @@ function updateModalProfit() {
     document.getElementById('modalDailyProfit').textContent = '$' + dailyProfit.toFixed(2);
 }
 
-// ROI Calculator
+// roi calculator
 function calculateROI() {
     const planSelect = document.getElementById('calc-plan');
     const selectedOption = planSelect.options[planSelect.selectedIndex];
@@ -410,7 +427,6 @@ function calculateROI() {
     const amount = parseFloat(document.getElementById('calc-amount').value) || 0;
     
     if (amount <= 0) {
-        showNotification('Please enter a valid investment amount', 'error');
         return;
     }
     
@@ -428,12 +444,36 @@ function calculateROI() {
     document.getElementById('calc-percentage').textContent = profitPercentage.toFixed(1) + '%';
 }
 
-// Event listeners
+function closeSuccessModal() {
+    document.getElementById('successModal').classList.add('hidden');
+}
+
+function setLoading(btn, isLoading) {
+    const text = btn.querySelector('#submitText');
+    const spinner = btn.querySelector('#submitSpinner');
+    
+    if (isLoading) {
+        text.textContent = 'Creating...';
+        spinner.classList.remove('hidden');
+        btn.disabled = true;
+    } else {
+        text.textContent = 'Confirm Investment';
+        spinner.classList.add('hidden');
+        btn.disabled = false;
+    }
+}
+
+function showNotification(message, type) {
+    // simple alert for now - could be enhanced with a toast system
+    alert(message);
+}
+
+// event listeners
 document.getElementById('investment-amount').addEventListener('input', updateModalProfit);
 document.getElementById('calc-amount').addEventListener('input', calculateROI);
 document.getElementById('calc-plan').addEventListener('change', calculateROI);
 
-// Form submission
+// form submission
 document.getElementById('investForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -473,12 +513,11 @@ document.getElementById('investForm').addEventListener('submit', async function(
         });
         const result = await response.json();
         setLoading(submitBtn, false);
+        
         if (result.success) {
-            showNotification(result.data?.message || 'Investment created successfully', 'success');
+            document.getElementById('successMessage').textContent = result.data?.message || 'Investment created successfully';
             closeInvestModal();
-            setTimeout(() => {
-                window.location.href = base + '/users/dashboard.php';
-            }, 1500);
+            document.getElementById('successModal').classList.remove('hidden');
         } else {
             showNotification(result.error || 'Investment failed', 'error');
         }
@@ -488,16 +527,21 @@ document.getElementById('investForm').addEventListener('submit', async function(
     }
 });
 
-// Initialize calculator on page load
+// initialize calculator on page load
 document.addEventListener('DOMContentLoaded', function() {
     calculateROI();
 });
 
-// Close modal on outside click
+// close modal on outside click
 window.addEventListener('click', function(e) {
     const modal = document.getElementById('investModal');
     if (e.target === modal) {
         closeInvestModal();
+    }
+    
+    const successModal = document.getElementById('successModal');
+    if (e.target === successModal) {
+        closeSuccessModal();
     }
 });
 </script>
