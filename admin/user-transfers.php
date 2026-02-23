@@ -3,7 +3,8 @@ if (!defined('ADMIN_AREA')) {
     define('ADMIN_AREA', true);
 }
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 // Start session
 \App\Utils\SessionManager::start();
@@ -46,70 +47,70 @@ $stats = $transferService->getTransferStats();
 include __DIR__ . '/includes/header.php';
 ?>
 
-<div class="page-header d-print-none">
-    <div class="container-xl">
+<div class="mb-6">
+    <div class="">
         <div class="row g-2 align-items-center">
             <div class="col">
-                <h2 class="page-title">User Transfers Management</h2>
-                <div class="text-muted mt-1">Monitor and manage user-to-user balance transfers</div>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">User Transfers Management</h2>
+                <div class="text-gray-400 dark:text-gray-500 mt-1">Monitor and manage user-to-user balance transfers</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="page-body">
-    <div class="container-xl">
+<div class="space-y-6">
+    <div class="">
         <!-- Statistics Cards -->
-        <div class="row row-deck row-cards mb-4">
-            <div class="col-sm-6 col-lg-3">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Total Transfers</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="">
+                <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex align-items-center">
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Transfers</div>
                         </div>
-                        <div class="h1 mb-3"><?= number_format($stats['total'] ?? 0) ?></div>
+                        <div class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white mb-3"><?= number_format($stats['total'] ?? 0) ?></div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Total Amount</div>
+            <div class="">
+                <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex align-items-center">
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Amount</div>
                         </div>
-                        <div class="h1 mb-3 text-success">$<?= number_format($stats['total_amount'] ?? 0, 2) ?></div>
+                        <div class="text-3xl font-light tracking-tighter text-emerald-600 dark:text-emerald-400 mb-3">$<?= number_format($stats['total_amount'] ?? 0, 2) ?></div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Today's Transfers</div>
+            <div class="">
+                <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex align-items-center">
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Today's Transfers</div>
                         </div>
-                        <div class="h1 mb-3 text-info"><?= number_format($stats['today'] ?? 0) ?></div>
+                        <div class="text-3xl font-light tracking-tighter text-blue-600 dark:text-blue-400 mb-3"><?= number_format($stats['today'] ?? 0) ?></div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Pending</div>
+            <div class="">
+                <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex align-items-center">
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</div>
                         </div>
-                        <div class="h1 mb-3 text-warning"><?= number_format($stats['pending'] ?? 0) ?></div>
+                        <div class="text-3xl font-light tracking-tighter text-amber-600 dark:text-amber-400 mb-3"><?= number_format($stats['pending'] ?? 0) ?></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Transfers Table -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">User Transfers</h3>
-                <div class="card-actions">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">User Transfers</h3>
+                <div class="flex items-center gap-2">
                     <div class="btn-group">
-                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" >
                             Filter
                         </button>
                         <div class="dropdown-menu">
@@ -121,83 +122,65 @@ include __DIR__ . '/includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-vcenter card-table">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
                     <thead>
-                        <tr>
-                            <th>Transaction ID</th>
-                            <th>From User</th>
-                            <th>To User</th>
-                            <th>Amount</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th class="w-1"></th>
+                        <tr class="bg-gray-50/50 dark:bg-white/5">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Transaction ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">From User</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">To User</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($transfers as $transfer): ?>
-                        <tr data-status="<?= $transfer['status'] ?>">
-                            <td>
-                                <div class="font-weight-medium"><?= htmlspecialchars($transfer['transaction_id']) ?></div>
-                                <div class="text-muted">#<?= $transfer['id'] ?></div>
+                        <tr data-status="<?= $transfer['status'] ?>" class="border-b border-gray-50 dark:border-[#2d1b6e]/30 hover:bg-gray-50/50 dark:hover:bg-white/5">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="font-medium text-gray-900 dark:text-white"><?= htmlspecialchars($transfer['transaction_id']) ?></div>
+                                <div class="text-gray-400 dark:text-gray-500">#<?= $transfer['id'] ?></div>
                             </td>
-                            <td>
-                                <div class="d-flex py-1 align-items-center">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="flex py-1 align-items-center">
                                     <div class="flex-fill">
-                                        <div class="font-weight-medium"><?= htmlspecialchars($transfer['from_email'] ?? 'Unknown') ?></div>
-                                        <div class="text-muted"><?= htmlspecialchars(($transfer['from_first_name'] ?? '') . ' ' . ($transfer['from_last_name'] ?? '')) ?></div>
+                                        <div class="font-medium text-gray-900 dark:text-white"><?= htmlspecialchars($transfer['from_email'] ?? 'Unknown') ?></div>
+                                        <div class="text-gray-400 dark:text-gray-500"><?= htmlspecialchars(($transfer['from_first_name'] ?? '') . ' ' . ($transfer['from_last_name'] ?? '')) ?></div>
                                     </div>
                                 </div>
                             </td>
-                            <td>
-                                <div class="d-flex py-1 align-items-center">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="flex py-1 align-items-center">
                                     <div class="flex-fill">
-                                        <div class="font-weight-medium"><?= htmlspecialchars($transfer['to_email'] ?? 'Unknown') ?></div>
-                                        <div class="text-muted"><?= htmlspecialchars(($transfer['to_first_name'] ?? '') . ' ' . ($transfer['to_last_name'] ?? '')) ?></div>
+                                        <div class="font-medium text-gray-900 dark:text-white"><?= htmlspecialchars($transfer['to_email'] ?? 'Unknown') ?></div>
+                                        <div class="text-gray-400 dark:text-gray-500"><?= htmlspecialchars(($transfer['to_first_name'] ?? '') . ' ' . ($transfer['to_last_name'] ?? '')) ?></div>
                                     </div>
                                 </div>
                             </td>
-                            <td>
-                                <div class="font-weight-medium text-success">$<?= number_format($transfer['amount'], 2) ?></div>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="font-medium text-emerald-600 dark:text-emerald-400">$<?= number_format($transfer['amount'], 2) ?></div>
                             </td>
-                            <td>
-                                <div class="text-muted"><?= htmlspecialchars($transfer['description'] ?: 'No description') ?></div>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="text-gray-400 dark:text-gray-500"><?= htmlspecialchars($transfer['description'] ?: 'No description') ?></div>
                             </td>
-                            <td>
-                                <?php
-                                switch($transfer['status']) {
-                                    case 'completed':
-                                        $statusClass = 'bg-success';
-                                        break;
-                                    case 'pending':
-                                        $statusClass = 'bg-warning';
-                                        break;
-                                    case 'cancelled':
-                                        $statusClass = 'bg-danger';
-                                        break;
-                                    case 'failed':
-                                        $statusClass = 'bg-secondary';
-                                        break;
-                                    default:
-                                        $statusClass = 'bg-secondary';
-                                        break;
-                                }
-                                ?>
-                                <span class="badge <?= $statusClass ?>"><?= htmlspecialchars($transfer['status']) ?></span>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <?php $tsc = match($transfer['status']) { 'completed' => 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400', 'pending' => 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400', 'cancelled' => 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400', 'failed' => 'bg-gray-100 dark:bg-gray-800/40 text-gray-600 dark:text-gray-400', default => 'bg-gray-100 dark:bg-gray-800/40 text-gray-600 dark:text-gray-400' }; ?>
+                                <span class="rounded-full px-2.5 py-0.5 text-xs font-medium <?= $tsc ?>"><?= ucfirst(htmlspecialchars($transfer['status'])) ?></span>
                             </td>
-                            <td>
-                                <div class="text-muted"><?= date('M j, Y', strtotime($transfer['created_at'])) ?></div>
-                                <div class="text-muted"><?= date('g:i A', strtotime($transfer['created_at'])) ?></div>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="text-gray-400 dark:text-gray-500"><?= date('M j, Y', strtotime($transfer['created_at'])) ?></div>
+                                <div class="text-gray-400 dark:text-gray-500"><?= date('g:i A', strtotime($transfer['created_at'])) ?></div>
                             </td>
-                            <td>
-                                <div class="btn-list flex-nowrap">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="flex gap-1">
                                     <?php if ($transfer['status'] === 'pending'): ?>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="cancelTransfer(<?= $transfer['id'] ?>)">
+                                    <button class="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-full hover:bg-red-700 transition-colors" onclick="cancelTransfer(<?= $transfer['id'] ?>)">
                                         Cancel
                                     </button>
                                     <?php endif; ?>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewTransfer(<?= $transfer['id'] ?>)">
+                                    <button class="px-3 py-1 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 text-xs font-medium rounded-full" onclick="viewTransfer(<?= $transfer['id'] ?>)">
                                         View
                                     </button>
                                 </div>
@@ -212,25 +195,25 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <!-- Cancel Transfer Modal -->
-<div class="modal" id="cancelTransferModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Cancel Transfer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4" id="cancelTransferModal" tabindex="-1">
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-sm">
+        <div class="">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                <h5 class="text-lg font-semibold text-gray-900 dark:text-white">Cancel Transfer</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-white" ></button>
             </div>
-            <div class="modal-body">
+            <div class="p-6">
                 <form id="cancelTransferForm">
                     <input type="hidden" id="cancelTransferId" name="transfer_id">
                     <div class="mb-3">
-                        <label class="form-label">Reason for Cancellation</label>
-                        <textarea class="form-control" id="cancelReason" name="reason" rows="3" placeholder="Enter reason for cancellation..." required></textarea>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Reason for Cancellation</label>
+                        <textarea class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" id="cancelReason" name="reason" rows="3" placeholder="Enter reason for cancellation..." required></textarea>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmCancelTransfer()">Cancel Transfer</button>
+            <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                <button type="button" class="px-4 py-2 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full transition-colors" >Cancel</button>
+                <button type="button" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-full hover:bg-red-700 transition-colors" onclick="confirmCancelTransfer()">Cancel Transfer</button>
             </div>
         </div>
     </div>
@@ -240,7 +223,7 @@ include __DIR__ . '/includes/header.php';
 function cancelTransfer(transferId) {
     document.getElementById('cancelTransferId').value = transferId;
     document.getElementById('cancelReason').value = '';
-    new bootstrap.Modal(document.getElementById('cancelTransferModal')).show();
+    showModal('cancelTransferModal');
 }
 
 function confirmCancelTransfer() {

@@ -105,7 +105,7 @@ require_once __DIR__ . '/includes/header.php';
     <!-- header -->
     <div class="text-center">
         <h2 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white mb-2">Investment Plans</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">choose from our carefully crafted investment plans designed to maximize your returns</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Choose from our carefully crafted investment plans designed to maximize your returns</p>
     </div>
 
     <!-- stats overview -->
@@ -375,7 +375,7 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="mt-4 text-center">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Investment Created Successfully</h3>
                     <div class="mt-2">
-                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">your investment has been created and is now active</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">Your investment has been created and is now active</p>
                     </div>
                 </div>
             </div>

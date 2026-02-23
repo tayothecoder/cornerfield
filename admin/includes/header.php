@@ -1,24 +1,24 @@
 <?php
-// Prevent direct access
+// prevent direct access
 if (!defined('ADMIN_AREA')) {
     die('Direct access not permitted');
 }
 
-// Prevent multiple inclusions
+// prevent multiple inclusions
 if (defined('HEADER_INCLUDED')) {
     return;
 }
 define('HEADER_INCLUDED', true);
 
-// Include CSRF protection
+// include csrf protection
 require_once dirname(__DIR__, 2) . '/src/Utils/CSRFProtection.php';
 
-// Initialize required dependencies if not already loaded
+// initialize required dependencies if not already loaded
 if (!class_exists('\App\Config\Database')) {
-    require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
+    require_once dirname(__DIR__, 2) . '/autoload.php';
 }
 
-// Initialize database and required models if not already done
+// initialize database and required models if not already done
 if (!isset($database)) {
     try {
         $database = new \App\Config\Database();
@@ -39,25 +39,25 @@ if (!isset($adminSettingsModel)) {
     $adminSettingsModel = new \App\Models\AdminSettings($database);
 }
 
-// Check admin authentication
+// check admin authentication
 if (!isset($adminController) || !$adminController->isLoggedIn()) {
     header('Location: login.php');
     exit;
 }
 
-// Handle logout
+// handle logout
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     $adminController->logout();
     header('Location: login.php');
     exit;
 }
 
-// Get admin data
+// get admin data
 if (!isset($currentAdmin) && isset($adminController)) {
     $currentAdmin = $adminController->getCurrentAdmin();
 }
 
-// Get admin settings
+// get admin settings
 if (!isset($siteName)) {
     $siteName = $adminSettingsModel->getSetting('site_name', 'Cornerfield Investment Platform');
 }
@@ -65,7 +65,7 @@ if (!isset($currencySymbol)) {
     $currencySymbol = $adminSettingsModel->getSetting('currency_symbol', '$');
 }
 
-// Set default page variables if not set
+// set default page variables if not set
 if (!isset($pageTitle)) {
     $pageTitle = 'Admin Dashboard - ' . \App\Config\Config::getSiteName();
 }
@@ -73,7 +73,7 @@ if (!isset($currentPage)) {
     $currentPage = 'dashboard';
 }
 
-// Get pending counts for navigation badges
+// get pending counts for navigation badges
 try {
     $pendingDeposits = $database->fetchOne("SELECT COUNT(*) as count FROM deposits WHERE status = 'pending'")['count'] ?? 0;
     $pendingWithdrawals = $database->fetchOne("SELECT COUNT(*) as count FROM withdrawals WHERE status = 'pending'")['count'] ?? 0;
@@ -85,7 +85,7 @@ try {
     error_log("Navigation badge counts error: " . $e->getMessage());
 }
 
-// Initialize SystemHealth checker if not done
+// initialize SystemHealth checker if not done
 if (!isset($systemHealth) && isset($database)) {
     try {
         $systemHealth = new \App\Utils\SystemHealth($database);
@@ -96,711 +96,119 @@ if (!isset($systemHealth) && isset($database)) {
         $healthData = [];
     }
 }
+
+$base = \App\Config\Config::getBasePath();
+
+// admin initials for avatar
+$adminInitials = 'A';
+if (!empty($currentAdmin['username'])) {
+    $adminInitials = strtoupper(substr($currentAdmin['username'], 0, 2));
+} elseif (!empty($currentAdmin['email'])) {
+    $adminInitials = strtoupper(substr($currentAdmin['email'], 0, 2));
+}
+
+// nav items for admin sidebar
+$adminNavItems = [
+    'dashboard' => ['title' => 'Dashboard', 'url' => 'dashboard.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>'],
+    'users' => ['title' => 'Users', 'url' => 'users.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>'],
+    'deposits' => ['title' => 'Deposits', 'url' => 'deposits.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m0 0l-6-6m6 6l6-6"/>', 'badge' => $pendingDeposits],
+    'withdrawals' => ['title' => 'Withdrawals', 'url' => 'withdrawals.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 20V4m0 0l-6 6m6-6l6 6"/>', 'badge' => $pendingWithdrawals],
+    'transactions' => ['title' => 'Transactions', 'url' => 'transactions.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'],
+    'user-transfers' => ['title' => 'Transfers', 'url' => 'user-transfers.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>'],
+    'investment-plans' => ['title' => 'Investment Plans', 'url' => 'investment-plans.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>'],
+    'profits' => ['title' => 'Profits', 'url' => 'profits.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'],
+    'support-tickets' => ['title' => 'Support', 'url' => 'support-tickets.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 2H4a2 2 0 00-2 2v12a2 2 0 002 2h4l4 4 4-4h4a2 2 0 002-2V4a2 2 0 00-2-2z"/>'],
+    'settings' => ['title' => 'Settings', 'url' => 'settings.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>'],
+    'content-management' => ['title' => 'Content', 'url' => 'content-management.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>'],
+    'email-management' => ['title' => 'Email', 'url' => 'email-management.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>'],
+    'payment-gateways' => ['title' => 'Payments', 'url' => 'payment-gateways.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>'],
+    'system-health' => ['title' => 'System Health', 'url' => 'system-health.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>'],
+];
 ?>
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" class="h-full">
 <head>
     <script>if(localStorage.theme==="dark"||(!localStorage.theme&&window.matchMedia("(prefers-color-scheme:dark)").matches)){document.documentElement.classList.add("dark")}else{document.documentElement.classList.remove("dark")}</script>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
     <title><?= htmlspecialchars($pageTitle) ?></title>
-    
-    <!-- Modern Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    
-    <!-- Tabler CSS -->
-    <link href="../assets/tabler/dist/css/tabler.min.css" rel="stylesheet" />
-    <link href="../assets/tabler/dist/css/tabler-flags.min.css" rel="stylesheet" />
-    <link href="../assets/tabler/dist/css/tabler-payments.min.css" rel="stylesheet" />
-    <link href="../assets/tabler/dist/css/tabler-socials.min.css" rel="stylesheet" />
-    
-    <!-- Custom Clean Admin CSS -->
-    <link href="../assets/css/admin-clean.css" rel="stylesheet" />
-    
-    <style>
-        /* Clean, modern admin styles */
-        :root {
-            --admin-primary: #206bc4;
-            --admin-primary-light: #4299e1;
-            --admin-primary-dark: #1a4a8c;
-            --admin-secondary: #6c757d;
-            --admin-success: #28a745;
-            --admin-warning: #ffc107;
-            --admin-danger: #dc3545;
-            --admin-info: #17a2b8;
-            --admin-light: #f8f9fa;
-            --admin-dark: #343a40;
-            --admin-border: #e9ecef;
-            --admin-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            --admin-shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-            --admin-radius: 0.5rem;
-            --admin-transition: all 0.2s ease-in-out;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f5f7fa;
-            color: #495057;
-            line-height: 1.6;
-        }
-        
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        .admin-sidebar {
-            width: 260px;
-            background: white;
-            border-right: 1px solid var(--admin-border);
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 1000;
-            transition: var(--admin-transition);
-            box-shadow: var(--admin-shadow);
-        }
-        
-        .admin-sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--admin-border);
-            background: white;
-        }
-        
-        .admin-sidebar-brand {
-            color: var(--admin-primary);
-            font-size: 1.25rem;
-            font-weight: 700;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .admin-sidebar-nav {
-            padding: 1rem 0;
-        }
-        
-        .admin-sidebar-nav .nav-item {
-            margin: 0.25rem 1rem;
-        }
-        
-        .admin-sidebar-nav .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            color: #6c757d;
-            text-decoration: none;
-            border-radius: var(--admin-radius);
-            transition: var(--admin-transition);
-            border-left: 3px solid transparent;
-        }
-        
-        .admin-sidebar-nav .nav-link:hover {
-            background-color: rgba(32, 107, 196, 0.05);
-            color: var(--admin-primary);
-            border-left-color: var(--admin-primary);
-        }
-        
-        .admin-sidebar-nav .nav-link.active {
-            background-color: rgba(32, 107, 196, 0.1);
-            color: var(--admin-primary);
-            border-left-color: var(--admin-primary);
-            font-weight: 600;
-        }
-        
-        .admin-sidebar-nav .nav-link-icon {
-            width: 20px;
-            text-align: center;
-            color: inherit;
-        }
-        
-        .admin-main {
-            flex: 1;
-            margin-left: 260px;
-            transition: var(--admin-transition);
-        }
-        
-        .admin-header {
-            background: white;
-            border-bottom: 1px solid var(--admin-border);
-            padding: 1rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: var(--admin-shadow);
-        }
-        
-        .admin-header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-        }
-        
-        .admin-page-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--admin-dark);
-            margin: 0;
-        }
-        
-        .admin-user-menu {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .admin-user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--admin-primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--admin-transition);
-        }
-        
-        .admin-user-avatar:hover {
-            background: var(--admin-primary-dark);
-            transform: scale(1.05);
-        }
-        
-        .admin-content {
-            padding: 2rem;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stats-card {
-            background: white;
-            border-radius: var(--admin-radius);
-            border: 1px solid var(--admin-border);
-            padding: 1.5rem;
-            transition: var(--admin-transition);
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--admin-shadow);
-        }
-        
-        .stats-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--admin-shadow-lg);
-            border-color: var(--admin-primary-light);
-        }
-        
-        .stats-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--admin-radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: white;
-            margin-bottom: 1rem;
-        }
-        
-        .stats-icon.users { background: var(--admin-primary); }
-        .stats-icon.deposits { background: var(--admin-success); }
-        .stats-icon.investments { background: var(--admin-info); }
-        .stats-icon.plans { background: var(--admin-warning); }
-        
-        .stats-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--admin-dark);
-            margin-bottom: 0.5rem;
-        }
-        
-        .stats-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-bottom: 0.75rem;
-            font-weight: 500;
-        }
-        
-        .stats-change {
-            font-size: 0.875rem;
-            font-weight: 500;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-        
-        .admin-card {
-            background: white;
-            border-radius: var(--admin-radius);
-            border: 1px solid var(--admin-border);
-            box-shadow: var(--admin-shadow);
-            transition: var(--admin-transition);
-            overflow: hidden;
-        }
-        
-        .admin-card:hover {
-            box-shadow: var(--admin-shadow-lg);
-            border-color: var(--admin-primary-light);
-        }
-        
-        .admin-card-header {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--admin-border);
-            background: #f8f9fa;
-        }
-        
-        .admin-card-title {
-            margin: 0;
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--admin-dark);
-        }
-        
-        .admin-card-body {
-            padding: 1.5rem;
-        }
-        
-        .admin-table {
-            width: 100%;
-            margin-bottom: 0;
-        }
-        
-        .admin-table thead th {
-            background: #f8f9fa;
-            color: #495057;
-            font-weight: 600;
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border: none;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .admin-table tbody td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--admin-border);
-            vertical-align: middle;
-        }
-        
-        .admin-table tbody tr:hover {
-            background-color: rgba(32, 107, 196, 0.02);
-        }
-        
-        .btn {
-            border-radius: var(--admin-radius);
-            font-weight: 500;
-            transition: var(--admin-transition);
-            border: none;
-            padding: 0.5rem 1rem;
-        }
-        
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--admin-shadow);
-        }
-        
-        .btn-primary {
-            background: var(--admin-primary);
-            border-color: var(--admin-primary);
-        }
-        
-        .btn-primary:hover {
-            background: var(--admin-primary-dark);
-            border-color: var(--admin-primary-dark);
-        }
-        
-        .form-control {
-            border-radius: var(--admin-radius);
-            border: 1px solid var(--admin-border);
-            transition: var(--admin-transition);
-        }
-        
-        .form-control:focus {
-            border-color: var(--admin-primary);
-            box-shadow: 0 0 0 0.2rem rgba(32, 107, 196, 0.25);
-        }
-        
-        .badge {
-            border-radius: 0.375rem;
-            font-weight: 500;
-            padding: 0.375rem 0.75rem;
-        }
-        
-        .modal-content {
-            border-radius: var(--admin-radius);
-            border: none;
-            box-shadow: var(--admin-shadow-lg);
-        }
-        
-        .modal-header {
-            border-bottom: 1px solid var(--admin-border);
-            background: #f8f9fa;
-        }
-        
-        .modal-footer {
-            border-top: 1px solid var(--admin-border);
-            background: #f8f9fa;
-        }
-        
-        /* Responsive design */
-        @media (max-width: 1024px) {
-            .admin-sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .admin-sidebar.open {
-                transform: translateX(0);
-            }
-            
-            .admin-main {
-                margin-left: 0;
-            }
-            
-            .admin-sidebar-toggle {
-                display: block;
-            }
-        }
-        
-        @media (min-width: 1025px) {
-            .admin-sidebar-toggle {
-                display: none;
-            }
-        }
-        
-        .admin-sidebar-toggle {
-            background: none;
-            border: none;
-            font-size: 1.25rem;
-            color: var(--admin-dark);
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: var(--admin-radius);
-            transition: var(--admin-transition);
-        }
-        
-        .admin-sidebar-toggle:hover {
-            background: var(--admin-light);
-            color: var(--admin-primary);
-        }
-        
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-        
-        .sidebar-overlay.open {
-            display: block;
-        }
-        
-        /* Notification styles */
-        .notification-badge {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            background: var(--admin-danger);
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border: 2px solid white;
-        }
-        
-        /* Search styles */
-        .admin-search {
-            position: relative;
-            max-width: 300px;
-        }
-        
-        .admin-search input {
-            width: 100%;
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
-            border: 1px solid var(--admin-border);
-            border-radius: var(--admin-radius);
-            background: white;
-            font-size: 0.875rem;
-            transition: var(--admin-transition);
-        }
-        
-        .admin-search input:focus {
-            outline: none;
-            border-color: var(--admin-primary);
-            box-shadow: 0 0 0 0.2rem rgba(32, 107, 196, 0.25);
-        }
-        
-        .admin-search i {
-            position: absolute;
-            left: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-        }
-        
-        /* Dropdown styles */
-        .dropdown-menu {
-            border-radius: var(--admin-radius);
-            border: 1px solid var(--admin-border);
-            box-shadow: var(--admin-shadow-lg);
-            padding: 0.5rem 0;
-            min-width: 200px;
-        }
-        
-        .dropdown-item {
-            padding: 0.5rem 1rem;
-            color: #495057;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: var(--admin-transition);
-            font-size: 0.875rem;
-        }
-        
-        .dropdown-item:hover {
-            background: var(--admin-light);
-            color: var(--admin-primary);
-        }
-        
-        /* Hover effects */
-        .hover-lift {
-            transition: var(--admin-transition);
-        }
-        
-        .hover-lift:hover {
-            transform: translateY(-2px);
-        }
-        
-        .hover-scale {
-            transition: var(--admin-transition);
-        }
-        
-        .hover-scale:hover {
-            transform: scale(1.02);
-        }
-    </style>
+    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/tailwind-compiled.css?v=4">
+    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/cornerfield.css?v=4">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars($base) ?>/assets/images/favicon.svg">
 </head>
-<body>
-    <div class="admin-layout">
-        <!-- Clean Admin Sidebar -->
-        <aside class="admin-sidebar">
-            <div class="admin-sidebar-header">
-                <a href="dashboard.php" class="admin-sidebar-brand">
-                    <i class="fas fa-chart-line"></i>
-                    <?= htmlspecialchars($siteName) ?>
+<body class="h-full bg-[#f5f3ff] dark:bg-[#0f0a2e]">
+    <div class="min-h-full flex">
+        <!-- mobile sidebar backdrop -->
+        <div id="sidebar-backdrop" class="fixed inset-0 z-40 bg-black/40 opacity-0 invisible transition-opacity duration-300 lg:hidden"></div>
+
+        <!-- sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-[#1e0e62] flex flex-col -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:flex-shrink-0">
+            <!-- brand -->
+            <div class="flex items-center justify-between px-6 h-16">
+                <a href="dashboard.php" class="text-lg font-semibold text-white tracking-tight">
+                    <?= htmlspecialchars(explode(' ', $siteName)[0]) ?>
+                    <span class="ml-2 text-[10px] font-medium uppercase tracking-wider bg-white/20 text-white/90 px-2 py-0.5 rounded-full">admin</span>
+                </a>
+                <button id="sidebar-close" class="lg:hidden text-white/70">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- nav -->
+            <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+                <?php foreach ($adminNavItems as $key => $item): ?>
+                <a href="<?= $item['url'] ?>" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors <?= $currentPage === $key ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?>">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><?= $item['icon'] ?></svg>
+                    <?= $item['title'] ?>
+                    <?php if (!empty($item['badge']) && $item['badge'] > 0): ?>
+                        <span class="ml-auto bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"><?= $item['badge'] ?></span>
+                    <?php endif; ?>
+                </a>
+                <?php endforeach; ?>
+            </nav>
+
+            <!-- sidebar footer -->
+            <div class="px-3 py-4 space-y-1">
+                <a href="<?= htmlspecialchars($base) ?>/users/dashboard.php" target="_blank" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    View user site
+                </a>
+                <a href="?action=logout" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    Logout
                 </a>
             </div>
-            
-            <nav class="admin-sidebar-nav">
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>" href="dashboard.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-tachometer-alt"></i>
-                        </span>
-                        Dashboard
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : '' ?>" href="users.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-users"></i>
-                        </span>
-                        Users
-                        <?php if ($pendingTransactions > 0): ?>
-                            <span class="badge bg-warning ms-auto"><?= $pendingTransactions ?></span>
-                        <?php endif; ?>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'deposits.php' ? 'active' : '' ?>" href="deposits.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-arrow-down"></i>
-                        </span>
-                        Deposits
-                        <?php if ($pendingDeposits > 0): ?>
-                            <span class="badge bg-warning ms-auto"><?= $pendingDeposits ?></span>
-                        <?php endif; ?>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'withdrawals.php' ? 'active' : '' ?>" href="withdrawals.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-arrow-up"></i>
-                        </span>
-                        Withdrawals
-                        <?php if ($pendingWithdrawals > 0): ?>
-                            <span class="badge bg-warning ms-auto"><?= $pendingWithdrawals ?></span>
-                        <?php endif; ?>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'investment-plans.php' ? 'active' : '' ?>" href="investment-plans.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </span>
-                        Investment Plans
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'profits.php' ? 'active' : '' ?>" href="profits.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-chart-bar"></i>
-                        </span>
-                        Profits
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : '' ?>" href="settings.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-cog"></i>
-                        </span>
-                        Settings
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'content-management.php' ? 'active' : '' ?>" href="content-management.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-edit"></i>
-                        </span>
-                        Content Management
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'email-management.php' ? 'active' : '' ?>" href="email-management.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-envelope"></i>
-                        </span>
-                        Email System
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'payment-gateways.php' ? 'active' : '' ?>" href="payment-gateways.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-credit-card"></i>
-                        </span>
-                        Payment Gateways
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'support-tickets.php' ? 'active' : '' ?>" href="support-tickets.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-ticket-alt"></i>
-                        </span>
-                        Support Tickets
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'user-transfers.php' ? 'active' : '' ?>" href="user-transfers.php">
-                        <span class="nav-link-icon">
-                            <i class="fas fa-exchange-alt"></i>
-                        </span>
-                        User Transfers
-                    </a>
-                </div>
-            </nav>
         </aside>
 
-        <!-- Main Content Area -->
-        <main class="admin-main">
-            <!-- Clean Admin Header -->
-            <header class="admin-header">
-                <div class="admin-header-content">
-                    <div class="d-flex align-items-center gap-3">
-                        <button class="admin-sidebar-toggle" onclick="toggleSidebar()">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h1 class="admin-page-title"><?= htmlspecialchars($pageTitle) ?></h1>
-                    </div>
-                    
-                    <div class="admin-user-menu">
-                        <!-- Search -->
-                        <div class="admin-search me-3">
-                            <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Search..." />
-                        </div>
-                        
-                        <!-- Notifications -->
-                        <div class="dropdown me-3">
-                            <div class="position-relative" data-bs-toggle="dropdown">
-                                <i class="fas fa-bell" style="font-size: 1.125rem; color: #6c757d; cursor: pointer;"></i>
-                                <span class="notification-badge">3</span>
-                            </div>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a href="#" class="dropdown-item">
-                                    <i class="fas fa-user-plus text-success"></i>
-                                    <span>New user registered</span>
-                                </a>
-                                <a href="#" class="dropdown-item">
-                                    <i class="fas fa-dollar-sign text-info"></i>
-                                    <span>New deposit received</span>
-                                </a>
-                                <a href="#" class="dropdown-item">
-                                    <i class="fas fa-exclamation-triangle text-warning"></i>
-                                    <span>System alert</span>
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <!-- User Avatar -->
-                        <div class="dropdown">
-                            <div class="admin-user-avatar" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a href="#" class="dropdown-item">
-                                    <i class="fas fa-user-cog"></i>
-                                    <span>Profile</span>
-                                </a>
-                                <a href="#" class="dropdown-item">
-                                    <i class="fas fa-cog"></i>
-                                    <span>Settings</span>
-                                </a>
-                                <hr class="dropdown-divider">
-                                <a href="logout.php" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Logout</span>
-                                </a>
-                            </div>
-                        </div>
+        <!-- main content wrapper -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- top bar -->
+            <header class="sticky top-0 z-10 bg-white dark:bg-[#1a1145] h-16 flex items-center justify-between px-4 sm:px-6 shadow-sm">
+                <button id="sidebar-open" class="text-gray-500 dark:text-gray-400 lg:hidden mr-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+
+                <div class="flex-1"></div>
+
+                <div class="flex items-center gap-3">
+                    <!-- dark mode toggle -->
+                    <button id="theme-toggle" class="p-2 text-gray-500 dark:text-gray-400 rounded-lg transition-colors">
+                        <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+
+                    <!-- admin avatar -->
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-[#1e0e62] flex items-center justify-center text-white text-xs font-medium"><?= htmlspecialchars($adminInitials) ?></div>
+                        <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300"><?= htmlspecialchars($currentAdmin['username'] ?? 'Admin') ?></span>
                     </div>
                 </div>
             </header>
 
-            <!-- Page Content -->
-            <div class="admin-content">
+            <!-- page content -->
+            <main class="flex-1 p-4 sm:p-6 lg:p-8">

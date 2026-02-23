@@ -3,7 +3,8 @@ if (!defined('ADMIN_AREA')) {
     define('ADMIN_AREA', true);
 }
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 // Start session
 \App\Utils\SessionManager::start();
@@ -74,24 +75,24 @@ $supportedCryptos = $paymentGateway->getSupportedCryptocurrencies();
 include __DIR__ . '/includes/header.php';
 ?>
 
-<div class="page-header d-print-none">
-    <div class="container-xl">
+<div class="mb-6">
+    <div class="">
         <div class="row g-2 align-items-center">
             <div class="col">
-                <h2 class="page-title">Payment Gateway Management</h2>
-                <div class="text-muted mt-1">Configure and manage payment gateways for automatic processing</div>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Payment Gateway Management</h2>
+                <div class="text-gray-400 dark:text-gray-500 mt-1">Configure and manage payment gateways for automatic processing</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="page-body">
-    <div class="container-xl">
+<div class="space-y-6">
+    <div class="">
         <!-- Cryptomus Configuration -->
         <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon mr-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                         <rect x="3" y="4" width="18" height="8" rx="1" />
                         <path d="M12 8v4" />
@@ -99,65 +100,65 @@ include __DIR__ . '/includes/header.php';
                     </svg>
                     Cryptomus Gateway
                 </h3>
-                <div class="card-actions">
-                    <label class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="cryptomus-enabled" 
+                <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2">
+                        <input class="w-4 h-4 text-[#1e0e62] border-gray-300 rounded focus:ring-[#1e0e62]" type="checkbox" id="cryptomus-enabled" 
                                <?= ($gatewaySettings['payment_cryptomus_enabled'] ?? '0') === '1' ? 'checked' : '' ?>>
-                        <span class="form-check-label">Enable</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Enable</span>
                     </label>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="p-6">
                 <form id="cryptomus-form">
                     <?= \App\Utils\CSRFProtection::getTokenField() ?>
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Merchant ID</label>
-                                <input type="text" class="form-control" name="payment_cryptomus_merchant_id" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Merchant ID</label>
+                                <input type="text" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_cryptomus_merchant_id" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_cryptomus_merchant_id'] ?? '') ?>" 
                                        placeholder="Enter your Cryptomus Merchant ID">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">API Key</label>
-                                <input type="password" class="form-control" name="payment_cryptomus_api_key" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">API Key</label>
+                                <input type="password" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_cryptomus_api_key" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_cryptomus_api_key'] ?? '') ?>" 
                                        placeholder="Enter your Cryptomus API Key">
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Secret Key</label>
-                                <input type="password" class="form-control" name="payment_cryptomus_secret_key" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Secret Key</label>
+                                <input type="password" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_cryptomus_secret_key" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_cryptomus_secret_key'] ?? '') ?>" 
                                        placeholder="Enter your Cryptomus Secret Key">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Return URL</label>
-                                <input type="url" class="form-control" name="payment_cryptomus_return_url" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Return URL</label>
+                                <input type="url" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_cryptomus_return_url" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_cryptomus_return_url'] ?? '') ?>" 
                                        placeholder="https://yourdomain.com/payment/return">
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Callback URL</label>
-                        <input type="url" class="form-control" name="payment_cryptomus_callback_url" 
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Callback URL</label>
+                        <input type="url" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_cryptomus_callback_url" 
                                value="<?= htmlspecialchars($gatewaySettings['payment_cryptomus_callback_url'] ?? '') ?>" 
                                placeholder="https://yourdomain.com/payment/callback">
-                        <small class="form-hint">This URL will receive payment notifications from Cryptomus</small>
+                        <small class="text-xs text-gray-400 mt-1">This URL will receive payment notifications from Cryptomus</small>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-primary" onclick="saveCryptomusSettings()">
+                    <div class="flex gap-2">
+                        <button type="button" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="saveCryptomusSettings()">
                             Save Settings
                         </button>
-                        <button type="button" class="btn btn-outline-primary" onclick="testCryptomus()">
+                        <button type="button" class="px-4 py-2 border border-[#1e0e62] text-[#1e0e62] dark:text-indigo-400 text-sm font-medium rounded-full hover:bg-[#1e0e62] hover:text-white transition-colors" onclick="testCryptomus()">
                             Test Connection
                         </button>
                     </div>
@@ -167,9 +168,9 @@ include __DIR__ . '/includes/header.php';
 
         <!-- NOWPayments Configuration -->
         <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon mr-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                         <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
                         <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
@@ -177,66 +178,66 @@ include __DIR__ . '/includes/header.php';
                     </svg>
                     NOWPayments Gateway
                 </h3>
-                <div class="card-actions">
-                    <label class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="nowpayments-enabled" 
+                <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2">
+                        <input class="w-4 h-4 text-[#1e0e62] border-gray-300 rounded focus:ring-[#1e0e62]" type="checkbox" id="nowpayments-enabled" 
                                <?= ($gatewaySettings['payment_nowpayments_enabled'] ?? '0') === '1' ? 'checked' : '' ?>>
-                        <span class="form-check-label">Enable</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Enable</span>
                     </label>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="p-6">
                 <form id="nowpayments-form">
                     <?= \App\Utils\CSRFProtection::getTokenField() ?>
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">API Key</label>
-                                <input type="password" class="form-control" name="payment_nowpayments_api_key" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">API Key</label>
+                                <input type="password" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_nowpayments_api_key" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_nowpayments_api_key'] ?? '') ?>" 
                                        placeholder="Enter your NOWPayments API Key">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">IPN Secret</label>
-                                <input type="password" class="form-control" name="payment_nowpayments_ipn_secret" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">IPN Secret</label>
+                                <input type="password" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_nowpayments_ipn_secret" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_nowpayments_ipn_secret'] ?? '') ?>" 
                                        placeholder="Enter your NOWPayments IPN Secret">
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Success URL</label>
-                                <input type="url" class="form-control" name="payment_nowpayments_success_url" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Success URL</label>
+                                <input type="url" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_nowpayments_success_url" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_nowpayments_success_url'] ?? '') ?>" 
                                        placeholder="https://yourdomain.com/payment/success">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Cancel URL</label>
-                                <input type="url" class="form-control" name="payment_nowpayments_cancel_url" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Cancel URL</label>
+                                <input type="url" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_nowpayments_cancel_url" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_nowpayments_cancel_url'] ?? '') ?>" 
                                        placeholder="https://yourdomain.com/payment/cancel">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Callback URL</label>
-                                <input type="url" class="form-control" name="payment_nowpayments_callback_url" 
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Callback URL</label>
+                                <input type="url" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="payment_nowpayments_callback_url" 
                                        value="<?= htmlspecialchars($gatewaySettings['payment_nowpayments_callback_url'] ?? '') ?>" 
                                        placeholder="https://yourdomain.com/payment/callback">
                             </div>
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-primary" onclick="saveNOWPaymentsSettings()">
+                    <div class="flex gap-2">
+                        <button type="button" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="saveNOWPaymentsSettings()">
                             Save Settings
                         </button>
-                        <button type="button" class="btn btn-outline-primary" onclick="testNOWPayments()">
+                        <button type="button" class="px-4 py-2 border border-[#1e0e62] text-[#1e0e62] dark:text-indigo-400 text-sm font-medium rounded-full hover:bg-[#1e0e62] hover:text-white transition-colors" onclick="testNOWPayments()">
                             Test Connection
                         </button>
                     </div>
@@ -245,10 +246,10 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Supported Cryptocurrencies -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon mr-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                         <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
                         <path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4h-2a2 2 0 0 1 -1.8 -1" />
@@ -257,14 +258,14 @@ include __DIR__ . '/includes/header.php';
                     Supported Cryptocurrencies
                 </h3>
             </div>
-            <div class="card-body">
-                <div class="row">
+            <div class="p-6">
+                <div class="grid grid-cols-1 gap-6">
                     <?php foreach ($supportedCryptos as $code => $name): ?>
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="d-flex align-items-center p-2 border rounded">
+                        <div class="flex align-items-center p-2 border rounded">
                             <div class="flex-fill">
-                                <div class="font-weight-medium"><?= htmlspecialchars($name) ?></div>
-                                <div class="text-muted"><?= strtoupper($code) ?></div>
+                                <div class="font-medium text-gray-900 dark:text-white"><?= htmlspecialchars($name) ?></div>
+                                <div class="text-gray-400 dark:text-gray-500"><?= strtoupper($code) ?></div>
                             </div>
                         </div>
                     </div>
@@ -403,7 +404,7 @@ function showNotification(message, type) {
     alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
     alertDiv.innerHTML = `
         ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-white" ></button>
     `;
     
     document.querySelector('.page-body').insertBefore(alertDiv, document.querySelector('.page-body').firstChild);

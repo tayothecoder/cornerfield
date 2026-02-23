@@ -1,5 +1,6 @@
 <?php
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 use App\Utils\SessionManager;
 use App\Config\Database;

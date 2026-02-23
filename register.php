@@ -111,7 +111,7 @@ $base = \App\Config\Config::getBasePath();
 
                 <div>
                     <label for="username" class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Username</label>
-                    <input type="text" id="username" name="username" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#1e0e62] focus:ring-2 focus:ring-[#1e0e62]/20 outline-none transition-colors" placeholder="janedoe" autocomplete="username" required>
+                    <input type="text" id="username" name="username" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#1e0e62] focus:ring-2 focus:ring-[#1e0e62]/20 outline-none transition-colors" placeholder="Janedoe" autocomplete="username" required>
                     <div class="hidden text-sm text-red-500 mt-1" id="username-error"></div>
                 </div>
 

@@ -1,5 +1,6 @@
 <?php
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 use App\Config\Database;
 use App\Models\User;
@@ -111,11 +112,10 @@ class DailyProfitDistributor
 
             if ($profitDistributionLocked) {
 
-                $this->database->update('users', [
-                    'balance' => $this->database->raw('balance + locked_balance + ' . $total_payout),
-                    'locked_balance' => 0, 
-                    'total_earned' => $this->database->raw('total_earned + ' . $final_profit)
-                ], 'id = ?', [$investment['user_id']]);
+                $this->database->update(
+                    "UPDATE users SET balance = balance + locked_balance + ?, locked_balance = 0, total_earned = total_earned + ? WHERE id = ?",
+                    [$total_payout, $final_profit, $investment['user_id']]
+                );
                 
                 echo "   [DONE] Released all locked profits + final profit + principal for user " . $investment['user_id'] . "\n";
             } else {
@@ -192,17 +192,17 @@ class DailyProfitDistributor
             $profitDistributionLocked = $adminSettingsModel->getSetting('profit_distribution_locked', 0);
 
             if ($profitDistributionLocked) {
-                $this->database->update('users', [
-                    'locked_balance' => $this->database->raw('locked_balance + ' . $daily_profit),
-                    'total_earned' => $this->database->raw('total_earned + ' . $daily_profit)
-                ], 'id = ?', [$investment['user_id']]);
+                $this->database->update(
+                    "UPDATE users SET locked_balance = locked_balance + ?, total_earned = total_earned + ? WHERE id = ?",
+                    [$daily_profit, $daily_profit, $investment['user_id']]
+                );
 
                 echo "   [PROFIT] Locked Mode: Added $" . number_format($daily_profit, 2) . " to locked balance for user " . $investment['user_id'] . "\n";
             } else {
-                $this->database->update('users', [
-                    'balance' => $this->database->raw('balance + ' . $daily_profit),
-                    'total_earned' => $this->database->raw('total_earned + ' . $daily_profit)
-                ], 'id = ?', [$investment['user_id']]);
+                $this->database->update(
+                    "UPDATE users SET balance = balance + ?, total_earned = total_earned + ? WHERE id = ?",
+                    [$daily_profit, $daily_profit, $investment['user_id']]
+                );
 
                 echo "   [PROFIT] Immediate Mode: Added $" . number_format($daily_profit, 2) . " to available balance for user " . $investment['user_id'] . "\n";
             }

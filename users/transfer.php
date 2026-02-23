@@ -69,7 +69,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-xl font-medium tracking-tight">Transfer Funds</h2>
-                <p class="text-indigo-200 mt-1">send money to other Cornerfield users instantly</p>
+                <p class="text-indigo-200 mt-1">Send money to other Cornerfield users instantly</p>
             </div>
             <div class="text-right">
                 <div class="text-sm opacity-75">Available Balance</div>
@@ -272,7 +272,7 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <div>
                             <p class="text-gray-900 dark:text-white font-medium">Secure & Safe</p>
-                            <p class="text-gray-500 dark:text-gray-400">all transfers are encrypted and verified before processing</p>
+                            <p class="text-gray-500 dark:text-gray-400">All transfers are encrypted and verified before processing</p>
                         </div>
                     </div>
 
@@ -316,26 +316,26 @@ require_once __DIR__ . '/includes/header.php';
         <?php if (!empty($data['recentTransfers'])): ?>
             <div class="overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full">
+                    <table class="w-full text-sm">
                         <thead>
-                            <tr class="text-left">
-                                <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reference</th>
-                                <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recipient</th>
-                                <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                                <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fee</th>
-                                <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                                <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <tr class="bg-gray-50/50 dark:bg-white/5">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reference</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recipient</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fee</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-[#2d1b6e]">
                             <?php foreach ($data['recentTransfers'] as $transfer): ?>
-                            <tr class="hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e] transition-colors">
-                                <td class="py-3 pr-6">
+                            <tr class="border-b border-gray-100 dark:border-[#2d1b6e]/30 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                     <div class="text-sm font-medium text-gray-900 dark:text-white">
                                         <?= htmlspecialchars($transfer['reference'] ?? '') ?>
                                     </div>
                                 </td>
-                                <td class="py-3 pr-6">
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                     <div class="flex items-center">
                                         <div class="w-8 h-8 bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-xl flex items-center justify-center">
                                             <span class="text-[#1e0e62] dark:text-indigo-400 font-medium text-sm">
@@ -349,22 +349,22 @@ require_once __DIR__ . '/includes/header.php';
                                         </div>
                                     </div>
                                 </td>
-                                <td class="py-3 pr-6">
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                     <div class="text-sm font-medium text-red-600 dark:text-red-400">
                                         -$<?= number_format($transfer['amount'], 2) ?>
                                     </div>
                                 </td>
-                                <td class="py-3 pr-6">
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
                                         $<?= number_format($transfer['fee'], 2) ?>
                                     </div>
                                 </td>
-                                <td class="py-3 pr-6">
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
                                         <?= date('M j, H:i', strtotime($transfer['created_at'])) ?>
                                     </div>
                                 </td>
-                                <td class="py-3">
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                     <span class="inline-block px-2 py-1 text-xs font-medium rounded-full <?php
                                         switch ($transfer['status']) {
                                             case 'completed': echo 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'; break;
@@ -391,7 +391,7 @@ require_once __DIR__ . '/includes/header.php';
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                 </svg>
                 <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">No transfers yet</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400">send your first transfer to another Cornerfield user</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Send your first transfer to another Cornerfield user</p>
             </div>
         <?php endif; ?>
     </div>
@@ -411,7 +411,7 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="mt-4 text-center">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Transfer Sent Successfully</h3>
                     <div class="mt-2">
-                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">your transfer has been processed successfully</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">Your transfer has been processed successfully</p>
                     </div>
                 </div>
             </div>

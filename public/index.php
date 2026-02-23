@@ -1,37 +1,32 @@
 <?php
-require_once __DIR__ . '/../config/Config.php';
-require_once __DIR__ . '/../src/Config/Database.php';
-require_once __DIR__ . '/../src/Models/User.php';
-require_once __DIR__ . '/../src/Models/Investment.php';
-require_once __DIR__ . '/../src/Models/Transaction.php';
-require_once __DIR__ . '/../src/Utils/SessionManager.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
-// Check maintenance mode
+\App\Utils\SessionManager::start();
+
+// check maintenance mode
 try {
-    $database = DatabaseFactory::create();
-    $adminSettingsModel = new AdminSettings($database);
+    $database = new \App\Config\Database();
+    $adminSettingsModel = new \App\Models\AdminSettings($database);
     $maintenanceMode = $adminSettingsModel->getSetting('maintenance_mode', 0);
     
     if ($maintenanceMode && !isset($_GET['admin_bypass'])) {
+        $siteName = \App\Config\Config::getSiteName();
         ?>
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Site Under Maintenance - <?= Config::getSiteName() ?></title>
-            <link href="assets/tabler/dist/css/tabler.min.css" rel="stylesheet">
+            <title>Site Under Maintenance - <?= htmlspecialchars($siteName) ?></title>
             <style>
-                .maintenance-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-                .crypto-icon { color: #f7931a; font-size: 4rem; }
+                .maintenance-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; }
             </style>
         </head>
         <body class="maintenance-page">
-            <div class="container text-center">
-                <div class="crypto-icon mb-4">₿</div>
-                <h1 class="display-4 mb-3">Site Under Maintenance</h1>
-                <p class="lead text-muted mb-4">We're currently performing scheduled maintenance. Please check back shortly.</p>
-                <div class="text-muted">Expected completion: Within 2 hours</div>
+            <div style="text-align: center;">
+                <h1>Site Under Maintenance</h1>
+                <p>We're currently performing scheduled maintenance. Please check back shortly.</p>
             </div>
         </body>
         </html>
@@ -39,7 +34,9 @@ try {
         exit;
     }
 } catch (Exception $e) {
-    // If database fails, allow access
+    // if database fails, allow access
 }
 
-?>
+// redirect to login page
+header('Location: ' . \App\Config\Config::getBasePath() . 'login.php');
+exit;

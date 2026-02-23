@@ -3,7 +3,8 @@ if (!defined('ADMIN_AREA')) {
     define('ADMIN_AREA', true);
 }
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 // Page setup
 $pageTitle = 'User Management - ' . \App\Config\Config::getSiteName();
@@ -201,420 +202,207 @@ $currentAdmin = $adminController->getCurrentAdmin();
 include __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Page header -->
-<div class="page-header d-print-none">
-    <div class="container-xl">
-        <div class="row g-2 align-items-center">
-            <div class="col">
-                <h2 class="page-title">User Management</h2>
-                <div class="text-secondary">Manage user accounts, balances, and permissions</div>
-            </div>
-            <div class="col-auto ms-auto d-print-none">
-                <div class="btn-list">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-create-user">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="m0 0h24v24H0z" fill="none"/>
-                            <line x1="12" y1="5" x2="12" y2="19"/>
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        Add User
-                    </button>
-                </div>
-            </div>
+<div class="space-y-6">
+    <!-- stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Users</p>
+            <p class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white"><?= number_format($stats['total_users']) ?></p>
+        </div>
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Active Users</p>
+            <p class="text-3xl font-light tracking-tighter text-emerald-600 dark:text-emerald-400"><?= number_format($stats['active_users']) ?></p>
+        </div>
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">New This Month</p>
+            <p class="text-3xl font-light tracking-tighter text-[#1e0e62] dark:text-indigo-400"><?= number_format($stats['new_users_this_month']) ?></p>
+        </div>
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Verified Users</p>
+            <p class="text-3xl font-light tracking-tighter text-blue-600 dark:text-blue-400"><?= number_format($stats['verified_users']) ?></p>
         </div>
     </div>
-</div>
 
-<!-- Page body -->
-<div class="page-body">
-    <div class="container-xl">
-        
-        <!-- Statistics Cards -->
-        <div class="row row-deck row-cards mb-3">
-            <div class="col-sm-6 col-lg-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Total Users</div>
-                        </div>
-                        <div class="h1 mb-3"><?= number_format($stats['total_users']) ?></div>
-                        <div class="d-flex mb-2">
-                            <div class="d-flex align-items-center flex-fill">
-                                <div class="progress progress-sm flex-fill">
-                                    <div class="progress-bar bg-primary" style="width: 100%" role="progressbar"></div>
-                                </div>
-                                <div class="text-secondary ms-2">All</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Active Users</div>
-                        </div>
-                        <div class="h1 mb-3 text-success"><?= number_format($stats['active_users']) ?></div>
-                        <div class="d-flex mb-2">
-                            <div class="d-flex align-items-center flex-fill">
-                                <div class="progress progress-sm flex-fill">
-                                    <div class="progress-bar bg-success" style="width: 100%" role="progressbar"></div>
-                                </div>
-                                <div class="text-secondary ms-2">Live</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">New This Month</div>
-                        </div>
-                        <div class="h1 mb-3 text-primary"><?= number_format($stats['new_users_this_month']) ?></div>
-                        <div class="d-flex mb-2">
-                            <div class="d-flex align-items-center flex-fill">
-                                <div class="progress progress-sm flex-fill">
-                                    <div class="progress-bar bg-primary" style="width: 100%" role="progressbar"></div>
-                                </div>
-                                <div class="text-secondary ms-2">Recent</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Verified Users</div>
-                        </div>
-                        <div class="h1 mb-3 text-info"><?= number_format($stats['verified_users']) ?></div>
-                        <div class="d-flex mb-2">
-                            <div class="d-flex align-items-center flex-fill">
-                                <div class="progress progress-sm flex-fill">
-                                    <div class="progress-bar bg-info" style="width: 100%" role="progressbar"></div>
-                                </div>
-                                <div class="text-secondary ms-2">Verified</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- filters + table -->
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">All Users</h3>
+                <form method="GET" class="flex flex-wrap gap-2">
+                    <input type="text" name="search" class="px-3 py-1.5 text-sm bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" placeholder="Search users..." value="<?= htmlspecialchars($search) ?>">
+                    <select name="status" class="px-3 py-1.5 text-sm bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]">
+                        <option value="all" <?= $status === 'all' ? 'selected' : '' ?>>All Status</option>
+                        <option value="active" <?= $status === 'active' ? 'selected' : '' ?>>Active</option>
+                        <option value="inactive" <?= $status === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                        <option value="verified" <?= $status === 'verified' ? 'selected' : '' ?>>Verified</option>
+                        <option value="unverified" <?= $status === 'unverified' ? 'selected' : '' ?>>Unverified</option>
+                    </select>
+                    <button type="submit" class="px-4 py-1.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Filter</button>
+                </form>
             </div>
         </div>
-
-        <!-- User Management Table -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">All Users</h3>
-                        <div class="card-actions">
-                            <form method="GET" class="d-flex gap-2">
-                                <input type="text" name="search" class="form-control form-control-sm" 
-                                       placeholder="Search users..." value="<?= htmlspecialchars($search) ?>">
-                                <select name="status" class="form-select form-select-sm">
-                                    <option value="all" <?= $status === 'all' ? 'selected' : '' ?>>All Status</option>
-                                    <option value="active" <?= $status === 'active' ? 'selected' : '' ?>>Active</option>
-                                    <option value="inactive" <?= $status === 'inactive' ? 'selected' : '' ?>>Inactive</option>
-                                    <option value="verified" <?= $status === 'verified' ? 'selected' : '' ?>>Verified</option>
-                                    <option value="unverified" <?= $status === 'unverified' ? 'selected' : '' ?>>Unverified</option>
-                                </select>
-                                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-vcenter table-mobile-md card-table">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Contact</th>
-                                    <th>Balance</th>
-                                    <th>Investments</th>
-                                    <th>Status</th>
-                                    <th>Joined</th>
-                                    <th class="w-1">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($users)): ?>
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">
-                                            No users found
-                                        </td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php foreach ($users as $user): ?>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex py-1 align-items-center">
-                                                    <div class="avatar me-3 gradient-bg-1 text-white">
-                                                        <?= strtoupper(substr($user['first_name'] ?: $user['username'], 0, 1)) ?>
-                                                    </div>
-                                                    <div class="flex-fill">
-                                                        <div class="font-weight-medium"><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></div>
-                                                        <div class="text-muted">@<?= htmlspecialchars($user['username']) ?></div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div><?= htmlspecialchars($user['email']) ?></div>
-                                                <?php if ($user['phone']): ?>
-                                                    <div class="text-muted"><?= htmlspecialchars($user['phone']) ?></div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <div class="amount-display <?= $user['balance'] > 0 ? 'text-success' : 'text-muted' ?>">
-                                                    <span class="currency-symbol"><?= htmlspecialchars($currencySymbol) ?></span><?= number_format($user['balance'], 2) ?>
-                                                </div>
-                                                <?php if ($user['bonus_balance'] > 0): ?>
-                                                    <div class="text-muted small">Bonus: <?= htmlspecialchars($currencySymbol) ?><?= number_format($user['bonus_balance'], 2) ?></div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <div><?= $user['total_investments'] ?> investments</div>
-                                                <div class="text-muted small"><?= htmlspecialchars($currencySymbol) ?><?= number_format($user['total_invested_amount'], 2) ?> total</div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex flex-column gap-1">
-                                                    <span class="badge <?= $user['is_active'] ? 'bg-success' : 'bg-secondary' ?>">
-                                                        <?= $user['is_active'] ? 'Active' : 'Inactive' ?>
-                                                    </span>
-                                                    <?php if ($user['email_verified']): ?>
-                                                        <span class="badge bg-success-lt">Verified</span>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-warning-lt">Unverified</span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div><?= date('M j, Y', strtotime($user['created_at'])) ?></div>
-                                                <div class="text-muted small"><?= date('g:i A', strtotime($user['created_at'])) ?></div>
-                                            </td>
-                                            <td>
-                                                <div class="btn-list flex-nowrap">
-                                                    <button class="btn btn-sm btn-primary" onclick="editUser(<?= $user['id'] ?>)">
-                                                        Edit
-                                                    </button>
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-sm btn-secondary dropdown-toggle" 
-                                                                type="button" data-bs-toggle="dropdown">
-                                                            More
-                                                        </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item" href="#" onclick="viewUserDetails(<?= $user['id'] ?>)">View Details</a></li>
-                                                            <li><a class="dropdown-item" href="#" onclick="manageBalance(<?= $user['id'] ?>)">Manage Balance</a></li>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li><a class="dropdown-item text-primary" href="#" onclick="impersonateUser(<?= $user['id'] ?>)">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
-                                                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                                                    <circle cx="9" cy="7" r="4"/>
-                                                                    <path d="m22 2-5 10-5-5 10-5z"/>
-                                                                </svg>
-                                                                Login as User
-                                                            </a></li>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li><a class="dropdown-item" href="#" onclick="toggleStatus(<?= $user['id'] ?>)">
-                                                                <?= $user['is_active'] ? 'Deactivate' : 'Activate' ?>
-                                                            </a></li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <?php if ($totalPages > 1): ?>
-                        <div class="card-footer d-flex align-items-center">
-                            <p class="m-0 text-muted">
-                                Showing <?= ($page - 1) * $limit + 1 ?> to <?= min($page * $limit, $totalUsers) ?> of <?= $totalUsers ?> entries
-                            </p>
-                            <ul class="pagination m-0 ms-auto">
-                                <?php if ($page > 1): ?>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&status=<?= $status ?>">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="m0 0h24v24H0z" fill="none"/><polyline points="15,6 9,12 15,18" /></svg>
-                                            prev
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
-                                
-                                <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
-                                    <li class="page-item <?= $i === $page ? 'active' : '' ?>">
-                                        <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&status=<?= $status ?>"><?= $i ?></a>
-                                    </li>
-                                <?php endfor; ?>
-                                
-                                <?php if ($page < $totalPages): ?>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&status=<?= $status ?>">
-                                            next
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="m0 0h24v24H0z" fill="none"/><polyline points="9,6 15,12 9,18" /></svg>
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
-                            </ul>
-                        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50/50 dark:bg-white/5">
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Contact</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Balance</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Investments</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-[#2d1b6e]">
+                    <?php if (empty($users)): ?>
+                    <tr><td colspan="7" class="px-4 py-12 text-center text-sm text-gray-400">No users found</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($users as $user): ?>
+                        <tr class="border-b border-gray-100 dark:border-[#2d1b6e]/30 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-[#1e0e62]/10 dark:bg-white/10 flex items-center justify-center text-[#1e0e62] dark:text-white text-xs font-medium"><?= strtoupper(substr($user['first_name'] ?: $user['username'], 0, 1)) ?></div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white"><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></p>
+                                        <p class="text-xs text-gray-400">@<?= htmlspecialchars($user['username']) ?></p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <p class="text-sm text-gray-900 dark:text-white"><?= htmlspecialchars($user['email']) ?></p>
+                                <?php if ($user['phone']): ?><p class="text-xs text-gray-400"><?= htmlspecialchars($user['phone']) ?></p><?php endif; ?>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <p class="text-sm font-medium <?= $user['balance'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400' ?>"><?= htmlspecialchars($currencySymbol) ?><?= number_format($user['balance'], 2) ?></p>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <p class="text-sm text-gray-900 dark:text-white"><?= $user['total_investments'] ?></p>
+                                <p class="text-xs text-gray-400"><?= htmlspecialchars($currencySymbol) ?><?= number_format($user['total_invested_amount'], 2) ?></p>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="flex flex-col gap-1">
+                                    <span class="rounded-full px-2.5 py-0.5 text-xs font-medium inline-block w-fit <?= $user['is_active'] ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500' ?>"><?= $user['is_active'] ? 'Active' : 'Inactive' ?></span>
+                                    <span class="rounded-full px-2.5 py-0.5 text-xs font-medium inline-block w-fit <?= $user['email_verified'] ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' ?>"><?= $user['email_verified'] ? 'Verified' : 'Unverified' ?></span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <p class="text-sm text-gray-900 dark:text-white"><?= date('M j, Y', strtotime($user['created_at'])) ?></p>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="flex items-center gap-1">
+                                    <button onclick="editUser(<?= $user['id'] ?>)" class="px-3 py-1 bg-[#1e0e62] text-white text-xs font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Edit</button>
+                                    <button onclick="manageBalance(<?= $user['id'] ?>)" class="px-3 py-1 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full hover:border-[#1e0e62] transition-colors">Balance</button>
+                                    <button onclick="impersonateUser(<?= $user['id'] ?>)" class="px-3 py-1 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full hover:border-[#1e0e62] transition-colors">Login as</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
                     <?php endif; ?>
-                </div>
+                </tbody>
+            </table>
+        </div>
+        <?php if ($totalPages > 1): ?>
+        <div class="p-6 border-t border-gray-100 dark:border-[#2d1b6e] flex items-center justify-between">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Showing <?= ($page - 1) * $limit + 1 ?> to <?= min($page * $limit, $totalUsers) ?> of <?= $totalUsers ?></p>
+            <div class="flex gap-1">
+                <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
+                <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&status=<?= $status ?>" class="px-3 py-1 text-sm rounded-full <?= $i === $page ? 'bg-[#1e0e62] text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10' ?>"><?= $i ?></a>
+                <?php endfor; ?>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
-<!-- Edit User Modal -->
-<div class="modal modal-blur fade" id="editUserModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="editUserForm">
-                <div class="modal-body">
-                    <?= \App\Utils\CSRFProtection::getTokenField() ?>
-                    <input type="hidden" id="edit_user_id" name="user_id">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">First Name</label>
-                                <input type="text" class="form-control" name="first_name" id="edit_first_name">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Last Name</label>
-                                <input type="text" class="form-control" name="last_name" id="edit_last_name">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" id="edit_email">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Phone</label>
-                                <input type="text" class="form-control" name="phone" id="edit_phone">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Country</label>
-                                <input type="text" class="form-control" name="country" id="edit_country">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">New Password (optional)</label>
-                                <input type="password" class="form-control" name="password" id="edit_password">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-check">
-                                    <input type="checkbox" class="form-check-input" name="is_active" id="edit_is_active">
-                                    <span class="form-check-label">Active User</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-check">
-                                    <input type="checkbox" class="form-check-input" name="email_verified" id="edit_email_verified">
-                                    <span class="form-check-label">Email Verified</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update User</button>
-                </div>
-            </form>
+<!-- edit user modal -->
+<div id="editUserModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-sm">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit User</h3>
+            <button onclick="hideModal('editUserModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
+        <form id="editUserForm" class="p-6 space-y-4">
+            <?= \App\Utils\CSRFProtection::getTokenField() ?>
+            <input type="hidden" id="edit_user_id" name="user_id">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">First name</label><input type="text" name="first_name" id="edit_first_name" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]"></div>
+                <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Last name</label><input type="text" name="last_name" id="edit_last_name" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]"></div>
+                <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Email</label><input type="email" name="email" id="edit_email" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]"></div>
+                <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Phone</label><input type="text" name="phone" id="edit_phone" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]"></div>
+                <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Country</label><input type="text" name="country" id="edit_country" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]"></div>
+                <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">New password (optional)</label><input type="password" name="password" id="edit_password" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]"></div>
+            </div>
+            <div class="flex items-center gap-6">
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="is_active" id="edit_is_active" class="w-4 h-4 text-[#1e0e62] border-gray-300 rounded focus:ring-[#1e0e62]"><span class="text-sm text-gray-600 dark:text-gray-400">Active</span></label>
+                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="email_verified" id="edit_email_verified" class="w-4 h-4 text-[#1e0e62] border-gray-300 rounded focus:ring-[#1e0e62]"><span class="text-sm text-gray-600 dark:text-gray-400">Email verified</span></label>
+            </div>
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="hideModal('editUserModal')" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">Cancel</button>
+                <button type="submit" class="px-6 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Update User</button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Balance Management Modal -->
-<div class="modal modal-blur fade" id="balanceModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Manage User Balance</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="balanceForm">
-                <div class="modal-body">
-                    <?= \App\Utils\CSRFProtection::getTokenField() ?>
-                    <input type="hidden" id="balance_user_id" name="user_id">
-                    <div class="mb-3">
-                        <label class="form-label">Current Balance</label>
-                        <div class="h3 text-primary" id="current_balance"><?= htmlspecialchars($currencySymbol) ?>0.00</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Action</label>
-                        <select class="form-select" name="type" id="balance_type">
-                            <option value="add">Add funds</option>
-                            <option value="subtract">Subtract funds</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><?= htmlspecialchars($currencySymbol) ?></span>
-                            <input type="number" class="form-control" name="amount" step="0.01" min="0" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" rows="3" placeholder="Reason for balance adjustment..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Balance</button>
-                </div>
-            </form>
+<!-- balance modal -->
+<div id="balanceModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-sm">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Manage Balance</h3>
+            <button onclick="hideModal('balanceModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
+        <form id="balanceForm" class="p-6 space-y-4">
+            <?= \App\Utils\CSRFProtection::getTokenField() ?>
+            <input type="hidden" id="balance_user_id" name="user_id">
+            <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Current balance</p>
+                <p class="text-2xl font-light tracking-tighter text-[#1e0e62] dark:text-indigo-400" id="current_balance"><?= htmlspecialchars($currencySymbol) ?>0.00</p>
+            </div>
+            <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Action</label><select name="type" id="balance_type" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none"><option value="add">Add funds</option><option value="subtract">Subtract funds</option></select></div>
+            <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Amount</label><input type="number" name="amount" step="0.01" min="0" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" required></div>
+            <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Description</label><textarea name="description" rows="3" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" placeholder="Reason for adjustment..."></textarea></div>
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="hideModal('balanceModal')" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-full">Cancel</button>
+                <button type="submit" class="px-6 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Update Balance</button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- User Details Modal -->
-<div class="modal modal-blur fade" id="userDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">User Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="userDetailsContent">
-                <!-- Content loaded via AJAX -->
-            </div>
+<!-- user details modal -->
+<div id="userDetailsModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-sm">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">User Details</h3>
+            <button onclick="hideModal('userDetailsModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
+        <div class="p-6" id="userDetailsContent"></div>
     </div>
 </div>
 
-<!-- Custom JavaScript for this page -->
 <?php
 $pageSpecificJS = '
 <script>
+// modal helpers
+function showModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.remove("hidden");
+        modal.style.display = "flex";
+        document.body.classList.add("modal-open");
+    }
+}
+
+function hideModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add("hidden");
+        modal.style.display = "none";
+        document.body.classList.remove("modal-open");
+    }
+}
+
 // Edit User Function
 function editUser(userId) {
     console.log("Edit user called for ID:", userId);
@@ -643,15 +431,13 @@ function editUser(userId) {
                 
                 // Show the modal using Tabler method or fallback
                 try {
-                    if (typeof bootstrap !== "undefined") {
+                    if (false && typeof bootstrap !== "undefined") {
                         const modal = new bootstrap.Modal(document.getElementById("editUserModal"));
                         modal.show();
                     } else {
                         // Fallback: show modal manually
                         const modal = document.getElementById("editUserModal");
-                        modal.style.display = "block";
-                        modal.classList.add("show");
-                        document.body.classList.add("modal-open");
+                        showModal(modal.id);
                     }
                 } catch (error) {
                     console.error("Error showing modal:", error);
@@ -709,14 +495,14 @@ function manageBalance(userId) {
                
                // Show modal
                try {
-                   if (typeof bootstrap !== "undefined") {
+                   if (false && typeof bootstrap !== "undefined") {
                        const modal = new bootstrap.Modal(document.getElementById("balanceModal"));
                        modal.show();
                    } else {
                        // Fallback
                        const modal = document.getElementById("balanceModal");
-                       modal.style.display = "block";
-                       modal.classList.add("show");
+                       modal.classList.remove("hidden");
+                       modal.style.display = "flex";
                        document.body.classList.add("modal-open");
                    }
                } catch (error) {
@@ -738,14 +524,14 @@ function viewUserDetails(userId) {
    console.log("View details called for ID:", userId);
    
    try {
-       if (typeof bootstrap !== "undefined") {
+       if (false && typeof bootstrap !== "undefined") {
            const modal = new bootstrap.Modal(document.getElementById("userDetailsModal"));
            modal.show();
        } else {
            // Fallback
            const modal = document.getElementById("userDetailsModal");
-           modal.style.display = "block";
-           modal.classList.add("show");
+           modal.classList.remove("hidden");
+           modal.style.display = "flex";
            document.body.classList.add("modal-open");
        }
    } catch (error) {
@@ -775,9 +561,12 @@ function viewUserDetails(userId) {
 // Impersonate User
 function impersonateUser(userId) {
    if (confirm("Are you sure you want to login as this user?\\n\\nThis action will be logged for security purposes.")) {
-       // Show loading state
-       const button = event.target;
-       const originalText = button.innerHTML;
+       // redirect to impersonation handler
+       window.location.href = `impersonate.php?user_id=${userId}`;
+       return;
+       // legacy loading state code below
+       const button = event ? event.target : null;
+       const originalText = button ? button.innerHTML : \'\';
        button.innerHTML = "<span class=\"spinner-border spinner-border-sm me-1\"></span>Logging in...";
        button.disabled = true;
        

@@ -3,7 +3,8 @@ if (!defined('ADMIN_AREA')) {
     define('ADMIN_AREA', true);
 }
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 // Initialize session
 \App\Utils\SessionManager::start();
@@ -57,8 +58,8 @@ try {
     <!-- User Basic Info -->
     <div class="row mb-4">
         <div class="col-md-6">
-            <h6 class="text-muted mb-3">Basic Information</h6>
-            <table class="table table-sm">
+            <h6 class="text-gray-400 mb-3">Basic Information</h6>
+            <table class="w-full text-sm">
                 <tr><td><strong>Username:</strong></td><td><?= htmlspecialchars($user['username']) ?></td></tr>
                 <tr><td><strong>Email:</strong></td><td><?= htmlspecialchars($user['email']) ?></td></tr>
                 <tr><td><strong>Full Name:</strong></td><td><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></td></tr>
@@ -78,8 +79,8 @@ try {
         </div>
         
         <div class="col-md-6">
-            <h6 class="text-muted mb-3">Financial Information</h6>
-            <table class="table table-sm">
+            <h6 class="text-gray-400 mb-3">Financial Information</h6>
+            <table class="w-full text-sm">
                 <tr><td><strong>Balance:</strong></td><td>$<?= number_format($user['balance'], 2) ?></td></tr>
                 <tr><td><strong>Locked Balance:</strong></td><td>$<?= number_format($user['locked_balance'], 2) ?></td></tr>
                 <tr><td><strong>Bonus Balance:</strong></td><td>$<?= number_format($user['bonus_balance'], 2) ?></td></tr>
@@ -93,53 +94,53 @@ try {
     <!-- User Statistics -->
     <div class="row mb-4">
         <div class="col-12">
-            <h6 class="text-muted mb-3">Investment Statistics</h6>
+            <h6 class="text-gray-400 mb-3">Investment Statistics</h6>
             <div class="row g-3">
                 <div class="col-md-2">
-                    <div class="card text-center">
-                        <div class="card-body p-2">
-                            <div class="h4 mb-0"><?= $userStats['total_investments'] ?></div>
-                            <small class="text-muted">Total Investments</small>
+                    <div class="bg-white dark:bg-[#1a1145] rounded-xl text-center">
+                        <div class="p-3">
+                            <div class="text-lg font-semibold text-gray-900 dark:text-white"><?= $userStats['total_investments'] ?></div>
+                            <small class="text-gray-400">Total Investments</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card text-center">
-                        <div class="card-body p-2">
-                            <div class="h4 mb-0">$<?= number_format($userStats['total_invested_amount'], 2) ?></div>
-                            <small class="text-muted">Total Invested</small>
+                    <div class="bg-white dark:bg-[#1a1145] rounded-xl text-center">
+                        <div class="p-3">
+                            <div class="text-lg font-semibold text-gray-900 dark:text-white">$<?= number_format($userStats['total_invested_amount'], 2) ?></div>
+                            <small class="text-gray-400">Total Invested</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card text-center">
-                        <div class="card-body p-2">
-                            <div class="h4 mb-0"><?= $userStats['active_investments'] ?></div>
-                            <small class="text-muted">Active</small>
+                    <div class="bg-white dark:bg-[#1a1145] rounded-xl text-center">
+                        <div class="p-3">
+                            <div class="text-lg font-semibold text-gray-900 dark:text-white"><?= $userStats['active_investments'] ?></div>
+                            <small class="text-gray-400">Active</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card text-center">
-                        <div class="card-body p-2">
-                            <div class="h4 mb-0"><?= $userStats['total_transactions'] ?></div>
-                            <small class="text-muted">Transactions</small>
+                    <div class="bg-white dark:bg-[#1a1145] rounded-xl text-center">
+                        <div class="p-3">
+                            <div class="text-lg font-semibold text-gray-900 dark:text-white"><?= $userStats['total_transactions'] ?></div>
+                            <small class="text-gray-400">Transactions</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card text-center">
-                        <div class="card-body p-2">
-                            <div class="h4 mb-0">$<?= number_format($userStats['total_profits_earned'], 2) ?></div>
-                            <small class="text-muted">Profits Earned</small>
+                    <div class="bg-white dark:bg-[#1a1145] rounded-xl text-center">
+                        <div class="p-3">
+                            <div class="text-lg font-semibold text-gray-900 dark:text-white">$<?= number_format($userStats['total_profits_earned'], 2) ?></div>
+                            <small class="text-gray-400">Profits Earned</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card text-center">
-                        <div class="card-body p-2">
-                            <div class="h4 mb-0"><?= $userStats['total_referrals'] ?></div>
-                            <small class="text-muted">Referrals</small>
+                    <div class="bg-white dark:bg-[#1a1145] rounded-xl text-center">
+                        <div class="p-3">
+                            <div class="text-lg font-semibold text-gray-900 dark:text-white"><?= $userStats['total_referrals'] ?></div>
+                            <small class="text-gray-400">Referrals</small>
                         </div>
                     </div>
                 </div>
@@ -151,9 +152,9 @@ try {
     <?php if (!empty($recentTransactions)): ?>
     <div class="row mb-4">
         <div class="col-12">
-            <h6 class="text-muted mb-3">Recent Transactions</h6>
+            <h6 class="text-gray-400 mb-3">Recent Transactions</h6>
             <div class="table-responsive">
-                <table class="table table-sm">
+                <table class="w-full text-sm">
                     <thead>
                         <tr>
                             <th>Type</th>
@@ -190,9 +191,9 @@ try {
     <?php if (!empty($investments)): ?>
     <div class="row">
         <div class="col-12">
-            <h6 class="text-muted mb-3">Current Investments</h6>
+            <h6 class="text-gray-400 mb-3">Current Investments</h6>
             <div class="table-responsive">
-                <table class="table table-sm">
+                <table class="w-full text-sm">
                     <thead>
                         <tr>
                             <th>Plan</th>

@@ -106,16 +106,24 @@ class SupportService {
      */
     public function addReply($ticketId, $userId, $message, $isAdmin = false) {
         try {
-            $replyId = $this->database->insert('support_ticket_replies', [
+            // ticket_replies table uses admin_id/user_id and sender_type columns
+            $data = [
                 'ticket_id' => $ticketId,
-                'user_id' => $userId,
                 'message' => $message,
-                'is_admin' => $isAdmin ? 1 : 0
-            ]);
+                'sender_type' => $isAdmin ? 'admin' : 'user',
+            ];
+            if ($isAdmin) {
+                $data['admin_id'] = $userId;
+            } else {
+                $data['user_id'] = $userId;
+            }
+            $replyId = $this->database->insert('ticket_replies', $data);
             
-            // Update ticket status
+            // update ticket status - use valid enum values
             $this->database->update('support_tickets', 
-                ['status' => $isAdmin ? 'answered' : 'waiting'], 
+                ['status' => $isAdmin ? 'in_progress' : 'pending',
+                 'last_reply_by' => $isAdmin ? 'admin' : 'user',
+                 'last_reply_at' => date('Y-m-d H:i:s')], 
                 'id = ?', 
                 [$ticketId]
             );

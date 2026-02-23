@@ -7,6 +7,34 @@ use App\Middleware\CsrfMiddleware;
 use App\Controllers\ProfileController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// handle ajax profile update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && 
+    isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+    $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+    
+    if (!AuthMiddleware::check()) {
+        header('Content-Type: application/json');
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+        exit;
+    }
+    
+    $action = $_POST['action'] ?? '';
+    if ($action === 'update_profile') {
+        // map form field names to controller field names
+        if (isset($_POST['firstname']) && !isset($_POST['first_name'])) {
+            $_POST['first_name'] = $_POST['firstname'];
+        }
+        if (isset($_POST['lastname']) && !isset($_POST['last_name'])) {
+            $_POST['last_name'] = $_POST['lastname'];
+        }
+        $controller = new ProfileController();
+        $controller->updateProfile();
+        exit;
+    }
+}
+
 if (!AuthMiddleware::check()) {
     $user = ['id' => 1, 'firstname' => 'Demo', 'lastname' => 'User', 'email' => 'demo@cornerfield.com', 'balance' => 15420.50, 'username' => 'demouser'];
     $isPreview = true;

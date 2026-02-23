@@ -380,7 +380,7 @@ class DepositManager {
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${deposit.formatted_fee}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${this.getStatusClasses(deposit.status)}">
-                        ${deposit.status}
+                        ${deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -394,12 +394,13 @@ class DepositManager {
 
     getStatusClasses(status) {
         const classes = {
-            'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100',
-            'processing': 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100',
-            'completed': 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100',
-            'failed': 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100',
-            'cancelled': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-            'expired': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+            'pending': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+            'processing': 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+            'completed': 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+            'rejected': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+            'failed': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+            'cancelled': 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
+            'expired': 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
         };
         return classes[status] || classes['pending'];
     }

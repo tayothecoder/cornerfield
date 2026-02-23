@@ -270,19 +270,19 @@ $depositMethods = $methodModel->findActive();
     <!-- deposit history -->
     <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6">
         <h2 class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-2">Recent Deposits</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">track your deposit history and status</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Track your deposit history and status</p>
         
         <div class="overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full">
+                <table class="w-full text-sm">
                     <thead>
-                        <tr class="text-left">
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Method</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fee</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        <tr class="bg-gray-50/50 dark:bg-white/5">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Method</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fee</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="depositHistory" class="divide-y divide-gray-100 dark:divide-[#2d1b6e]">
@@ -318,7 +318,7 @@ $depositMethods = $methodModel->findActive();
                 <div class="mt-4 text-center">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Deposit Created Successfully</h3>
                     <div class="mt-2">
-                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">your deposit request has been created and is being processed.</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">Your deposit request has been created and is being processed.</p>
                     </div>
                 </div>
             </div>

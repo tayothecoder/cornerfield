@@ -15,7 +15,7 @@
  */
 class CornerfieldApp {
     constructor() {
-        this.theme = localStorage.getItem('cf-theme') || 'light';
+        this.theme = localStorage.getItem('cf-theme') || localStorage.getItem('theme') || 'light';
         this.init();
     }
 
@@ -38,6 +38,13 @@ class CornerfieldApp {
         this.theme = theme;
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('cf-theme', theme);
+        // sync with tailwind dark class and localStorage.theme
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('theme', theme);
         
         // Update theme toggle icon if it exists
         const toggleIcon = document.querySelector('.cf-theme-toggle-icon');
@@ -65,6 +72,9 @@ class CornerfieldApp {
         if (!themeToggle) {
             themeToggle = document.createElement('button');
             themeToggle.className = 'cf-theme-toggle';
+            themeToggle.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:50;background:none;border:none;cursor:pointer;padding:0.5rem;opacity:0.6;transition:opacity 0.2s';
+            themeToggle.onmouseenter = () => themeToggle.style.opacity = '1';
+            themeToggle.onmouseleave = () => themeToggle.style.opacity = '0.6';
             const sunSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
             const moonSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
             themeToggle.innerHTML = `<span class="cf-theme-toggle-icon">${this.theme === 'dark' ? sunSvg : moonSvg}</span>`;
@@ -244,6 +254,13 @@ class CornerfieldApp {
     }
 
     validatePassword(input) {
+        // skip strict validation on login page — server handles auth
+        const path = window.location.pathname;
+        if (path.endsWith('login.php') || path.endsWith('forgot-password.php')) {
+            this.setFieldValidation(input, true, '');
+            return true;
+        }
+
         const password = input.value;
         const minLength = password.length >= 8;
         const hasUpper = /[A-Z]/.test(password);

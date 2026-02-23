@@ -6,24 +6,38 @@ use App\Models\UserModel;
 use App\Controllers\WithdrawalController;
 use App\Utils\Security;
 
-// handle ajax post before any html output
-if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-    $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+// handle ajax requests before any html output
+if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     require_once dirname(__DIR__) . '/autoload.php';
-    try {
-        $controller = new WithdrawalController();
-        $controller->create();
-    } catch (\Throwable $e) {
-        error_log('Withdrawal POST failed: ' . $e->getMessage());
-        header('Content-Type: application/json');
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Server error processing withdrawal']);
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            $controller = new WithdrawalController();
+            $controller->create();
+        } catch (\Throwable $e) {
+            error_log('Withdrawal POST failed: ' . $e->getMessage());
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Server error processing withdrawal']);
+        }
+        exit;
     }
-    exit;
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'history') {
+        try {
+            $controller = new WithdrawalController();
+            $controller->getHistory();
+        } catch (\Throwable $e) {
+            error_log('Withdrawal history failed: ' . $e->getMessage());
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Server error loading history']);
+        }
+        exit;
+    }
 }
 
 $pageTitle = 'Withdraw';
@@ -58,7 +72,7 @@ $withdrawalModel = new WithdrawalModel();
                 <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                 </svg>
-                <span id="pendingText" class="text-sm">you have pending withdrawals totaling $0.00</span>
+                <span id="pendingText" class="text-sm">You have pending withdrawals totaling $0.00</span>
             </div>
         </div>
     </div>
@@ -66,7 +80,7 @@ $withdrawalModel = new WithdrawalModel();
     <!-- withdrawal form -->
     <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6">
         <h2 class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-2">Create Withdrawal</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">withdraw funds to your cryptocurrency wallet</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Withdraw funds to your cryptocurrency wallet</p>
         
         <form id="withdrawalForm" class="space-y-6">
             <?= Security::getCsrfTokenInput() ?>
@@ -129,7 +143,7 @@ $withdrawalModel = new WithdrawalModel();
                        class="block w-full py-2.5 px-3 text-sm border border-gray-200 dark:border-[#2d1b6e] rounded-xl bg-white dark:bg-[#0f0a2e] text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#1e0e62] focus:border-[#1e0e62]" 
                        placeholder="Enter your wallet address"
                        required>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">make sure the wallet address matches the selected currency and network</p>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Make sure the wallet address matches the selected currency and network</p>
             </div>
 
             <div class="bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-2xl p-4" id="feeCalculation" style="display: none;">
@@ -159,7 +173,7 @@ $withdrawalModel = new WithdrawalModel();
                 </div>
                 
                 <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                    <p>processing time: 1-24 hours</p>
+                    <p>Processing time: 1-24 hours</p>
                 </div>
             </div>
 
@@ -174,10 +188,10 @@ $withdrawalModel = new WithdrawalModel();
                         <h3 class="text-sm font-medium text-amber-800 dark:text-amber-200">Security Notice</h3>
                         <div class="mt-2 text-sm text-amber-700 dark:text-amber-300">
                             <ul class="list-disc list-inside space-y-1">
-                                <li>double-check your wallet address before submitting</li>
-                                <li>withdrawals are processed within 1-24 hours during business hours</li>
-                                <li>you will receive an email confirmation once processed</li>
-                                <li>all withdrawals are final and cannot be reversed</li>
+                                <li>Double-check your wallet address before submitting</li>
+                                <li>Withdrawals are processed within 1-24 hours during business hours</li>
+                                <li>You will receive an email confirmation once processed</li>
+                                <li>All withdrawals are final and cannot be reversed</li>
                             </ul>
                         </div>
                     </div>
@@ -222,20 +236,20 @@ $withdrawalModel = new WithdrawalModel();
     <!-- withdrawal history -->
     <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6">
         <h2 class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-2">Withdrawal History</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">track your withdrawal requests and their status</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Track your withdrawal requests and their status</p>
         
         <div class="overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full">
+                <table class="w-full text-sm">
                     <thead>
-                        <tr class="text-left">
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fee</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Currency</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Address</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hash</th>
+                        <tr class="bg-gray-50/50 dark:bg-white/5">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fee</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Currency</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Address</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hash</th>
                         </tr>
                     </thead>
                     <tbody id="withdrawalHistory" class="divide-y divide-gray-100 dark:divide-[#2d1b6e]">
@@ -280,7 +294,7 @@ $withdrawalModel = new WithdrawalModel();
                             <p><strong>Address:</strong> <span id="confirmAddress" class="font-mono text-xs break-all">...</span></p>
                         </div>
                         <div class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
-                            <p class="text-sm text-red-800 dark:text-red-200">this withdrawal cannot be reversed. please verify all details are correct.</p>
+                            <p class="text-sm text-red-800 dark:text-red-200">This withdrawal cannot be reversed. please verify all details are correct.</p>
                         </div>
                     </div>
                 </div>
@@ -311,7 +325,7 @@ $withdrawalModel = new WithdrawalModel();
                 <div class="mt-4 text-center">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Withdrawal Submitted</h3>
                     <div class="mt-2">
-                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">your withdrawal request has been submitted and will be processed within 1-24 hours.</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="successMessage">Your withdrawal request has been submitted and will be processed within 1-24 hours.</p>
                     </div>
                 </div>
             </div>

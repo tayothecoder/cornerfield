@@ -92,10 +92,10 @@ $base = $base ?? \App\Config\Config::getBasePath();
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <?php
         $statItems = [
-            ['Total', $data['stats']['total'] ?? 0, 'text-gray-600 dark:text-gray-400', 'bg-gray-100 dark:bg-[#0f0a2e]'],
-            ['Open', $data['stats']['open'] ?? 0, 'text-red-600 dark:text-red-400', 'bg-red-100 dark:bg-red-900/20'],
-            ['Pending', $data['stats']['pending'] ?? 0, 'text-amber-600 dark:text-amber-400', 'bg-amber-100 dark:bg-amber-900/20'],
-            ['Resolved', $data['stats']['resolved'] ?? 0, 'text-emerald-600 dark:text-emerald-400', 'bg-emerald-100 dark:bg-emerald-900/20'],
+            ['Total', $data['stats']['total_tickets'] ?? $data['stats']['total'] ?? 0, 'text-gray-600 dark:text-gray-400', 'bg-gray-100 dark:bg-[#0f0a2e]'],
+            ['Open', $data['stats']['open_tickets'] ?? $data['stats']['open'] ?? 0, 'text-red-600 dark:text-red-400', 'bg-red-100 dark:bg-red-900/20'],
+            ['Pending', $data['stats']['waiting_tickets'] ?? $data['stats']['pending'] ?? 0, 'text-amber-600 dark:text-amber-400', 'bg-amber-100 dark:bg-amber-900/20'],
+            ['Resolved', $data['stats']['resolved_tickets'] ?? $data['stats']['resolved'] ?? 0, 'text-emerald-600 dark:text-emerald-400', 'bg-emerald-100 dark:bg-emerald-900/20'],
             ['Closed', $data['stats']['closed'] ?? 0, 'text-gray-600 dark:text-gray-400', 'bg-gray-100 dark:bg-[#0f0a2e]'],
         ];
         foreach ($statItems as [$label, $count, $textColor, $bgColor]): ?>
@@ -123,11 +123,12 @@ $base = $base ?? \App\Config\Config::getBasePath();
                             <span class="px-2 py-0.5 text-[10px] font-medium rounded-full <?php
                                 echo match($ticket['status']) {
                                     'open' => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-                                    'pending' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                                    'pending', 'waiting' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                                    'in_progress' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
                                     'resolved' => 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
                                     default => 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
                                 };
-                            ?>"><?= ucfirst($ticket['status']) ?></span>
+                            ?>"><?= ucwords(str_replace('_', ' ', $ticket['status'])) ?></span>
                             <span class="px-2 py-0.5 text-[10px] font-medium rounded-full <?php
                                 echo match($ticket['priority']) {
                                     'high' => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
@@ -164,11 +165,12 @@ $base = $base ?? \App\Config\Config::getBasePath();
             <span class="px-2.5 py-1 text-xs font-medium rounded-full <?php
                 echo match($data['ticket']['status']) {
                     'open' => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-                    'pending' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                    'pending', 'waiting' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                    'in_progress' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
                     'resolved' => 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
                     default => 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
                 };
-            ?>"><?= ucfirst($data['ticket']['status']) ?></span>
+            ?>"><?= ucwords(str_replace('_', ' ', $data['ticket']['status'])) ?></span>
         </div>
         <div class="flex items-center gap-3 text-xs text-gray-400 mb-6">
             <span><?= ucfirst($data['ticket']['category']) ?></span>

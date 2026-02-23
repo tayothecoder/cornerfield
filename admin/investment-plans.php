@@ -3,7 +3,8 @@ if (!defined('ADMIN_AREA')) {
     define('ADMIN_AREA', true);
 }
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 // Initialize session
 \App\Utils\SessionManager::start();
@@ -136,99 +137,99 @@ include __DIR__ . '/includes/header.php';
 ?>
 
 <!-- Page Content -->
-<div class="admin-content">
+<div class="space-y-6">
     <?php if ($success): ?>
-        <div class="alert alert-success alert-dismissible" role="alert">
-            <div class="d-flex">
+        <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm" >
+            <div class="flex">
                 <div>
-                    <i class="fas fa-check-circle me-2"></i>
+                    <i class="fas fa-check-circle mr-2"></i>
                 </div>
                 <div><?= htmlspecialchars($success) ?></div>
             </div>
-            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+            <a class="text-gray-400 hover:text-gray-600 dark:hover:text-white"  aria-label="close"></a>
         </div>
     <?php endif; ?>
 
     <?php if ($error): ?>
-        <div class="alert alert-danger alert-dismissible" role="alert">
-            <div class="d-flex">
+        <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm" >
+            <div class="flex">
                 <div>
-                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <i class="fas fa-exclamation-circle mr-2"></i>
                 </div>
                 <div><?= htmlspecialchars($error) ?></div>
             </div>
-            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+            <a class="text-gray-400 hover:text-gray-600 dark:hover:text-white"  aria-label="close"></a>
         </div>
     <?php endif; ?>
 
     <!-- Statistics -->
-    <div class="stats-grid">
-        <div class="stats-card">
-            <div class="stats-icon" style="background: var(--admin-primary);">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <div class="hidden">
                 <i class="fas fa-chart-line"></i>
             </div>
-            <div class="stats-number"><?= number_format($schemaStats['total_schemas']) ?></div>
-            <div class="stats-label">Total Plans</div>
+            <div class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white"><?= number_format($schemaStats['total_schemas']) ?></div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Plans</div>
         </div>
 
-        <div class="stats-card">
-            <div class="stats-icon" style="background: var(--admin-success);">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <div class="hidden">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <div class="stats-number"><?= number_format($schemaStats['active_schemas']) ?></div>
-            <div class="stats-label">Active Plans</div>
+            <div class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white"><?= number_format($schemaStats['active_schemas']) ?></div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Plans</div>
         </div>
 
-        <div class="stats-card">
-            <div class="stats-icon" style="background: var(--admin-info);">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <div class="hidden">
                 <i class="fas fa-users"></i>
             </div>
-            <div class="stats-number"><?= number_format($schemaStats['total_investments']) ?></div>
-            <div class="stats-label">Total Investments</div>
+            <div class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white"><?= number_format($schemaStats['total_investments']) ?></div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Investments</div>
         </div>
 
-        <div class="stats-card">
-            <div class="stats-icon" style="background: var(--admin-warning);">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <div class="hidden">
                 <i class="fas fa-dollar-sign"></i>
             </div>
-            <div class="stats-number"><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schemaStats['total_invested'], 2) ?></div>
-            <div class="stats-label">Total Invested</div>
+            <div class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white"><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schemaStats['total_invested'], 2) ?></div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Invested</div>
         </div>
     </div>
 
     <!-- Investment Plans Table -->
-    <div class="admin-card">
-        <div class="admin-card-header">
-            <h3 class="admin-card-title">Investment Plans</h3>
-            <div class="ms-auto">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-create-plan">
-                    <i class="fas fa-plus me-2"></i>
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+            <h3 class="text-sm font-medium text-gray-900 dark:text-white">Investment Plans</h3>
+            <div class="ml-auto">
+                <button class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="showModal(this.getAttribute('data-target'))" data-target="modal-create-plan">
+                    <i class="fas fa-plus mr-2"></i>
                     Create New Plan
                 </button>
             </div>
         </div>
-        <div class="admin-card-body">
-            <div class="table-responsive">
-                <table class="admin-table">
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
                     <thead>
-                        <tr>
-                            <th>Plan Name</th>
-                            <th>Daily Rate</th>
-                            <th>Duration</th>
-                            <th>Min/Max Investment</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Actions</th>
+                        <tr class="bg-gray-50/50 dark:bg-white/5">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Plan Name</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Daily Rate</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Min/Max Investment</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($schemas)): ?>
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="7" class="px-4 py-12 text-center text-sm text-gray-400">
                                     <i class="fas fa-chart-line fa-2x mb-3"></i>
                                     <div>No investment plans found</div>
                                     <div class="mt-2">
-                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal-create-plan">
+                                        <button class="btn btn-primary btn-sm" onclick="showModal(this.getAttribute('data-target'))" data-target="modal-create-plan">
                                             Create First Plan
                                         </button>
                                     </div>
@@ -236,24 +237,24 @@ include __DIR__ . '/includes/header.php';
                             </tr>
                         <?php else: ?>
                             <?php foreach ($schemas as $schema): ?>
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold"><?= htmlspecialchars($schema['name']) ?></div>
-                                        <div class="text-muted small"><?= htmlspecialchars($schema['description']) ?></div>
+                                <tr class="border-b border-gray-100 dark:border-[#2d1b6e]/30 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                        <div class="font-medium text-gray-900 dark:text-white"><?= htmlspecialchars($schema['name']) ?></div>
+                                        <div class="text-gray-400 dark:text-gray-500 small"><?= htmlspecialchars($schema['description']) ?></div>
                                     </td>
-                                    <td>
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                         <div class="fw-bold text-success"><?= number_format($schema['daily_rate'], 2) ?>%</div>
-                                        <div class="text-muted small">Daily Return</div>
+                                        <div class="text-gray-400 dark:text-gray-500 small">Daily Return</div>
                                     </td>
-                                    <td>
-                                        <div class="fw-bold"><?= $schema['duration_days'] ?> days</div>
-                                        <div class="text-muted small">Investment Period</div>
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                        <div class="font-medium text-gray-900 dark:text-white"><?= $schema['duration_days'] ?> days</div>
+                                        <div class="text-gray-400 dark:text-gray-500 small">Investment Period</div>
                                     </td>
-                                    <td>
-                                        <div class="fw-bold"><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schema['min_amount'], 2) ?></div>
-                                        <div class="text-muted small">Min: <?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schema['min_amount'], 2) ?> | Max: <?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schema['max_amount'], 2) ?></div>
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                        <div class="font-medium text-gray-900 dark:text-white"><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schema['min_amount'], 2) ?></div>
+                                        <div class="text-gray-400 dark:text-gray-500 small">Min: <?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schema['min_amount'], 2) ?> | Max: <?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($schema['max_amount'], 2) ?></div>
                                     </td>
-                                    <td>
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                         <?php
                                         switch($schema['status']) {
                                             case 1:
@@ -270,26 +271,27 @@ include __DIR__ . '/includes/header.php';
                                                 break;
                                         }
                                         ?>
-                                        <span class="badge <?= $statusClass ?>"><?= $statusText ?></span>
+                                        <?php $sc = match($schema['status']) { 1 => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400', default => 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' }; ?>
+                                        <span class="rounded-full px-2.5 py-0.5 text-xs font-medium inline-block <?= $sc ?>"><?= $statusText ?></span>
                                     </td>
-                                    <td>
-                                        <div class="text-muted small">
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                        <div class="text-gray-400 dark:text-gray-500 small">
                                             <?= date('M j, Y', strtotime($schema['created_at'])) ?>
                                         </div>
-                                        <div class="text-muted small">
+                                        <div class="text-gray-400 dark:text-gray-500 small">
                                             <?= date('g:i A', strtotime($schema['created_at'])) ?>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div class="btn-list">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="editPlan(<?= $schema['id'] ?>)">
-                                                <i class="fas fa-edit"></i>
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                        <div class="flex flex-wrap gap-2">
+                                            <button class="px-3 py-1 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full hover:border-[#1e0e62] transition-colors" onclick="editPlan(<?= $schema['id'] ?>)">
+                                                Edit
                                             </button>
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewPlan(<?= $schema['id'] ?>)">
-                                                <i class="fas fa-eye"></i>
+                                            <button class="px-3 py-1 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full hover:border-[#1e0e62] transition-colors" onclick="viewPlan(<?= $schema['id'] ?>)">
+                                                View
                                             </button>
-                                            <button class="btn btn-sm btn-danger" onclick="deletePlan(<?= $schema['id'] ?>, '<?= htmlspecialchars($schema['name']) ?>')">
-                                                <i class="fas fa-trash"></i>
+                                            <button class="px-3 py-1 text-xs font-medium rounded-full text-red-500 hover:text-red-700 transition-colors" onclick="deletePlan(<?= $schema['id'] ?>, '<?= htmlspecialchars($schema['name']) ?>')">
+                                                Delete
                                             </button>
                                         </div>
                                     </td>
@@ -304,61 +306,61 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <!-- Create Plan Modal -->
-<div class="modal fade" id="modal-create-plan" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Create Investment Plan</h5>
-                <button type="button" class="btn-close" onclick="closeCreateModal()"></button>
+<div class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4" id="modal-create-plan" tabindex="-1">
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-sm">
+        <div class="">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                <h5 class="text-lg font-semibold text-gray-900 dark:text-white">Create Investment Plan</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-white" onclick="closeCreateModal()"></button>
             </div>
             <form method="POST" id="create-plan-form">
-                <div class="modal-body">
+                <div class="p-6">
                     <input type="hidden" name="action" value="create_schema">
                     
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Plan Name</label>
-                                <input type="text" name="name" class="form-control" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Plan Name</label>
+                                <input type="text" name="name" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" required>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Daily Rate (%)</label>
-                                <input type="number" name="daily_rate" class="form-control" step="0.01" min="0.01" max="100" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Duration (Days)</label>
-                                <input type="number" name="duration_days" class="form-control" min="1" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Total Return (%)</label>
-                                <input type="number" name="total_return" class="form-control" step="0.01" min="0.01" max="1000" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Daily Rate (%)</label>
+                                <input type="number" name="daily_rate" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" step="0.01" min="0.01" max="100" required>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Status</label>
-                                <select name="status" class="form-select" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Duration (Days)</label>
+                                <input type="number" name="duration_days" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" min="1" required>
+                            </div>
+                        </div>
+                        <div class="">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Total Return (%)</label>
+                                <input type="number" name="total_return" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" step="0.01" min="0.01" max="1000" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Status</label>
+                                <select name="status" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" required>
                                     <option value="1">Active</option>
                                     <option value="0">Inactive</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Featured</label>
-                                <select name="featured" class="form-select" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Featured</label>
+                                <select name="featured" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" required>
                                     <option value="0">No</option>
                                     <option value="1">Yes</option>
                                 </select>
@@ -366,29 +368,29 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Minimum Investment</label>
-                                <input type="number" name="min_amount" class="form-control" step="0.01" min="0.01" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Minimum Investment</label>
+                                <input type="number" name="min_amount" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" step="0.01" min="0.01" required>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Maximum Investment</label>
-                                <input type="number" name="max_amount" class="form-control" step="0.01" min="0.01" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Maximum Investment</label>
+                                <input type="number" name="max_amount" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" step="0.01" min="0.01" required>
                             </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea name="description" class="form-control" rows="3" placeholder="Plan description..."></textarea>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Description</label>
+                        <textarea name="description" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" rows="3" placeholder="Plan description..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="submitCreateForm()">Create Plan</button>
+                <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                    <button type="button" class="px-4 py-2 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full transition-colors" onclick="closeCreateModal()">Cancel</button>
+                    <button type="button" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="submitCreateForm()">Create Plan</button>
                 </div>
             </form>
         </div>
@@ -396,62 +398,62 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <!-- Edit Plan Modal -->
-<div class="modal fade" id="modal-edit-plan" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Investment Plan</h5>
-                <button type="button" class="btn-close" onclick="closeEditModal()"></button>
+<div class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4" id="modal-edit-plan" tabindex="-1">
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-sm">
+        <div class="">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                <h5 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Investment Plan</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-white" onclick="closeEditModal()"></button>
             </div>
             <form method="POST" id="edit-plan-form">
-                <div class="modal-body">
+                <div class="p-6">
                     <input type="hidden" name="action" value="update_schema">
                     <input type="hidden" name="schema_id" id="edit-schema-id">
                     
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Plan Name</label>
-                                <input type="text" name="name" id="edit-name" class="form-control" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Plan Name</label>
+                                <input type="text" name="name" id="edit-name" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" required>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Daily Rate (%)</label>
-                                <input type="number" name="daily_rate" id="edit-daily-rate" class="form-control" step="0.01" min="0.01" max="100" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Duration (Days)</label>
-                                <input type="number" name="duration_days" id="edit-duration-days" class="form-control" min="1" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Total Return (%)</label>
-                                <input type="number" name="total_return" id="edit-total-return" class="form-control" step="0.01" min="0.01" max="1000" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Daily Rate (%)</label>
+                                <input type="number" name="daily_rate" id="edit-daily-rate" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" step="0.01" min="0.01" max="100" required>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Status</label>
-                                <select name="status" id="edit-is-active" class="form-select" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Duration (Days)</label>
+                                <input type="number" name="duration_days" id="edit-duration-days" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" min="1" required>
+                            </div>
+                        </div>
+                        <div class="">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Total Return (%)</label>
+                                <input type="number" name="total_return" id="edit-total-return" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" step="0.01" min="0.01" max="1000" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Status</label>
+                                <select name="status" id="edit-is-active" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" required>
                                     <option value="1">Active</option>
                                     <option value="0">Inactive</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Featured</label>
-                                <select name="featured" id="edit-featured" class="form-select" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Featured</label>
+                                <select name="featured" id="edit-featured" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" required>
                                     <option value="0">No</option>
                                     <option value="1">Yes</option>
                                 </select>
@@ -459,29 +461,29 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Minimum Investment</label>
-                                <input type="number" name="min_amount" id="edit-min-investment" class="form-control" step="0.01" min="0.01" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Minimum Investment</label>
+                                <input type="number" name="min_amount" id="edit-min-investment" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" step="0.01" min="0.01" required>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="">
                             <div class="mb-3">
-                                <label class="form-label">Maximum Investment</label>
-                                <input type="number" name="max_amount" id="edit-max-investment" class="form-control" step="0.01" min="0.01" required>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Maximum Investment</label>
+                                <input type="number" name="max_amount" id="edit-max-investment" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" step="0.01" min="0.01" required>
                             </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea name="description" id="edit-description" class="form-control" rows="3" placeholder="Plan description..."></textarea>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Description</label>
+                        <textarea name="description" id="edit-description" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" rows="3" placeholder="Plan description..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="submitEditForm()">Update Plan</button>
+                <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                    <button type="button" class="px-4 py-2 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full transition-colors" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="submitEditForm()">Update Plan</button>
                 </div>
             </form>
         </div>
@@ -489,14 +491,14 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <!-- View Plan Modal -->
-<div class="modal fade" id="modal-view-plan" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Plan Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4" id="modal-view-plan" tabindex="-1">
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-sm">
+        <div class="">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                <h5 class="text-lg font-semibold text-gray-900 dark:text-white">Plan Details</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-white" ></button>
             </div>
-            <div class="modal-body" id="plan-details-content">
+            <div class="p-6" id="plan-details-content">
                 <!-- Content will be loaded here -->
             </div>
         </div>
@@ -547,7 +549,7 @@ function editPlan(schemaId) {
                     modal.show();
                 } else {
                     // Fallback: show modal manually
-                    modalElement.style.display = 'block';
+                    modalElement.classList.remove('hidden'); modalElement.style.display = 'flex';
                     modalElement.classList.add('show');
                     document.body.classList.add('modal-open');
                     
@@ -587,15 +589,15 @@ function viewPlan(schemaId) {
             
             // Create HTML content for the modal
             const html = `
-                <div class="row">
-                    <div class="col-md-6">
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="">
                         <h6>Plan Details</h6>
                         <p><strong>Name:</strong> ${schema.name}</p>
                         <p><strong>Daily Rate:</strong> ${schema.daily_rate}%</p>
                         <p><strong>Duration:</strong> ${schema.duration_days} days</p>
                         <p><strong>Total Return:</strong> ${schema.total_return}%</p>
                     </div>
-                    <div class="col-md-6">
+                    <div class="">
                         <h6>Investment Limits</h6>
                         <p><strong>Min Investment:</strong> $${parseFloat(schema.min_amount).toLocaleString()}</p>
                         <p><strong>Max Investment:</strong> $${parseFloat(schema.max_amount).toLocaleString()}</p>
@@ -604,7 +606,7 @@ function viewPlan(schemaId) {
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <div class="col-12">
+                    <div class="">
                         <h6>Description</h6>
                         <p>${schema.description || 'No description available.'}</p>
                     </div>
@@ -621,7 +623,7 @@ function viewPlan(schemaId) {
                     modal.show();
                 } else {
                     // Fallback: show modal manually
-                    modalElement.style.display = 'block';
+                    modalElement.classList.remove('hidden'); modalElement.style.display = 'flex';
                     modalElement.classList.add('show');
                     document.body.classList.add('modal-open');
                     

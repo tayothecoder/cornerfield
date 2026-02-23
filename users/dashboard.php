@@ -75,9 +75,14 @@ require_once __DIR__ . '/includes/header.php';
         <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6">
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Balance</p>
             <p class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white">$<?= number_format($data['totalBalance'] ?? 15420.50, 2) ?></p>
-            <div class="flex items-center gap-1 mt-2 text-emerald-600 dark:text-emerald-400">
+            <?php $bc = $data['balanceChange'] ?? 2.4; ?>
+            <div class="flex items-center gap-1 mt-2 <?= $bc >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' ?>">
+                <?php if ($bc >= 0): ?>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-                <span class="text-xs font-medium">+<?= number_format($data['balanceChange'] ?? 2.4, 1) ?>%</span>
+                <?php else: ?>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                <?php endif; ?>
+                <span class="text-xs font-medium"><?= $bc > 0 ? '+' : '' ?><?= $bc == 0 ? '0' : number_format($bc, 1) ?>%</span>
             </div>
         </div>
 
@@ -90,9 +95,14 @@ require_once __DIR__ . '/includes/header.php';
         <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6">
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Earned</p>
             <p class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white">$<?= number_format($data['totalEarned'] ?? 2530.25, 2) ?></p>
-            <div class="flex items-center gap-1 mt-2 text-emerald-600 dark:text-emerald-400">
+            <?php $ec = $data['earningsChange'] ?? 15.2; ?>
+            <div class="flex items-center gap-1 mt-2 <?= $ec >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' ?>">
+                <?php if ($ec >= 0): ?>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-                <span class="text-xs font-medium">+<?= number_format($data['earningsChange'] ?? 15.2, 1) ?>%</span>
+                <?php else: ?>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                <?php endif; ?>
+                <span class="text-xs font-medium"><?= $ec > 0 ? '+' : '' ?><?= $ec == 0 ? '0' : number_format($ec, 1) ?>%</span>
             </div>
         </div>
 

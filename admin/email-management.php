@@ -3,7 +3,8 @@ if (!defined('ADMIN_AREA')) {
     define('ADMIN_AREA', true);
 }
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 // Initialize session
 \App\Utils\SessionManager::start();
@@ -214,67 +215,66 @@ $availableTemplates = [
 include __DIR__ . '/includes/header.php';
 ?>
 
-<div class="page-wrapper">
-    <div class="page-header d-print-none">
-        <div class="container-xl">
+    <div class="mb-6">
+        <div class="">
             <div class="row g-2 align-items-center">
                 <div class="col">
-                    <h2 class="page-title">Email Management</h2>
-                    <div class="text-muted mt-1">Manage email settings and send emails</div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Email Management</h2>
+                    <div class="text-gray-400 dark:text-gray-500 mt-1">Manage email settings and send emails</div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="page-body">
-        <div class="container-xl">
+    <div class="space-y-6">
+        <div class="">
             <?php if ($success): ?>
-                <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+                <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm"><?= htmlspecialchars($success) ?></div>
             <?php endif; ?>
             
             <?php if ($error): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+                <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm"><?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
             
             <!-- Email Statistics -->
-            <div class="row row-deck row-cards mb-4">
-                <div class="col-sm-6 col-lg-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="subheader">Total Emails</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="">
+                    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex align-items-center">
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Emails</div>
                             </div>
-                            <div class="h1 mb-3 text-primary"><?= number_format($emailStats['total_emails']) ?></div>
+                            <div class="text-3xl font-light tracking-tighter text-[#1e0e62] dark:text-indigo-400 mb-3"><?= number_format($emailStats['total_emails']) ?></div>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6 col-lg-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="subheader">Sent Successfully</div>
+                <div class="">
+                    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex align-items-center">
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Sent Successfully</div>
                             </div>
-                            <div class="h1 mb-3 text-success"><?= number_format($emailStats['sent_emails']) ?></div>
+                            <div class="text-3xl font-light tracking-tighter text-emerald-600 dark:text-emerald-400 mb-3"><?= number_format($emailStats['sent_emails']) ?></div>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6 col-lg-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="subheader">Failed</div>
+                <div class="">
+                    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex align-items-center">
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Failed</div>
                             </div>
                             <div class="h1 mb-3 text-danger"><?= number_format($emailStats['failed_emails']) ?></div>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6 col-lg-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="subheader">Success Rate</div>
+                <div class="">
+                    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex align-items-center">
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Success Rate</div>
                             </div>
-                            <div class="h1 mb-3 text-info">
+                            <div class="text-3xl font-light tracking-tighter text-blue-600 dark:text-blue-400 mb-3">
                                 <?= $emailStats['total_emails'] > 0 ? round(($emailStats['sent_emails'] / $emailStats['total_emails']) * 100, 1) : 0 ?>%
                             </div>
                         </div>
@@ -282,50 +282,50 @@ include __DIR__ . '/includes/header.php';
                 </div>
             </div>
             
-            <div class="row">
+            <div class="grid grid-cols-1 gap-6">
                 <!-- Email Configuration -->
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Email Configuration</h3>
+                <div class="">
+                    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                            <h3 class="text-sm font-medium text-gray-900 dark:text-white">Email Configuration</h3>
                         </div>
-                        <div class="card-body">
+                        <div class="p-6">
                             <form id="emailConfigForm">
                                 <div class="mb-3">
-                                    <label class="form-label">SMTP Host</label>
-                                    <input type="text" class="form-control" name="smtp_host" value="localhost" required>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">SMTP Host</label>
+                                    <input type="text" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="smtp_host" value="localhost" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">SMTP Port</label>
-                                    <input type="number" class="form-control" name="smtp_port" value="587" required>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">SMTP Port</label>
+                                    <input type="number" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="smtp_port" value="587" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">SMTP Username</label>
-                                    <input type="text" class="form-control" name="smtp_username" required>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">SMTP Username</label>
+                                    <input type="text" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="smtp_username" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">SMTP Password</label>
-                                    <input type="password" class="form-control" name="smtp_password" required>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">SMTP Password</label>
+                                    <input type="password" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="smtp_password" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Encryption</label>
-                                    <select class="form-select" name="smtp_encryption">
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Encryption</label>
+                                    <select class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" name="smtp_encryption">
                                         <option value="tls">TLS</option>
                                         <option value="ssl">SSL</option>
                                         <option value="">None</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">From Email</label>
-                                    <input type="email" class="form-control" name="from_email" value="noreply@cornerfield.local" required>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">From Email</label>
+                                    <input type="email" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="from_email" value="noreply@cornerfield.local" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">From Name</label>
-                                    <input type="text" class="form-control" name="from_name" value="CornerField" required>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">From Name</label>
+                                    <input type="text" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="from_name" value="CornerField" required>
                                 </div>
                                 <div class="mb-3">
-                                    <button type="button" class="btn btn-primary" onclick="testEmailConfig()">Test Configuration</button>
-                                    <button type="submit" class="btn btn-success">Save Configuration</button>
+                                    <button type="button" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="testEmailConfig()">Test Configuration</button>
+                                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-full hover:bg-emerald-700 transition-colors">Save Configuration</button>
                                 </div>
                             </form>
                         </div>
@@ -333,27 +333,27 @@ include __DIR__ . '/includes/header.php';
                 </div>
                 
                 <!-- Send Test Email -->
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Send Test Email</h3>
+                <div class="">
+                    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                            <h3 class="text-sm font-medium text-gray-900 dark:text-white">Send Test Email</h3>
                         </div>
-                        <div class="card-body">
+                        <div class="p-6">
                             <form id="testEmailForm">
                                 <div class="mb-3">
-                                    <label class="form-label">To Email</label>
-                                    <input type="email" class="form-control" name="to_email" placeholder="recipient@example.com" required>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">To Email</label>
+                                    <input type="email" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="to_email" placeholder="recipient@example.com" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Subject</label>
-                                    <input type="text" class="form-control" name="subject" value="Test Email from CornerField" required>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Subject</label>
+                                    <input type="text" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="subject" value="Test Email from CornerField" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Message</label>
-                                    <textarea class="form-control" name="message" rows="4" placeholder="Enter your test message here...">This is a test email to verify your email configuration is working properly.</textarea>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Message</label>
+                                    <textarea class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="message" rows="4" placeholder="Enter your test message here...">This is a test email to verify your email configuration is working properly.</textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <button type="submit" class="btn btn-primary">Send Test Email</button>
+                                    <button type="submit" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Send Test Email</button>
                                 </div>
                             </form>
                         </div>
@@ -362,25 +362,25 @@ include __DIR__ . '/includes/header.php';
             </div>
             
             <!-- Template Emails -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Send Template Emails</h3>
+            <div class="mt-6">
+                <div class="">
+                    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                            <h3 class="text-sm font-medium text-gray-900 dark:text-white">Send Template Emails</h3>
                         </div>
-                        <div class="card-body">
+                        <div class="p-6">
                             <form id="templateEmailForm">
-                                <div class="row">
-                                    <div class="col-md-4">
+                                <div class="grid grid-cols-1 gap-6">
+                                    <div class="">
                                         <div class="mb-3">
-                                            <label class="form-label">To Email</label>
-                                            <input type="email" class="form-control" name="to_email" placeholder="recipient@example.com" required>
+                                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">To Email</label>
+                                            <input type="email" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="to_email" placeholder="recipient@example.com" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="">
                                         <div class="mb-3">
-                                            <label class="form-label">Template</label>
-                                            <select class="form-select" name="template" required>
+                                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Template</label>
+                                            <select class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" name="template" required>
                                                 <option value="">Select Template</option>
                                                 <?php foreach ($availableTemplates as $key => $label): ?>
                                                     <option value="<?= $key ?>"><?= htmlspecialchars($label) ?></option>
@@ -388,15 +388,15 @@ include __DIR__ . '/includes/header.php';
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="">
                                         <div class="mb-3">
-                                            <label class="form-label">Recipient Name</label>
-                                            <input type="text" class="form-control" name="user_name" placeholder="John Doe" required>
+                                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Recipient Name</label>
+                                            <input type="text" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" name="user_name" placeholder="John Doe" required>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <button type="submit" class="btn btn-success">Send Template Email</button>
+                                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-full hover:bg-emerald-700 transition-colors">Send Template Email</button>
                                 </div>
                             </form>
                         </div>
@@ -405,38 +405,39 @@ include __DIR__ . '/includes/header.php';
             </div>
             
             <!-- Recent Email Logs -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Recent Email Logs</h3>
+            <div class="mt-6">
+                <div class="">
+                    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                            <h3 class="text-sm font-medium text-gray-900 dark:text-white">Recent Email Logs</h3>
                         </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-vcenter">
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
                                     <thead>
-                                        <tr>
-                                            <th>To</th>
-                                            <th>Subject</th>
-                                            <th>Status</th>
-                                            <th>Sent At</th>
-                                            <th>Error</th>
+                                        <tr class="bg-gray-50/50 dark:bg-white/5">
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">To</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Subject</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sent At</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Error</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach ($recentEmails as $email): ?>
-                                            <tr>
-                                                <td><?= htmlspecialchars($email['to_email']) ?></td>
-                                                <td><?= htmlspecialchars($email['subject']) ?></td>
-                                                <td>
-                                                    <span class="badge bg-<?= $email['status'] === 'sent' ? 'success' : ($email['status'] === 'failed' ? 'danger' : 'warning') ?>">
+                                            <tr class="border-b border-gray-100 dark:border-[#2d1b6e]/30 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
+                                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><?= htmlspecialchars($email['to_email']) ?></td>
+                                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><?= htmlspecialchars($email['subject']) ?></td>
+                                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                                    <?php $esc = match($email['status']) { 'sent' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400', 'failed' => 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400', default => 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' }; ?>
+                                                    <span class="rounded-full px-2.5 py-0.5 text-xs font-medium inline-block <?= $esc ?>">
                                                         <?= ucfirst($email['status']) ?>
                                                     </span>
                                                 </td>
-                                                <td><?= date('M j, Y g:i A', strtotime($email['sent_at'])) ?></td>
-                                                <td>
+                                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><?= date('M j, Y g:i A', strtotime($email['sent_at'])) ?></td>
+                                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                                     <?php if ($email['error_message']): ?>
-                                                        <span class="text-danger" title="<?= htmlspecialchars($email['error_message']) ?>">
+                                                        <span class="text-red-600 dark:text-red-400" title="<?= htmlspecialchars($email['error_message']) ?>">
                                                             <?= htmlspecialchars(substr($email['error_message'] ?? '', 0, 50)) ?>...
                                                         </span>
                                                     <?php endif; ?>
@@ -453,19 +454,19 @@ include __DIR__ . '/includes/header.php';
         </div>
         
         <!-- Email Template Editor -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Email Template Editor</h3>
+        <div class="mt-6">
+            <div class="">
+                <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                        <h3 class="text-sm font-medium text-gray-900 dark:text-white">Email Template Editor</h3>
                         <p class="card-subtitle">Edit and customize email templates</p>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 gap-6">
+                            <div class="">
                                 <div class="mb-3">
-                                    <label class="form-label">Select Template</label>
-                                    <select class="form-select" id="templateSelector">
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Select Template</label>
+                                    <select class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" id="templateSelector">
                                         <option value="">Choose a template...</option>
                                         <?php 
                                         $availableTemplates = $emailService->getAvailableTemplates();
@@ -477,8 +478,8 @@ include __DIR__ . '/includes/header.php';
                                 </div>
                                 
                                 <div id="templateVariables" class="mb-3" style="display: none;">
-                                    <label class="form-label">Available Variables</label>
-                                    <div class="alert alert-info">
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Available Variables</label>
+                                    <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-sm">
                                         <small>
                                             <strong>Template Variables:</strong><br>
                                             <span id="variablesList"></span>
@@ -487,17 +488,17 @@ include __DIR__ . '/includes/header.php';
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <button type="button" class="btn btn-primary" onclick="loadTemplate()" id="loadBtn" disabled>Load Template</button>
-                                    <button type="button" class="btn btn-success" onclick="saveTemplate()" id="saveBtn" disabled>Save Template</button>
+                                    <button type="button" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="loadTemplate()" id="loadBtn" disabled>Load Template</button>
+                                    <button type="button" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-full hover:bg-emerald-700 transition-colors" onclick="saveTemplate()" id="saveBtn" disabled>Save Template</button>
                                     <button type="button" class="btn btn-info" onclick="previewTemplate()" id="previewBtn" disabled>Preview</button>
                                 </div>
                             </div>
                             
                             <div class="col-md-8">
                                 <div class="mb-3">
-                                    <label class="form-label">Template Content (HTML)</label>
-                                    <textarea class="form-control" id="templateContent" rows="25" style="font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.4;" placeholder="Select a template to edit..."></textarea>
-                                    <small class="form-text text-muted">Use {{variable_name}} for dynamic content. HTML is supported.</small>
+                                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Template Content (HTML)</label>
+                                    <textarea class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" id="templateContent" rows="25" style="font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.4;" placeholder="Select a template to edit..."></textarea>
+                                    <small class="text-xs text-gray-400 mt-1">Use {{variable_name}} for dynamic content. HTML is supported.</small>
                                 </div>
                             </div>
                         </div>
@@ -508,23 +509,23 @@ include __DIR__ . '/includes/header.php';
         
         <!-- Template Preview Modal -->
         <div id="previewModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
-            <div class="modal-content" style="position: relative; background: white; margin: 2% auto; padding: 20px; width: 90%; max-width: 900px; border-radius: 8px; max-height: 96vh; overflow-y: auto;">
-                <div class="modal-header" style="border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; position: sticky; top: 0; background: white; z-index: 1;">
-                    <h5 class="modal-title">Template Preview</h5>
-                    <button type="button" class="btn-close" onclick="closePreviewModal()" style="float: right; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <div class="" style="position: relative; background: white; margin: 2% auto; padding: 20px; width: 90%; max-width: 900px; border-radius: 8px; max-height: 96vh; overflow-y: auto;">
+                <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]" style="border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; position: sticky; top: 0; background: white; z-index: 1;">
+                    <h5 class="text-lg font-semibold text-gray-900 dark:text-white">Template Preview</h5>
+                    <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-white" onclick="closePreviewModal()" style="float: right; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                 </div>
-                <div class="modal-body" style="overflow-y: auto;">
+                <div class="p-6" style="overflow-y: auto;">
                     <div class="mb-3">
-                        <label class="form-label">Subject</label>
-                        <input type="text" class="form-control" id="previewSubject" readonly>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Subject</label>
+                        <input type="text" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" id="previewSubject" readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Preview</label>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Preview</label>
                         <div id="previewContent" style="border: 1px solid #ddd; padding: 15px; background: #f9f9f9; min-height: 300px; max-height: 500px; overflow-y: auto;"></div>
                     </div>
                 </div>
-                <div class="modal-footer" style="border-top: 1px solid #ddd; padding-top: 15px; text-align: right; position: sticky; bottom: 0; background: white;">
-                    <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">Close</button>
+                <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-100 dark:border-[#2d1b6e]" style="border-top: 1px solid #ddd; padding-top: 15px; text-align: right; position: sticky; bottom: 0; background: white;">
+                    <button type="button" class="px-4 py-2 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full transition-colors" onclick="closePreviewModal()">Close</button>
                 </div>
             </div>
         </div>
@@ -812,7 +813,7 @@ function previewTemplate() {
             document.getElementById('previewContent').innerHTML = data.preview.message;
             
             // Show modal
-            document.getElementById('previewModal').style.display = 'block';
+            document.getElementById('previewModal').classList.remove('hidden'); document.getElementById('previewModal').style.display = 'flex';
         } else {
             alert('Error previewing template: ' + data.message);
         }

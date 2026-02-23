@@ -4,7 +4,8 @@ if (!defined('ADMIN_AREA')) {
 }
 
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 // Page setup
 $pageTitle = 'Transaction Management - ' . \App\Config\Config::getSiteName();
@@ -289,390 +290,96 @@ $users = $userModel->getAllUsers(1, 100);
 include __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Page header -->
-<div class="page-header d-print-none">
-    <div class="container-xl">
-        <div class="row g-2 align-items-center">
-            <div class="col">
-                <h2 class="page-title">Transaction Management</h2>
-                <div class="text-secondary">
-                    Manage deposits, withdrawals, and other financial transactions
-                </div>
-            </div>
-            <div class="col-auto ms-auto d-print-none">
-                <div class="btn-list">
-                    <button class="btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#modal-manual-deposit">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24"
-                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        Manual Deposit
-                    </button>
-                </div>
-            </div>
+<div class="space-y-6">
+    <?php if ($success): ?><div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm"><?= htmlspecialchars($success) ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Pending Deposits</p>
+            <p class="text-3xl font-light tracking-tighter text-amber-600 dark:text-amber-400"><?= $pendingDeposits ?></p>
+        </div>
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Pending Withdrawals</p>
+            <p class="text-3xl font-light tracking-tighter text-red-600 dark:text-red-400"><?= $pendingWithdrawals ?></p>
+        </div>
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Deposited</p>
+            <p class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white"><?= $currencySymbol ?><?= number_format($stats['total_deposited'], 2) ?></p>
+        </div>
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Withdrawn</p>
+            <p class="text-3xl font-light tracking-tighter text-gray-900 dark:text-white"><?= $currencySymbol ?><?= number_format($stats['total_withdrawn'], 2) ?></p>
+        </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+        <?php foreach (['all' => 'All', 'pending' => 'Pending', 'deposits' => 'Deposits', 'withdrawals' => 'Withdrawals', 'today' => 'Today'] as $fk => $fl): ?>
+        <a href="?filter=<?= $fk ?>" class="px-4 py-2 text-sm font-medium rounded-full transition-colors <?= $filter === $fk ? 'bg-[#1e0e62] text-white' : 'border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 hover:border-[#1e0e62]' ?>"><?= $fl ?></a>
+        <?php endforeach; ?>
+        <button onclick="showModal('modal-manual-deposit')" class="ml-auto px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a]">Manual Deposit</button>
+    </div>
+
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead><tr class="bg-gray-50/50 dark:bg-white/5">
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Method</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-[#2d1b6e]">
+                    <?php if (!empty($transactions)): ?>
+                        <?php foreach ($transactions as $tx): ?>
+                        <tr class="border-b border-gray-100 dark:border-[#2d1b6e]/30 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">#<?= $tx['id'] ?></td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><p class="text-sm font-medium text-gray-900 dark:text-white"><?= htmlspecialchars($tx['username']) ?></p><p class="text-xs text-gray-400"><?= htmlspecialchars($tx['email']) ?></p></td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <?php $tc = match($tx['type']) { 'deposit' => 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400', 'withdrawal' => 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400', default => 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' }; ?>
+                                <span class="rounded-full px-2.5 py-0.5 text-xs font-medium <?= $tc ?>"><?= ucfirst($tx['type']) ?></span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-medium"><?= $currencySymbol ?><?= number_format($tx['amount'], 2) ?></td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <?php $sc = match($tx['status']) { 'completed' => 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400', 'pending' => 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400', 'failed' => 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400', default => 'bg-gray-100 dark:bg-gray-800 text-gray-500' }; ?>
+                                <span class="rounded-full px-2.5 py-0.5 text-xs font-medium <?= $sc ?>"><?= ucfirst($tx['status']) ?></span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><?= ucfirst($tx['payment_method']) ?></td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><?= date('M j, Y', strtotime($tx['created_at'])) ?></td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <?php if ($tx['status'] === 'pending'): ?>
+                                <div class="flex gap-1">
+                                    <?php if ($tx['type'] === 'deposit'): ?>
+                                    <button onclick="approveDeposit(<?= $tx['id'] ?>, <?= $tx['user_id'] ?>, <?= $tx['amount'] ?>)" class="px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-full">Approve</button>
+                                    <?php elseif ($tx['type'] === 'withdrawal'): ?>
+                                    <button onclick="approveWithdrawal(<?= $tx['id'] ?>)" class="px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-full">Approve</button>
+                                    <?php endif; ?>
+                                    <button onclick="rejectTransaction(<?= $tx['id'] ?>)" class="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-full">Reject</button>
+                                </div>
+                                <?php else: ?>
+                                <span class="text-gray-300">-</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                    <tr><td colspan="8" class="px-4 py-12 text-center text-sm text-gray-400">No transactions found</td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<!-- Page body -->
-<div class="page-body">
-    <div class="container-xl">
-        <?php if ($success): ?>
-            <div class="alert alert-success alert-dismissible" role="alert">
-                <div class="d-flex">
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24"
-                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M5 12l5 5l10 -10" />
-                        </svg>
-                    </div>
-                    <div><?= htmlspecialchars($success) ?></div>
-                </div>
-                <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($error): ?>
-            <div class="alert alert-danger alert-dismissible" role="alert">
-                <div class="d-flex">
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24"
-                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <circle cx="12" cy="12" r="9" />
-                            <line x1="12" y1="8" x2="12" y2="12" />
-                            <line x1="12" y1="16" x2="12.01" y2="16" />
-                        </svg>
-                    </div>
-                    <div><?= htmlspecialchars($error) ?></div>
-                </div>
-                <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
-            </div>
-        <?php endif; ?>
-
-        <!-- Statistics -->
-        <div class="row row-deck row-cards">
-            <div class="col-sm-6 col-lg-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Pending Deposits</div>
-                            <?php if ($pendingDeposits > 0): ?>
-                                <div class="ms-auto">
-                                    <span class="badge bg-warning"><?= $pendingDeposits ?></span>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="h1 mb-3"><?= $pendingDeposits ?></div>
-                        <div class="d-flex mb-2">
-                            <div class="d-flex align-items-center flex-fill">
-                                <div class="progress progress-sm flex-fill">
-                                    <div class="progress-bar bg-warning" style="width: 100%"
-                                        role="progressbar"></div>
-                                </div>
-                                <div class="text-secondary ms-2">Waiting</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-sm-6 col-lg-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Pending Withdrawals</div>
-                            <?php if ($pendingWithdrawals > 0): ?>
-                                <div class="ms-auto">
-                                    <span class="badge bg-danger"><?= $pendingWithdrawals ?></span>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="h1 mb-3"><?= $pendingWithdrawals ?></div>
-                        <div class="d-flex mb-2">
-                            <div class="d-flex align-items-center flex-fill">
-                                <div class="progress progress-sm flex-fill">
-                                    <div class="progress-bar bg-danger" style="width: 100%"
-                                        role="progressbar"></div>
-                                </div>
-                                <div class="text-secondary ms-2">Waiting</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-sm-6 col-lg-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Total Deposited</div>
-                        </div>
-                        <div class="h1 mb-3">
-                            <?= $currencySymbol ?><?= number_format($stats['total_deposited'], 2) ?>
-                        </div>
-                        <div class="d-flex mb-2">
-                            <div class="d-flex align-items-center flex-fill">
-                                <div class="progress progress-sm flex-fill">
-                                    <div class="progress-bar bg-success" style="width: 100%"
-                                        role="progressbar"></div>
-                                </div>
-                                <div class="text-secondary ms-2">All time</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-sm-6 col-lg-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Total Withdrawn</div>
-                        </div>
-                        <div class="h1 mb-3">
-                            <?= $currencySymbol ?><?= number_format($stats['total_withdrawn'], 2) ?>
-                        </div>
-                        <div class="d-flex mb-2">
-                            <div class="d-flex align-items-center flex-fill">
-                                <div class="progress progress-sm flex-fill">
-                                    <div class="progress-bar bg-info" style="width: 100%"
-                                        role="progressbar"></div>
-                                </div>
-                                <div class="text-secondary ms-2">All time</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Filter Transactions</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="btn-list">
-                                    <a href="?filter=all"
-                                        class="btn btn-outline-primary <?= $filter === 'all' ? 'active' : '' ?>">
-                                        All Transactions
-                                    </a>
-                                    <a href="?filter=pending"
-                                        class="btn btn-outline-warning <?= $filter === 'pending' ? 'active' : '' ?>">
-                                        Pending
-                                        <?php if ($pendingDeposits + $pendingWithdrawals > 0): ?>
-                                            <span
-                                                class="badge bg-red ms-2"><?= $pendingDeposits + $pendingWithdrawals ?></span>
-                                        <?php endif; ?>
-                                    </a>
-                                    <a href="?filter=deposits"
-                                        class="btn btn-outline-success <?= $filter === 'deposits' ? 'active' : '' ?>">
-                                        Deposits
-                                    </a>
-                                    <a href="?filter=withdrawals"
-                                        class="btn btn-outline-danger <?= $filter === 'withdrawals' ? 'active' : '' ?>">
-                                        Withdrawals
-                                    </a>
-                                    <a href="?filter=today"
-                                        class="btn btn-outline-info <?= $filter === 'today' ? 'active' : '' ?>">
-                                        Today
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Transactions Table -->
-        <div class="row row-cards mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Transactions</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-vcenter">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>User</th>
-                                        <th>Type</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Method</th>
-                                        <th>Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (!empty($transactions)): ?>
-                                        <?php foreach ($transactions as $transaction): ?>
-                                            <tr>
-                                                <td>
-                                                    <div class="text-secondary">#<?= $transaction['id'] ?></div>
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <span
-                                                            class="avatar avatar-sm me-2"><?= strtoupper(substr($transaction['username'], 0, 2)) ?></span>
-                                                        <div>
-                                                            <div class="fw-semibold">
-                                                                <?= htmlspecialchars($transaction['username']) ?>
-                                                            </div>
-                                                            <div class="text-secondary">
-                                                                <?= htmlspecialchars($transaction['email']) ?>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span
-                                                        class="badge bg-<?= $transaction['type'] === 'deposit' ? 'success' : ($transaction['type'] === 'withdrawal' ? 'danger' : 'info') ?>">
-                                                        <?= ucfirst($transaction['type']) ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <div>
-                                                        <div class="fw-semibold amount-display">
-                                                            <span class="currency-symbol"><?= $currencySymbol ?></span>
-                                                            <?= number_format($transaction['amount'], 2) ?>
-                                                        </div>
-                                                        <?php if ($transaction['fee'] > 0): ?>
-                                                            <div class="text-secondary">Fee:
-                                                                <?= $currencySymbol ?>
-                                                                <?= number_format($transaction['fee'], 2) ?>
-                                                            </div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-<?=
-                                                        $transaction['status'] === 'completed' ? 'success' :
-                                                        ($transaction['status'] === 'pending' ? 'warning' :
-                                                            ($transaction['status'] === 'failed' ? 'danger' : 'secondary'))
-                                                        ?>">
-                                                        <?= ucfirst($transaction['status']) ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span
-                                                        class="text-secondary"><?= ucfirst($transaction['payment_method']) ?></span>
-                                                    <?php if ($transaction['wallet_address']): ?>
-                                                        <div class="text-secondary small td-truncate">
-                                                            <?= substr($transaction['wallet_address'] ?? '', 0, 15) ?>...
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td>
-                                                    <div>
-                                                        <?= date('M j, Y', strtotime($transaction['created_at'])) ?>
-                                                   </div>
-                                                   <div class="text-secondary">
-                                                       <?= date('H:i', strtotime($transaction['created_at'])) ?>
-                                                   </div>
-                                               </td>
-                                               <td>
-                                                   <?php if ($transaction['status'] === 'pending'): ?>
-                                                       <div class="btn-list flex-nowrap">
-                                                           <?php if ($transaction['type'] === 'deposit'): ?>
-                                                               <button class="btn btn-sm btn-success"
-                                                                   onclick="approveDeposit(<?= $transaction['id'] ?>, <?= $transaction['user_id'] ?>, <?= $transaction['amount'] ?>)">
-                                                                   Approve
-                                                               </button>
-                                                           <?php elseif ($transaction['type'] === 'withdrawal'): ?>
-                                                               <button class="btn btn-sm btn-success"
-                                                                   onclick="approveWithdrawal(<?= $transaction['id'] ?>)">
-                                                                   Approve
-                                                               </button>
-                                                           <?php endif; ?>
-                                                           <button class="btn btn-sm btn-danger"
-                                                               onclick="rejectTransaction(<?= $transaction['id'] ?>)">
-                                                               Reject
-                                                           </button>
-                                                       </div>
-                                                   <?php else: ?>
-                                                       <span class="text-secondary">—</span>
-                                                   <?php endif; ?>
-                                               </td>
-                                           </tr>
-                                       <?php endforeach; ?>
-                                   <?php else: ?>
-                                       <tr>
-                                           <td colspan="8" class="text-center text-muted py-4">
-                                               No transactions found
-                                           </td>
-                                       </tr>
-                                   <?php endif; ?>
-                               </tbody>
-                           </table>
-                       </div>
-                   </div>
-               </div>
-           </div>
-       </div>
-   </div>
-</div>
-
-<!-- Manual Deposit Modal -->
-<div class="modal modal-blur fade" id="modal-manual-deposit" tabindex="-1" role="dialog" aria-hidden="true">
-   <div class="modal-dialog modal-dialog-centered" role="document">
-       <div class="modal-content">
-           <div class="modal-header">
-               <h5 class="modal-title">Manual Deposit</h5>
-               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-           </div>
-           <form method="POST">
-               <div class="modal-body">
-                   <input type="hidden" name="action" value="manual_deposit">
-
-                   <div class="mb-3">
-                       <label class="form-label">Select User</label>
-                       <select name="user_id" class="form-select" required>
-                           <option value="">Choose user...</option>
-                           <?php foreach ($users as $user): ?>
-                               <option value="<?= $user['id'] ?>">
-                                   <?= htmlspecialchars($user['username']) ?> (<?= htmlspecialchars($user['email']) ?>)
-                               </option>
-                           <?php endforeach; ?>
-                       </select>
-                   </div>
-
-                   <div class="mb-3">
-                       <label class="form-label">Deposit Amount</label>
-                       <div class="input-group">
-                           <span class="input-group-text"><?= $currencySymbol ?></span>
-                           <input type="number" name="amount" class="form-control" step="0.01" min="1" required>
-                       </div>
-                   </div>
-
-                   <div class="mb-3">
-                       <label class="form-label">Description (Optional)</label>
-                       <input type="text" name="description" class="form-control"
-                           placeholder="Manual deposit by admin">
-                   </div>
-               </div>
-               <div class="modal-footer">
-                   <a href="#" class="btn me-auto" data-bs-dismiss="modal">Cancel</a>
-                   <button type="submit" class="btn btn-primary">Add Deposit</button>
-               </div>
-           </form>
-       </div>
-   </div>
+<!-- manual deposit modal -->
+<div id="modal-manual-deposit" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl w-full max-w-md shadow-sm">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-[#2d1b6e]"><h3 class="text-lg font-semibold text-gray-900 dark:text-white">Manual Deposit</h3><button onclick="hideModal('modal-manual-deposit')" class="text-gray-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+        <form method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="action" value="manual_deposit">
+            <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">User</label><select name="user_id" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" required><option value="">Choose user...</option><?php foreach ($users as $u): ?><option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['username']) ?> (<?= htmlspecialchars($u['email']) ?>)</option><?php endforeach; ?></select></div>
+            <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Amount</label><input type="number" name="amount" step="0.01" min="1" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" required></div>
+            <div><label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Description</label><input type="text" name="description" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none" placeholder="Manual deposit by admin"></div>
+            <div class="flex justify-end gap-3"><button type="button" onclick="hideModal('modal-manual-deposit')" class="px-4 py-2 text-sm text-gray-600 rounded-full">Cancel</button><button type="submit" class="px-6 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full">Add Deposit</button></div>
+        </form>
+    </div>
 </div>
 
 <?php

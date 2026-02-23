@@ -1,6 +1,7 @@
 <?php
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 // set session cookie path before any session starts
 if (session_status() === PHP_SESSION_NONE) {
@@ -58,101 +59,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+$base = \App\Config\Config::getBasePath();
 ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <script>if(localStorage.theme==="dark"||(!localStorage.theme&&window.matchMedia("(prefers-color-scheme:dark)").matches)){document.documentElement.classList.add("dark")}else{document.documentElement.classList.remove("dark")}</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - <?= \App\Config\Config::getSiteName() ?></title>
-    <link href="../assets/tabler/dist/css/tabler.min.css?1692870487" rel="stylesheet"/>
-    <style>
-        .login-page {
-            background: #f5f3ff;
-            min-height: 100vh;
-        }
-        .admin-badge {
-            background: #1e0e62;
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .bitcoin-icon {
-            color: #f7931a;
-            font-size: 2rem;
-        }
-    </style>
+    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/tailwind-compiled.css?v=4">
+    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/cornerfield.css?v=4">
+    <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars($base) ?>/assets/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="d-flex flex-column login-page">
-    <div class="page page-center">
-        <div class="container container-tight py-4">
-            <div class="text-center mb-4">
-                <div class="bitcoin-icon mb-3">₿</div>
-                <h1 class="text-white mb-2"><?= explode(' ', \App\Config\Config::getSiteName())[0] ?></h1>
-                <div class="admin-badge">Admin Panel</div>
-            </div>
-            
-            <div class="card card-md">
-                <div class="card-body">
-                    <h2 class="h2 text-center mb-4">Administrator Login</h2>
-                    
-                    <?php if ($error): ?>
-                        <div class="alert alert-danger" role="alert">
-                            <div class="d-flex">
-                                <div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                        <circle cx="12" cy="12" r="9"/>
-                                        <line x1="12" y1="8" x2="12" y2="12"/>
-                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                    </svg>
-                                </div>
-                                <div><?= htmlspecialchars($error) ?></div>
-                            </div>
-                        </div>
-                    <?php endif; ?>
+<body class="min-h-screen bg-[#f5f3ff] dark:bg-[#0f0a2e] flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- logo -->
+        <div class="text-center mb-8">
+            <span class="text-2xl font-semibold tracking-tight text-[#1e0e62] dark:text-white"><?= htmlspecialchars(explode(' ', \App\Config\Config::getSiteName())[0]) ?></span>
+            <span class="ml-2 text-[10px] font-medium uppercase tracking-wider bg-[#1e0e62]/10 dark:bg-white/10 text-[#1e0e62] dark:text-white/80 px-2 py-0.5 rounded-full">admin</span>
+        </div>
 
-                    <form method="POST" autocomplete="off" novalidate>
-                        <div class="mb-3">
-                            <label class="form-label">Admin Email</label>
-                            <input type="email" name="email" class="form-control" 
-                                   placeholder="<?= \App\Config\Config::getAdminEmail() ?>" 
-                                   value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" 
-                                   autocomplete="username" required>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" 
-                                   placeholder="Your password" autocomplete="current-password" required>
-                        </div>
-                        <div class="form-footer">
-                            <button type="submit" class="btn btn-primary w-100">Sign in to Admin Panel</button>
-                        </div>
-                    </form>
-                    
-                    <?php if (\App\Config\Config::isDebug()): ?>
-                    <div class="mt-3 p-2" style="background: #f8f9fa; border-radius: 4px; font-size: 12px;">
-                        <strong>Debug Mode:</strong><br>
-                        Email: <?= \App\Config\Config::getAdminEmail() ?><br>
-                        Password: admin123
-                    </div>
-                    <?php endif; ?>
+        <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-8 shadow-sm">
+            <?php if ($error): ?>
+            <div class="mb-6 p-3 rounded-xl text-sm bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400">
+                <?= htmlspecialchars($error) ?>
+            </div>
+            <?php endif; ?>
+
+            <form method="POST" novalidate class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Admin email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#1e0e62] focus:ring-2 focus:ring-[#1e0e62]/20 outline-none transition-colors"
+                        placeholder="<?= htmlspecialchars(\App\Config\Config::getAdminEmail()) ?>"
+                        value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+                        autocomplete="username"
+                        required
+                    >
                 </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#1e0e62] focus:ring-2 focus:ring-[#1e0e62]/20 outline-none transition-colors"
+                        placeholder="Your password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="w-full bg-[#1e0e62] text-white font-medium py-2.5 px-6 rounded-full hover:bg-[#2d1b8a] transition-colors focus:outline-none">
+                    Sign in to admin panel
+                </button>
+            </form>
+
+            <?php if (\App\Config\Config::isDebug()): ?>
+            <div class="mt-4 p-3 rounded-xl bg-gray-50 dark:bg-[#0f0a2e] text-xs text-gray-500 dark:text-gray-400">
+                <span class="font-medium">Debug mode</span><br>
+                Email: <?= \App\Config\Config::getAdminEmail() ?><br>
+                Password: admin123
             </div>
-            
-            <div class="text-center mt-3">
-                <a href="../dashboard.php" class="text-white text-decoration-none opacity-75">
-                    ← Back to User Dashboard
-                </a>
-            </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="<?= htmlspecialchars($base) ?>/users/dashboard.php" class="text-sm text-gray-500 dark:text-gray-400 hover:text-[#1e0e62] dark:hover:text-white transition-colors">
+                Back to user site
+            </a>
         </div>
     </div>
-    
-    <script src="../assets/tabler/dist/js/tabler.min.js?1692870487" defer></script>
 </body>
 </html>

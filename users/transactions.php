@@ -188,26 +188,26 @@ require_once __DIR__ . '/includes/header.php';
 
         <div class="overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full" id="transactionsTable">
+                <table class="w-full text-sm" id="transactionsTable">
                     <thead>
-                        <tr class="text-left">
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Transaction</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                            <th class="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                        <tr class="bg-gray-50/50 dark:bg-white/5">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Transaction</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-[#2d1b6e]" id="transactionsBody">
                         <?php foreach ($data['transactions'] as $transaction): ?>
-                        <tr class="hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e] transition-colors transaction-row" 
+                        <tr class="border-b border-gray-100 dark:border-[#2d1b6e]/30 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors transaction-row" 
                             data-type="<?= $transaction['type'] ?>" 
                             data-status="<?= $transaction['status'] ?>"
                             data-date="<?= $transaction['date'] ?>"
                             data-description="<?= strtolower($transaction['description']) ?>">
                             
-                            <td class="py-4 pr-6">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                 <div class="flex items-center">
                                     <div class="w-10 h-10 rounded-xl flex items-center justify-center mr-3 <?php
                                         switch ($transaction['type']) {
@@ -261,7 +261,7 @@ require_once __DIR__ . '/includes/header.php';
                                 </div>
                             </td>
 
-                            <td class="py-4 pr-6">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                 <span class="inline-block px-2.5 py-1 text-xs font-medium rounded-full <?php
                                     switch ($transaction['type']) {
                                         case 'deposit': echo 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'; break;
@@ -273,17 +273,34 @@ require_once __DIR__ . '/includes/header.php';
                                         default: echo 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400';
                                     }
                                 ?>">
-                                    <?= ucfirst($transaction['type']) ?>
+                                    <?= ucwords(str_replace('_', ' ', $transaction['type'])) ?>
                                 </span>
                             </td>
 
-                            <td class="py-4 pr-6">
-                                <div class="text-sm font-medium <?= (float)$transaction['amount'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' ?>">
-                                    <?= (float)$transaction['amount'] > 0 ? '+' : '' ?>$<?= number_format(abs((float)$transaction['amount']), 2) ?>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                <?php
+                                // determine sign and color based on transaction type
+                                $txAmount = abs((float)$transaction['amount']);
+                                $txType = $transaction['type'] ?? '';
+                                $isNegative = in_array($txType, ['withdrawal', 'investment']) || ($txType === 'transfer' && (float)$transaction['amount'] < 0);
+                                $isPositive = in_array($txType, ['deposit', 'earning', 'profit', 'referral', 'bonus', 'principal_return']) || ($txType === 'transfer' && (float)$transaction['amount'] > 0);
+                                if ($isNegative) {
+                                    $amountClass = 'text-red-600 dark:text-red-400';
+                                    $amountPrefix = '-';
+                                } elseif ($isPositive) {
+                                    $amountClass = 'text-emerald-600 dark:text-emerald-400';
+                                    $amountPrefix = '+';
+                                } else {
+                                    $amountClass = (float)$transaction['amount'] >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
+                                    $amountPrefix = (float)$transaction['amount'] >= 0 ? '+' : '-';
+                                }
+                                ?>
+                                <div class="text-sm font-medium <?= $amountClass ?>">
+                                    <?= $amountPrefix ?>$<?= number_format($txAmount, 2) ?>
                                 </div>
                             </td>
 
-                            <td class="py-4 pr-6">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                 <span class="inline-block px-2.5 py-1 text-xs font-medium rounded-full <?php
                                     switch ($transaction['status']) {
                                         case 'completed': echo 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'; break;
@@ -297,12 +314,12 @@ require_once __DIR__ . '/includes/header.php';
                                 </span>
                             </td>
 
-                            <td class="py-4 pr-6">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                 <div class="text-sm text-gray-900 dark:text-white"><?= date('M j, Y', strtotime($transaction['date'])) ?></div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400"><?= date('H:i', strtotime($transaction['date'])) ?></div>
                             </td>
 
-                            <td class="py-4">
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                 <button onclick="viewTransaction('<?= htmlspecialchars((string)$transaction['id']) ?>')" 
                                         class="text-[#1e0e62] dark:text-indigo-400 hover:text-[#2d1b8a] dark:hover:text-indigo-300 text-sm font-medium">
                                     View Details

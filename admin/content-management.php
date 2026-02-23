@@ -3,7 +3,8 @@ if (!defined('ADMIN_AREA')) {
     define('ADMIN_AREA', true);
 }
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/autoload.php';
+\App\Config\EnvLoader::load(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
 
 use App\Config\Database;
 use App\Models\SiteSettings;
@@ -104,217 +105,43 @@ include __DIR__ . '/includes/header.php';
 ?>
 
 <style>
-.content-management {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-.settings-section {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
-}
-
-.section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e5e7eb;
-}
-
-.settings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.setting-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.setting-label {
-    font-weight: 600;
-    color: #374151;
-    font-size: 0.9rem;
-}
-
-.setting-description {
-    font-size: 0.8rem;
-    color: #6b7280;
-    margin-bottom: 0.5rem;
-}
-
-.form-control {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    transition: border-color 0.2s;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.color-input {
-    width: 60px;
-    height: 40px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.textarea-control {
-    min-height: 100px;
-    resize: vertical;
-}
-
-.upload-area {
-    border: 2px dashed #d1d5db;
-    border-radius: 8px;
-    padding: 2rem;
-    text-align: center;
-    transition: border-color 0.2s;
-    cursor: pointer;
-}
-
-.upload-area:hover {
-    border-color: #667eea;
-}
-
-.upload-area.dragover {
-    border-color: #667eea;
-    background-color: #f8fafc;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-}
-
-.btn-primary {
-    background: #1e0e62;
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.btn-secondary {
-    background: #6b7280;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: #4b5563;
-}
-
-.btn-success {
-    background: #10b981;
-    color: white;
-}
-
-.btn-success:hover {
-    background: #059669;
-}
-
-.btn-danger {
-    background: #ef4444;
-    color: white;
-}
-
-.btn-danger:hover {
-    background: #dc2626;
-}
-
-.current-logo {
-    max-width: 200px;
-    max-height: 100px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.alert {
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.alert-success {
-    background-color: #d1fae5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-}
-
-.alert-error {
-    background-color: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fca5a5;
-}
-
-.tab-navigation {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.tab-button {
-    padding: 0.75rem 1.5rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    color: #6b7280;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-}
-
-.tab-button.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
-}
-
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-}
+/* content management styles */
+.settings-section { margin-bottom: 1.5rem; }
+.section-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; }
+.settings-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+@media (min-width: 768px) { .settings-grid { grid-template-columns: 1fr 1fr; } }
+.setting-item { margin-bottom: 0.75rem; }
+.setting-label { display: block; font-size: 0.875rem; font-weight: 500; color: #6b7280; margin-bottom: 0.25rem; }
+.setting-description { font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.5rem; }
+.textarea-control { width: 100%; min-height: 100px; padding: 0.625rem 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; outline: none; font-size: 0.875rem; background: white; color: #111827; resize: vertical; }
+:is(.dark *) .textarea-control { background: #1a1145; border-color: #2d1b6e; color: white; }
+.textarea-control:focus { border-color: #1e0e62; }
+.upload-area { border: 2px dashed #e5e7eb; border-radius: 0.75rem; padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+.upload-area:hover { border-color: #1e0e62; }
+:is(.dark *) .upload-area { border-color: #2d1b6e; }
+.current-logo { max-height: 60px; border-radius: 0.5rem; }
+.color-input { width: 40px; height: 40px; border: 1px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; padding: 2px; }
+:is(.dark *) .color-input { border-color: #2d1b6e; }
+:is(.dark *) .section-title { color: white; }
+:is(.dark *) .setting-label { color: #9ca3af; }
+:is(.dark *) .setting-description { color: #6b7280; }
 </style>
 
+<div class="space-y-6">
+
+
+
 <div class="content-management">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0">Content Management</h1>
-        <div>
-            <button type="button" class="btn btn-secondary me-2" onclick="resetSettings()">Reset to Defaults</button>
-            <button type="button" class="btn btn-primary" onclick="saveAllSettings()">Save All Changes</button>
+    <div class="flex justify-between items-center gap-4 mb-4">
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Content Management</h1>
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <button type="button" class="px-4 py-2 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full hover:border-[#1e0e62] transition-colors" onclick="resetSettings()">Reset to Defaults</button>
+            <button type="button" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="saveAllSettings()">Save All Changes</button>
         </div>
     </div>
 
     <?php if (isset($success_message)): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($success_message) ?></div>
+        <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm"><?= htmlspecialchars($success_message) ?></div>
     <?php endif; ?>
 
     <?php if (isset($error_message)): ?>
@@ -322,15 +149,15 @@ include __DIR__ . '/includes/header.php';
     <?php endif; ?>
 
     <!-- Tab Navigation -->
-    <div class="tab-navigation">
-        <button class="tab-button active" onclick="showTab('general')">General</button>
-        <button class="tab-button" onclick="showTab('branding')">Branding</button>
-        <button class="tab-button" onclick="showTab('theme')">Theme</button>
-        <button class="tab-button" onclick="showTab('company')">Company</button>
-        <button class="tab-button" onclick="showTab('content')">Content</button>
-        <button class="tab-button" onclick="showTab('social')">Social Media</button>
-        <button class="tab-button" onclick="showTab('seo')">SEO</button>
-        <button class="tab-button" onclick="showTab('system')">System</button>
+    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm p-1 flex flex-wrap gap-1 mb-4">
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl bg-[#1e0e62] text-white" onclick="showTab('general')">General</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('branding')">Branding</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('theme')">Theme</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('company')">Company</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('content')">Content</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('social')">Social Media</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('seo')">SEO</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('system')">System</button>
     </div>
 
     <form id="settingsForm" method="POST">
@@ -352,7 +179,7 @@ include __DIR__ . '/includes/header.php';
                             <?php else: ?>
                                 <input type="text" 
                                        name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="form-control" 
+                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
                                        value="<?= htmlspecialchars($setting['setting_value']) ?>"
                                        placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
                             <?php endif; ?>
@@ -365,7 +192,7 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Branding Tab -->
-        <div id="branding-tab" class="tab-content">
+        <div id="branding-tab" class="tab-content" style="display:none">
             <div class="settings-section">
                 <h3 class="section-title">Branding & Logo</h3>
                 
@@ -385,7 +212,7 @@ include __DIR__ . '/includes/header.php';
                     <div class="upload-area" onclick="document.getElementById('logoUpload').click()">
                         <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color: #6b7280;"></i>
                         <p>Click to upload or drag and drop</p>
-                        <p class="text-muted">PNG, JPG, SVG up to 2MB</p>
+                        <p class="text-gray-400 dark:text-gray-500">PNG, JPG, SVG up to 2MB</p>
                     </div>
                     <input type="file" id="logoUpload" name="logo" accept="image/*" style="display: none;" onchange="uploadLogo()">
                 </div>
@@ -397,7 +224,7 @@ include __DIR__ . '/includes/header.php';
                             <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
                             <input type="text" 
                                    name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                   class="form-control" 
+                                   class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
                                    value="<?= htmlspecialchars($setting['setting_value']) ?>"
                                    placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
                             <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
@@ -409,7 +236,7 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Theme Tab -->
-        <div id="theme-tab" class="tab-content">
+        <div id="theme-tab" class="tab-content" style="display:none">
             <div class="settings-section">
                 <h3 class="section-title">Theme Colors</h3>
                 <div class="settings-grid">
@@ -417,14 +244,14 @@ include __DIR__ . '/includes/header.php';
                         <div class="setting-item">
                             <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
                             <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="flex align-items-center gap-2">
                                 <input type="color" 
                                        name="settings[<?= $setting['setting_key'] ?>][value]" 
                                        class="color-input" 
                                        value="<?= htmlspecialchars($setting['setting_value']) ?>">
                                 <input type="text" 
                                        name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="form-control" 
+                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
                                        value="<?= htmlspecialchars($setting['setting_value']) ?>"
                                        placeholder="#000000">
                             </div>
@@ -437,7 +264,7 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Company Tab -->
-        <div id="company-tab" class="tab-content">
+        <div id="company-tab" class="tab-content" style="display:none">
             <div class="settings-section">
                 <h3 class="section-title">Company Information</h3>
                 <div class="settings-grid">
@@ -452,7 +279,7 @@ include __DIR__ . '/includes/header.php';
                             <?php else: ?>
                                 <input type="text" 
                                        name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="form-control" 
+                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
                                        value="<?= htmlspecialchars($setting['setting_value']) ?>"
                                        placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
                             <?php endif; ?>
@@ -465,7 +292,7 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Content Tab -->
-        <div id="content-tab" class="tab-content">
+        <div id="content-tab" class="tab-content" style="display:none">
             <div class="settings-section">
                 <h3 class="section-title">Page Content</h3>
                 <div class="settings-grid">
@@ -485,7 +312,7 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Social Media Tab -->
-        <div id="social-tab" class="tab-content">
+        <div id="social-tab" class="tab-content" style="display:none">
             <div class="settings-section">
                 <h3 class="section-title">Social Media Links</h3>
                 <div class="settings-grid">
@@ -495,7 +322,7 @@ include __DIR__ . '/includes/header.php';
                             <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
                             <input type="url" 
                                    name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                   class="form-control" 
+                                   class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
                                    value="<?= htmlspecialchars($setting['setting_value']) ?>"
                                    placeholder="https://...">
                             <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
@@ -507,7 +334,7 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- SEO Tab -->
-        <div id="seo-tab" class="tab-content">
+        <div id="seo-tab" class="tab-content" style="display:none">
             <div class="settings-section">
                 <h3 class="section-title">SEO Settings</h3>
                 <div class="settings-grid">
@@ -522,7 +349,7 @@ include __DIR__ . '/includes/header.php';
                             <?php else: ?>
                                 <input type="text" 
                                        name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="form-control" 
+                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
                                        value="<?= htmlspecialchars($setting['setting_value']) ?>"
                                        placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
                             <?php endif; ?>
@@ -535,7 +362,7 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- System Tab -->
-        <div id="system-tab" class="tab-content">
+        <div id="system-tab" class="tab-content" style="display:none">
             <div class="settings-section">
                 <h3 class="section-title">System Settings</h3>
                 <div class="settings-grid">
@@ -544,7 +371,7 @@ include __DIR__ . '/includes/header.php';
                             <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
                             <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
                             <?php if ($setting['setting_type'] === 'boolean'): ?>
-                                <select name="settings[<?= $setting['setting_key'] ?>][value]" class="form-control">
+                                <select name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]">
                                     <option value="0" <?= $setting['setting_value'] === '0' ? 'selected' : '' ?>>Disabled</option>
                                     <option value="1" <?= $setting['setting_value'] === '1' ? 'selected' : '' ?>>Enabled</option>
                                 </select>
@@ -555,7 +382,7 @@ include __DIR__ . '/includes/header.php';
                             <?php else: ?>
                                 <input type="text" 
                                        name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="form-control" 
+                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
                                        value="<?= htmlspecialchars($setting['setting_value']) ?>"
                                        placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
                             <?php endif; ?>
@@ -571,21 +398,26 @@ include __DIR__ . '/includes/header.php';
 
 <script>
 function showTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
+    // hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(function(tab) {
+        tab.style.display = 'none';
     });
-    
-    // Remove active class from all tab buttons
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('active');
+
+    // deactivate all tab buttons
+    document.querySelectorAll('.cm-tab').forEach(function(button) {
+        button.classList.remove('bg-[#1e0e62]', 'text-white');
+        button.classList.add('text-gray-500', 'dark:text-gray-400');
     });
-    
-    // Show selected tab content
-    document.getElementById(tabName + '-tab').classList.add('active');
-    
-    // Add active class to clicked button
-    event.target.classList.add('active');
+
+    // show selected tab content
+    var targetTab = document.getElementById(tabName + '-tab');
+    if (targetTab) targetTab.style.display = 'block';
+
+    // activate clicked button
+    if (event && event.target) {
+        event.target.classList.add('bg-[#1e0e62]', 'text-white');
+        event.target.classList.remove('text-gray-500', 'dark:text-gray-400');
+    }
 }
 
 function saveAllSettings() {

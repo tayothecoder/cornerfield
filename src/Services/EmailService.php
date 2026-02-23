@@ -31,6 +31,10 @@ class EmailService {
      */
     private function initializeMailer() {
         try {
+            if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+                error_log("PHPMailer not installed - email sending disabled");
+                return;
+            }
             $this->mailer = new PHPMailer(true);
             
             // Server settings
