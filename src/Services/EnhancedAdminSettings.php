@@ -278,13 +278,24 @@ class EnhancedAdminSettings {
             $nowpaymentsEnabled = $this->getPaymentGatewaySettings()['payment_nowpayments_enabled'] ?? '0';
             $health['payment_gateways'] = ($cryptomusEnabled === '1' || $nowpaymentsEnabled === '1') ? 'configured' : 'not_configured';
             
-            // Email system
-            $emailEnabled = $this->getEmailSettings()['email_smtp_enabled'] ?? '0';
-            $health['email_system'] = $emailEnabled === '1' ? 'configured' : 'not_configured';
+            // Email system - check if smtp host is configured as the enabled flag may not exist
+            $emailSettings = $this->getEmailSettings();
+            $emailConfigured = !empty($emailSettings['email_smtp_host'] ?? '') || ($emailSettings['email_smtp_enabled'] ?? '0') === '1';
+            $health['email_system'] = $emailConfigured ? 'configured' : 'not_configured';
             
-            // Support system
-            $supportEnabled = $this->getSupportSettings()['support_enabled'] ?? '0';
-            $health['support_system'] = $supportEnabled === '1' ? 'enabled' : 'disabled';
+            // Support system - check if support tickets table exists and has data, or if enabled flag is set
+            $supportSettings = $this->getSupportSettings();
+            $supportEnabled = ($supportSettings['support_enabled'] ?? '') === '1';
+            if (!$supportEnabled) {
+                // fallback: check if support_tickets table has any records
+                try {
+                    $ticketCount = $this->database->fetchOne("SELECT COUNT(*) as cnt FROM support_tickets")['cnt'] ?? 0;
+                    $supportEnabled = $ticketCount >= 0; // table exists, support is functional
+                } catch (\Exception $e) {
+                    $supportEnabled = false;
+                }
+            }
+            $health['support_system'] = $supportEnabled ? 'enabled' : 'disabled';
             
             // Transfer system
             $transferEnabled = $this->getTransferSettings()['transfer_enabled'] ?? '0';

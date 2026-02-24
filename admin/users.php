@@ -293,7 +293,7 @@ include __DIR__ . '/includes/header.php';
                                 <div class="flex items-center gap-1">
                                     <button onclick="editUser(<?= $user['id'] ?>)" class="px-3 py-1 bg-[#1e0e62] text-white text-xs font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Edit</button>
                                     <button onclick="manageBalance(<?= $user['id'] ?>)" class="px-3 py-1 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full hover:border-[#1e0e62] transition-colors">Balance</button>
-                                    <button onclick="impersonateUser(<?= $user['id'] ?>)" class="px-3 py-1 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full hover:border-[#1e0e62] transition-colors">Login as</button>
+                                    <button onclick="impersonateUser(<?= $user['id'] ?>)" class="px-3 py-1 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full hover:border-[#1e0e62] transition-colors whitespace-nowrap">Login as</button>
                                 </div>
                             </td>
                         </tr>

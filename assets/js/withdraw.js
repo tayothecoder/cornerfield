@@ -171,7 +171,7 @@ function renderWithdrawalHistory(withdrawals) {
         var address = w.wallet_address || '-';
         var shortAddr = address.length > 16 ? address.substring(0, 8) + '...' + address.substring(address.length - 6) : address;
         var hash = w.transaction_hash || '-';
-        var shortHash = hash.length > 16 ? hash.substring(0, 8) + '...' : hash;
+        var shortHash = hash.length > 16 ? hash.substring(0, 10) + '...' + hash.substring(hash.length - 6) : hash;
         var statusLabel = w.status ? w.status.charAt(0).toUpperCase() + w.status.slice(1) : 'Pending';
 
         return '<tr class="hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e] transition-colors">' +
@@ -181,7 +181,7 @@ function renderWithdrawalHistory(withdrawals) {
             '<td class="py-3 pr-4 text-sm text-gray-900 dark:text-white">' + currency + '</td>' +
             '<td class="py-3 pr-4 text-sm text-gray-500 dark:text-gray-400 font-mono">' + shortAddr + '</td>' +
             '<td class="py-3 pr-4"><span class="px-2 py-0.5 text-xs font-medium rounded-full ' + cls + '">' + statusLabel + '</span></td>' +
-            '<td class="py-3 text-sm text-gray-500 dark:text-gray-400 font-mono">' + shortHash + '</td>' +
+            '<td class="py-3 text-sm text-gray-500 dark:text-gray-400 font-mono" style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + shortHash + '</td>' +
             '</tr>';
     }).join('');
 }

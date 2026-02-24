@@ -66,7 +66,10 @@ class CornerfieldApp {
     }
 
     initThemeToggle() {
-        // Create theme toggle button if it doesn't exist
+        // skip if the header already has a theme toggle
+        if (document.getElementById('theme-toggle')) return;
+
+        // create theme toggle button if it doesn't exist
         let themeToggle = document.querySelector('.cf-theme-toggle');
         
         if (!themeToggle) {

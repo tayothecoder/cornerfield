@@ -160,7 +160,7 @@ if (strlen($initials) < 2) $initials = strtoupper(substr($user['firstname'] ?? '
                     <!-- user -->
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-full bg-[#1e0e62] flex items-center justify-center text-white text-xs font-medium"><?= htmlspecialchars($initials) ?></div>
-                        <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300"><?= htmlspecialchars($user['firstname']) ?></span>
+                        <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[250px] pr-2" title="<?= htmlspecialchars(trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''))) ?>"><?= htmlspecialchars(trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''))) ?></span>
                     </div>
                 </div>
             </header>

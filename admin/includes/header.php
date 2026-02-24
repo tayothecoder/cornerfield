@@ -115,6 +115,7 @@ $adminNavItems = [
     'withdrawals' => ['title' => 'Withdrawals', 'url' => 'withdrawals.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 20V4m0 0l-6 6m6-6l6 6"/>', 'badge' => $pendingWithdrawals],
     'transactions' => ['title' => 'Transactions', 'url' => 'transactions.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'],
     'user-transfers' => ['title' => 'Transfers', 'url' => 'user-transfers.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>'],
+    'investments' => ['title' => 'Investments', 'url' => 'investments.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>'],
     'investment-plans' => ['title' => 'Investment Plans', 'url' => 'investment-plans.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>'],
     'profits' => ['title' => 'Profits', 'url' => 'profits.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'],
     'support-tickets' => ['title' => 'Support', 'url' => 'support-tickets.php', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 2H4a2 2 0 00-2 2v12a2 2 0 002 2h4l4 4 4-4h4a2 2 0 002-2V4a2 2 0 00-2-2z"/>'],
@@ -205,7 +206,13 @@ $adminNavItems = [
                     <!-- admin avatar -->
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-full bg-[#1e0e62] flex items-center justify-center text-white text-xs font-medium"><?= htmlspecialchars($adminInitials) ?></div>
-                        <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300"><?= htmlspecialchars($currentAdmin['username'] ?? 'Admin') ?></span>
+                        <?php
+                        $adminDisplayName = trim(($currentAdmin['first_name'] ?? '') . ' ' . ($currentAdmin['last_name'] ?? ''));
+                        if (empty($adminDisplayName)) {
+                            $adminDisplayName = $currentAdmin['username'] ?? 'Admin';
+                        }
+                        ?>
+                        <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[250px] pr-2" title="<?= htmlspecialchars($adminDisplayName) ?>"><?= htmlspecialchars($adminDisplayName) ?></span>
                     </div>
                 </div>
             </header>

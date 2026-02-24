@@ -35,26 +35,50 @@ if (!AuthMiddleware::check()) {
 try {
     $controller = new TransferController();
     $data = $controller->getTransferData();
+
+    // if recentTransfers is empty, query user_transfers table directly
+    if (empty($data['recentTransfers'])) {
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        if ($userId > 0) {
+            $db = new \App\Config\Database();
+            $transfers = $db->fetchAll("
+                SELECT t.*, r.username as recipient
+                FROM user_transfers t
+                JOIN users r ON t.receiver_id = r.id
+                WHERE t.sender_id = ?
+                ORDER BY t.created_at DESC
+                LIMIT 10
+            ", [$userId]);
+
+            $formatted = [];
+            foreach ($transfers as $t) {
+                $formatted[] = [
+                    'id' => $t['id'],
+                    'recipient' => $t['recipient'],
+                    'amount' => (float)$t['amount'],
+                    'fee' => (float)($t['fee'] ?? 0),
+                    'status' => $t['status'],
+                    'created_at' => $t['created_at'],
+                    'reference' => 'TRF-' . str_pad($t['id'], 8, '0', STR_PAD_LEFT),
+                ];
+            }
+            $data['recentTransfers'] = $formatted;
+        }
+    }
 } catch (\Throwable $e) {
-    // fallback demo data for preview
+    // fallback with empty data
     $data = [
-        'availableBalance' => 12890.25,
+        'availableBalance' => 0,
         'transferFee' => 2.50,
-        'recentTransfers' => [
-            ['id' => 1, 'recipient' => 'trader123', 'amount' => 500.00, 'fee' => 2.50, 'status' => 'completed', 'created_at' => '2024-02-10 14:30:00', 'reference' => 'TRF-2024021001'],
-            ['id' => 2, 'recipient' => 'investor456', 'amount' => 250.00, 'fee' => 2.50, 'status' => 'completed', 'created_at' => '2024-02-09 10:15:00', 'reference' => 'TRF-2024020901'],
-            ['id' => 3, 'recipient' => 'crypto_lover', 'amount' => 1000.00, 'fee' => 2.50, 'status' => 'pending', 'created_at' => '2024-02-08 16:45:00', 'reference' => 'TRF-2024020801'],
-            ['id' => 4, 'recipient' => 'newbie101', 'amount' => 100.00, 'fee' => 2.50, 'status' => 'completed', 'created_at' => '2024-02-07 11:20:00', 'reference' => 'TRF-2024020701'],
-            ['id' => 5, 'recipient' => 'pro_investor', 'amount' => 750.00, 'fee' => 2.50, 'status' => 'failed', 'created_at' => '2024-02-06 09:10:00', 'reference' => 'TRF-2024020601', 'failure_reason' => 'Recipient account not found']
-        ],
+        'recentTransfers' => [],
         'transferLimits' => [
             'daily' => 5000.00,
             'monthly' => 50000.00,
             'min' => 10.00,
             'max' => 10000.00
         ],
-        'dailyUsed' => 750.00,
-        'monthlyUsed' => 2500.00
+        'dailyUsed' => 0,
+        'monthlyUsed' => 0
     ];
 }
 
@@ -102,7 +126,7 @@ require_once __DIR__ . '/includes/header.php';
                                    placeholder="Enter username or email address">
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            send to any registered Cornerfield user
+                            Send to any registered Cornerfield user
                         </p>
                     </div>
 
@@ -180,7 +204,7 @@ require_once __DIR__ . '/includes/header.php';
                             </div>
                             <div class="ml-3">
                                 <p class="text-sm text-amber-800 dark:text-amber-200">
-                                    transfers are instant and cannot be reversed. please verify recipient details carefully.
+                                    Transfers are instant and cannot be reversed. Please verify recipient details carefully.
                                 </p>
                             </div>
                         </div>
@@ -244,7 +268,7 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <div class="ml-3">
                             <p class="text-sm text-blue-800 dark:text-blue-200">
-                                limits reset daily at midnight UTC and monthly on the 1st
+                                Limits reset daily at midnight UTC and monthly on the 1st
                             </p>
                         </div>
                     </div>
@@ -262,7 +286,7 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <div>
                             <p class="text-gray-900 dark:text-white font-medium">Instant Transfers</p>
-                            <p class="text-gray-500 dark:text-gray-400">funds are transferred immediately to the recipient's account</p>
+                            <p class="text-gray-500 dark:text-gray-400">Funds are transferred immediately to the recipient's account</p>
                         </div>
                     </div>
 
@@ -282,7 +306,7 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <div>
                             <p class="text-gray-900 dark:text-white font-medium">Low Fees</p>
-                            <p class="text-gray-500 dark:text-gray-400">only $<?= number_format($data['transferFee'], 2) ?> flat fee per transfer</p>
+                            <p class="text-gray-500 dark:text-gray-400">Only $<?= number_format($data['transferFee'], 2) ?> flat fee per transfer</p>
                         </div>
                     </div>
 
@@ -292,7 +316,7 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <div>
                             <p class="text-gray-900 dark:text-white font-medium">Non-Reversible</p>
-                            <p class="text-gray-500 dark:text-gray-400">transfers cannot be cancelled once confirmed</p>
+                            <p class="text-gray-500 dark:text-gray-400">Transfers cannot be cancelled once confirmed</p>
                         </div>
                     </div>
                 </div>

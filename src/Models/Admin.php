@@ -142,7 +142,15 @@ class Admin {
             // Active investment schemas
             $result = $this->db->fetchOne("SELECT COUNT(*) as count FROM investment_schemas WHERE status = 1");
             $stats['active_schemas'] = $result['count'];
-            
+
+            // Total deposits (completed)
+            $result = $this->db->fetchOne("SELECT COALESCE(SUM(requested_amount), 0) as total FROM deposits WHERE status = 'completed'");
+            $stats['total_deposits'] = $result['total'];
+
+            // Pending withdrawals
+            $result = $this->db->fetchOne("SELECT COUNT(*) as count FROM withdrawals WHERE status = 'pending'");
+            $stats['pending_withdrawals'] = $result['count'];
+
             return $stats;
         } catch (Exception $e) {
             error_log("Admin getDashboardStats error: " . $e->getMessage());

@@ -191,7 +191,7 @@ $depositMethods = $methodModel->findActive();
                            name="transaction_hash" 
                            class="block w-full py-2.5 px-3 text-sm border border-gray-200 dark:border-[#2d1b6e] rounded-xl bg-white dark:bg-[#0f0a2e] text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#1e0e62] focus:border-[#1e0e62]" 
                            placeholder="Enter blockchain transaction hash">
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">optional: provide the transaction hash after sending payment</p>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Optional: provide the transaction hash after sending payment</p>
                 </div>
 
                 <div>
@@ -206,7 +206,7 @@ $depositMethods = $methodModel->findActive();
                                     <span>Upload a file</span>
                                     <input id="proofOfPayment" name="proof_of_payment" type="file" accept="image/*,.pdf" class="sr-only">
                                 </label>
-                                <p class="pl-1">or drag and drop</p>
+                                <p class="pl-1">Or drag and drop</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, PDF up to 5MB</p>
                         </div>
@@ -243,7 +243,7 @@ $depositMethods = $methodModel->findActive();
                     </div>
                     <div class="ml-3">
                         <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">Automatic Processing</h3>
-                        <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">you will be redirected to our secure payment processor to complete the transaction. funds are credited automatically upon successful payment.</p>
+                        <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">You will be redirected to our secure payment processor to complete the transaction. Funds are credited automatically upon successful payment.</p>
                     </div>
                 </div>
             </div>

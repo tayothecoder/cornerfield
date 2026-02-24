@@ -14,18 +14,32 @@ if (!AuthMiddleware::check()) {
 
 try {
     $controller = new ReferralController();
-    $data = $controller->getReferralData();
+    $referralLink = $controller->getReferralLink();
+    $referrals = $controller->getMyReferrals();
+
+    $totalEarnings = 0;
+    $monthlyEarnings = 0;
+    $commissions = [];
+
+    // build referral commissions from referral data
+    foreach ($referrals as $ref) {
+        $totalEarnings += (float)($ref['commission_earned'] ?? 0);
+    }
+
+    $data = [
+        'referralLink' => $referralLink ?: ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/register.php?ref=unknown'),
+        'totalReferrals' => count($referrals),
+        'activeReferrals' => count(array_filter($referrals, fn($r) => ($r['is_active'] ?? 0) == 1)),
+        'totalEarnings' => $totalEarnings,
+        'monthlyEarnings' => 0,
+        'referralCommissions' => [],
+    ];
 } catch (\Throwable $e) {
     $data = [
-        'referralLink' => 'https://cornerfield.com/ref/demouser',
-        'totalReferrals' => 12, 'activeReferrals' => 8,
-        'totalEarnings' => 1250.75, 'monthlyEarnings' => 320.50,
-        'referralCommissions' => [
-            ['id' => 1, 'username' => 'user123', 'level' => 1, 'amount' => 50.00, 'commission' => 5.00, 'date' => '2024-02-10 15:30:00', 'status' => 'paid'],
-            ['id' => 2, 'username' => 'trader456', 'level' => 1, 'amount' => 200.00, 'commission' => 20.00, 'date' => '2024-02-09 11:15:00', 'status' => 'paid'],
-            ['id' => 3, 'username' => 'investor789', 'level' => 2, 'amount' => 500.00, 'commission' => 25.00, 'date' => '2024-02-08 09:45:00', 'status' => 'paid'],
-            ['id' => 4, 'username' => 'newbie101', 'level' => 1, 'amount' => 100.00, 'commission' => 10.00, 'date' => '2024-02-07 14:20:00', 'status' => 'pending'],
-        ]
+        'referralLink' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/register.php?ref=unknown',
+        'totalReferrals' => 0, 'activeReferrals' => 0,
+        'totalEarnings' => 0, 'monthlyEarnings' => 0,
+        'referralCommissions' => [],
     ];
 }
 

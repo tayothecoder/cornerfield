@@ -10,7 +10,7 @@ use App\Config\Database;
 use App\Models\SiteSettings;
 use App\Utils\SessionManager;
 
-// Start session and check admin authentication
+// start session and check admin authentication
 SessionManager::start();
 
 if (!SessionManager::get('admin_logged_in')) {
@@ -21,7 +21,7 @@ if (!SessionManager::get('admin_logged_in')) {
 $database = new Database();
 $siteSettings = new SiteSettings($database);
 
-// Handle form submissions
+// handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -30,23 +30,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'update_settings':
                 $settings = $_POST['settings'] ?? [];
                 $siteSettings->updateMultiple($settings);
-                $success_message = 'Settings updated successfully!';
+                $success_message = 'Settings updated successfully.';
                 break;
                 
             case 'upload_logo':
                 $uploaded = handleLogoUpload();
                 if ($uploaded) {
-                    $success_message = 'Logo uploaded successfully!';
+                    $success_message = 'Logo uploaded successfully.';
                 } else {
                     $error_message = 'Failed to upload logo.';
                 }
                 break;
                 
             case 'reset_settings':
-                // Reset to defaults
                 $defaults = getDefaultSettings();
                 $siteSettings->updateMultiple($defaults);
-                $success_message = 'Settings reset to defaults!';
+                $success_message = 'Settings reset to defaults.';
                 break;
         }
     } catch (Exception $e) {
@@ -54,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all settings grouped by category
+// get all settings grouped by category
 $settingsByCategory = $siteSettings->getAllByCategory();
 
 function handleLogoUpload() {
@@ -101,40 +100,18 @@ function getDefaultSettings() {
 }
 
 $pageTitle = 'Content Management';
+$currentPage = 'content-management';
 include __DIR__ . '/includes/header.php';
 ?>
 
-<style>
-/* content management styles */
-.settings-section { margin-bottom: 1.5rem; }
-.section-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; }
-.settings-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-@media (min-width: 768px) { .settings-grid { grid-template-columns: 1fr 1fr; } }
-.setting-item { margin-bottom: 0.75rem; }
-.setting-label { display: block; font-size: 0.875rem; font-weight: 500; color: #6b7280; margin-bottom: 0.25rem; }
-.setting-description { font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.5rem; }
-.textarea-control { width: 100%; min-height: 100px; padding: 0.625rem 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; outline: none; font-size: 0.875rem; background: white; color: #111827; resize: vertical; }
-:is(.dark *) .textarea-control { background: #1a1145; border-color: #2d1b6e; color: white; }
-.textarea-control:focus { border-color: #1e0e62; }
-.upload-area { border: 2px dashed #e5e7eb; border-radius: 0.75rem; padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.2s; }
-.upload-area:hover { border-color: #1e0e62; }
-:is(.dark *) .upload-area { border-color: #2d1b6e; }
-.current-logo { max-height: 60px; border-radius: 0.5rem; }
-.color-input { width: 40px; height: 40px; border: 1px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; padding: 2px; }
-:is(.dark *) .color-input { border-color: #2d1b6e; }
-:is(.dark *) .section-title { color: white; }
-:is(.dark *) .setting-label { color: #9ca3af; }
-:is(.dark *) .setting-description { color: #6b7280; }
-</style>
-
 <div class="space-y-6">
-
-
-
-<div class="content-management">
-    <div class="flex justify-between items-center gap-4 mb-4">
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Content Management</h1>
-        <div class="flex items-center gap-2 flex-shrink-0">
+    <!-- page header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Content Management</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage site content, branding, and configuration</p>
+        </div>
+        <div class="flex items-center gap-2">
             <button type="button" class="px-4 py-2 border border-gray-200 dark:border-[#2d1b6e] text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full hover:border-[#1e0e62] transition-colors" onclick="resetSettings()">Reset to Defaults</button>
             <button type="button" class="px-4 py-2 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors" onclick="saveAllSettings()">Save All Changes</button>
         </div>
@@ -143,290 +120,342 @@ include __DIR__ . '/includes/header.php';
     <?php if (isset($success_message)): ?>
         <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm"><?= htmlspecialchars($success_message) ?></div>
     <?php endif; ?>
-
     <?php if (isset($error_message)): ?>
-        <div class="alert alert-error"><?= htmlspecialchars($error_message) ?></div>
+        <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm"><?= htmlspecialchars($error_message) ?></div>
     <?php endif; ?>
 
-    <!-- Tab Navigation -->
-    <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm p-1 flex flex-wrap gap-1 mb-4">
-        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl bg-[#1e0e62] text-white" onclick="showTab('general')">General</button>
-        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('branding')">Branding</button>
-        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('theme')">Theme</button>
-        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('company')">Company</button>
-        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('content')">Content</button>
-        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('social')">Social Media</button>
-        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('seo')">SEO</button>
-        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-2xl text-gray-500 dark:text-gray-400 hover:bg-[#f5f3ff] dark:hover:bg-[#0f0a2e]" onclick="showTab('system')">System</button>
+    <!-- tab navigation -->
+    <div class="flex flex-wrap gap-2" id="cmTabs">
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-full bg-[#1e0e62] text-white cursor-pointer" data-target="general" type="button">General</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0f0a2e] cursor-pointer" data-target="branding" type="button">Branding</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0f0a2e] cursor-pointer" data-target="theme" type="button">Theme</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0f0a2e] cursor-pointer" data-target="company" type="button">Company</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0f0a2e] cursor-pointer" data-target="content" type="button">Content</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0f0a2e] cursor-pointer" data-target="social" type="button">Social Media</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0f0a2e] cursor-pointer" data-target="seo" type="button">SEO</button>
+        <button class="cm-tab px-4 py-2 text-sm font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0f0a2e] cursor-pointer" data-target="system" type="button">System</button>
     </div>
 
     <form id="settingsForm" method="POST">
         <input type="hidden" name="action" value="update_settings">
-        
-        <!-- General Settings Tab -->
-        <div id="general-tab" class="tab-content active">
-            <div class="settings-section">
-                <h3 class="section-title">General Settings</h3>
-                <div class="settings-grid">
-                    <?php foreach ($settingsByCategory['general'] ?? [] as $setting): ?>
-                        <div class="setting-item">
-                            <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
-                            <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <?php if ($setting['setting_type'] === 'textarea'): ?>
-                                <textarea name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                          class="form-control textarea-control" 
-                                          placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
-                            <?php else: ?>
-                                <input type="text" 
-                                       name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
-                                       value="<?= htmlspecialchars($setting['setting_value']) ?>"
-                                       placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
-                            <?php endif; ?>
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
 
-        <!-- Branding Tab -->
-        <div id="branding-tab" class="tab-content" style="display:none">
-            <div class="settings-section">
-                <h3 class="section-title">Branding & Logo</h3>
-                
-                <!-- Logo Upload -->
-                <div class="mb-4">
-                    <label class="setting-label">Site Logo</label>
-                    <div class="setting-description">Upload your site logo (PNG, JPG, or SVG)</div>
-                    
-                    <?php 
-                    $currentLogo = $siteSettings->get('site_logo', '');
-                    if ($currentLogo): ?>
-                        <div class="mb-3">
-                            <img src="../<?= htmlspecialchars($currentLogo) ?>" alt="Current Logo" class="current-logo">
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="upload-area" onclick="document.getElementById('logoUpload').click()">
-                        <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color: #6b7280;"></i>
-                        <p>Click to upload or drag and drop</p>
-                        <p class="text-gray-400 dark:text-gray-500">PNG, JPG, SVG up to 2MB</p>
-                    </div>
-                    <input type="file" id="logoUpload" name="logo" accept="image/*" style="display: none;" onchange="uploadLogo()">
+        <!-- general tab -->
+        <div class="cm-pane" id="general">
+            <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">General Settings</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Basic site information and configuration</p>
                 </div>
-
-                <div class="settings-grid">
-                    <?php foreach ($settingsByCategory['branding'] ?? [] as $setting): ?>
-                        <div class="setting-item">
-                            <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
-                            <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <input type="text" 
-                                   name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                   class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
-                                   value="<?= htmlspecialchars($setting['setting_value']) ?>"
-                                   placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- Theme Tab -->
-        <div id="theme-tab" class="tab-content" style="display:none">
-            <div class="settings-section">
-                <h3 class="section-title">Theme Colors</h3>
-                <div class="settings-grid">
-                    <?php foreach ($settingsByCategory['theme'] ?? [] as $setting): ?>
-                        <div class="setting-item">
-                            <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
-                            <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <div class="flex align-items-center gap-2">
-                                <input type="color" 
-                                       name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="color-input" 
-                                       value="<?= htmlspecialchars($setting['setting_value']) ?>">
-                                <input type="text" 
-                                       name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
-                                       value="<?= htmlspecialchars($setting['setting_value']) ?>"
-                                       placeholder="#000000">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <?php foreach ($settingsByCategory['general'] ?? [] as $setting): ?>
+                            <div class="<?= $setting['setting_type'] === 'textarea' ? 'md:col-span-2' : '' ?>">
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
+                                <?php if ($setting['setting_type'] === 'textarea'): ?>
+                                    <textarea name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] min-h-[100px] resize-vertical text-sm" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
+                                <?php else: ?>
+                                    <input type="text" name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] text-sm" value="<?= htmlspecialchars($setting['setting_value']) ?>" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
+                                <?php endif; ?>
+                                <?php if (!empty($setting['description'])): ?>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= htmlspecialchars($setting['description']) ?></p>
+                                <?php endif; ?>
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
                             </div>
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                        <button type="submit" class="px-6 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Save General Settings</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Company Tab -->
-        <div id="company-tab" class="tab-content" style="display:none">
-            <div class="settings-section">
-                <h3 class="section-title">Company Information</h3>
-                <div class="settings-grid">
-                    <?php foreach ($settingsByCategory['company'] ?? [] as $setting): ?>
-                        <div class="setting-item">
-                            <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
-                            <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <?php if ($setting['setting_type'] === 'textarea'): ?>
-                                <textarea name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                          class="form-control textarea-control" 
-                                          placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
-                            <?php else: ?>
-                                <input type="text" 
-                                       name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
-                                       value="<?= htmlspecialchars($setting['setting_value']) ?>"
-                                       placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
-                            <?php endif; ?>
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
+        <!-- branding tab -->
+        <div class="cm-pane hidden" id="branding">
+            <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">Branding</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Logo and brand identity settings</p>
+                </div>
+                <div class="p-6">
+                    <!-- logo upload -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">Site Logo</label>
+                        <?php $currentLogo = $siteSettings->get('site_logo', ''); if ($currentLogo): ?>
+                            <div class="mb-3">
+                                <img src="../<?= htmlspecialchars($currentLogo) ?>" alt="Current Logo" class="max-h-[60px] rounded-lg">
+                            </div>
+                        <?php endif; ?>
+                        <div class="border-2 border-dashed border-gray-200 dark:border-[#2d1b6e] rounded-xl p-8 text-center cursor-pointer hover:border-[#1e0e62] transition-colors" onclick="document.getElementById('logoUpload').click()">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Click to upload or drag and drop</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">PNG, JPG, SVG up to 2MB</p>
                         </div>
-                    <?php endforeach; ?>
+                        <input type="file" id="logoUpload" name="logo" accept="image/*" class="hidden" onchange="uploadLogo()">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <?php foreach ($settingsByCategory['branding'] ?? [] as $setting): ?>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
+                                <input type="text" name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] text-sm" value="<?= htmlspecialchars($setting['setting_value']) ?>" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
+                                <?php if (!empty($setting['description'])): ?>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= htmlspecialchars($setting['description']) ?></p>
+                                <?php endif; ?>
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                        <button type="submit" class="px-6 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Save Branding Settings</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Content Tab -->
-        <div id="content-tab" class="tab-content" style="display:none">
-            <div class="settings-section">
-                <h3 class="section-title">Page Content</h3>
-                <div class="settings-grid">
-                    <?php foreach ($settingsByCategory['content'] ?? [] as $setting): ?>
-                        <div class="setting-item">
-                            <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
-                            <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <textarea name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                      class="form-control textarea-control" 
-                                      placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
-                        </div>
-                    <?php endforeach; ?>
+        <!-- theme tab -->
+        <div class="cm-pane hidden" id="theme">
+            <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">Theme Colors</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Customize the color scheme of your platform</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <?php foreach ($settingsByCategory['theme'] ?? [] as $setting): ?>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" class="w-10 h-10 border border-gray-200 dark:border-[#2d1b6e] rounded-lg cursor-pointer p-0.5" value="<?= htmlspecialchars($setting['setting_value']) ?>" data-sync="<?= $setting['setting_key'] ?>">
+                                    <input type="text" name="settings[<?= $setting['setting_key'] ?>][value]" class="flex-1 px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] text-sm" value="<?= htmlspecialchars($setting['setting_value']) ?>" placeholder="#000000" data-sync-text="<?= $setting['setting_key'] ?>">
+                                </div>
+                                <?php if (!empty($setting['description'])): ?>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= htmlspecialchars($setting['description']) ?></p>
+                                <?php endif; ?>
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                        <button type="submit" class="px-6 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Save Theme Settings</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Social Media Tab -->
-        <div id="social-tab" class="tab-content" style="display:none">
-            <div class="settings-section">
-                <h3 class="section-title">Social Media Links</h3>
-                <div class="settings-grid">
-                    <?php foreach ($settingsByCategory['social'] ?? [] as $setting): ?>
-                        <div class="setting-item">
-                            <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
-                            <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <input type="url" 
-                                   name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                   class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
-                                   value="<?= htmlspecialchars($setting['setting_value']) ?>"
-                                   placeholder="https://...">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
-                        </div>
-                    <?php endforeach; ?>
+        <!-- company tab -->
+        <div class="cm-pane hidden" id="company">
+            <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">Company Information</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Legal and business details</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <?php foreach ($settingsByCategory['company'] ?? [] as $setting): ?>
+                            <div class="<?= $setting['setting_type'] === 'textarea' ? 'md:col-span-2' : '' ?>">
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
+                                <?php if ($setting['setting_type'] === 'textarea'): ?>
+                                    <textarea name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] min-h-[100px] resize-vertical text-sm" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
+                                <?php else: ?>
+                                    <input type="text" name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] text-sm" value="<?= htmlspecialchars($setting['setting_value']) ?>" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
+                                <?php endif; ?>
+                                <?php if (!empty($setting['description'])): ?>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= htmlspecialchars($setting['description']) ?></p>
+                                <?php endif; ?>
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                        <button type="submit" class="px-6 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Save Company Settings</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- SEO Tab -->
-        <div id="seo-tab" class="tab-content" style="display:none">
-            <div class="settings-section">
-                <h3 class="section-title">SEO Settings</h3>
-                <div class="settings-grid">
-                    <?php foreach ($settingsByCategory['seo'] ?? [] as $setting): ?>
-                        <div class="setting-item">
-                            <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
-                            <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <?php if ($setting['setting_type'] === 'textarea'): ?>
-                                <textarea name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                          class="form-control textarea-control" 
-                                          placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
-                            <?php else: ?>
-                                <input type="text" 
-                                       name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
-                                       value="<?= htmlspecialchars($setting['setting_value']) ?>"
-                                       placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
-                            <?php endif; ?>
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
-                        </div>
-                    <?php endforeach; ?>
+        <!-- content tab -->
+        <div class="cm-pane hidden" id="content">
+            <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">Page Content</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Manage text content displayed on your site</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <?php foreach ($settingsByCategory['content'] ?? [] as $setting): ?>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
+                                <textarea name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] min-h-[100px] resize-vertical text-sm" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
+                                <?php if (!empty($setting['description'])): ?>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= htmlspecialchars($setting['description']) ?></p>
+                                <?php endif; ?>
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                        <button type="submit" class="px-6 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Save Content Settings</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- System Tab -->
-        <div id="system-tab" class="tab-content" style="display:none">
-            <div class="settings-section">
-                <h3 class="section-title">System Settings</h3>
-                <div class="settings-grid">
-                    <?php foreach ($settingsByCategory['system'] ?? [] as $setting): ?>
-                        <div class="setting-item">
-                            <label class="setting-label"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
-                            <div class="setting-description"><?= htmlspecialchars($setting['description']) ?></div>
-                            <?php if ($setting['setting_type'] === 'boolean'): ?>
-                                <select name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]">
-                                    <option value="0" <?= $setting['setting_value'] === '0' ? 'selected' : '' ?>>Disabled</option>
-                                    <option value="1" <?= $setting['setting_value'] === '1' ? 'selected' : '' ?>>Enabled</option>
-                                </select>
-                            <?php elseif ($setting['setting_type'] === 'textarea'): ?>
-                                <textarea name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                          class="form-control textarea-control" 
-                                          placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
-                            <?php else: ?>
-                                <input type="text" 
-                                       name="settings[<?= $setting['setting_key'] ?>][value]" 
-                                       class="w-full px-4 py-2.5 bg-white dark:bg-[#1a1145] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62]" 
-                                       value="<?= htmlspecialchars($setting['setting_value']) ?>"
-                                       placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
-                            <?php endif; ?>
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
-                            <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
-                        </div>
-                    <?php endforeach; ?>
+        <!-- social media tab -->
+        <div class="cm-pane hidden" id="social">
+            <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">Social Media Links</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Connect your social media profiles</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <?php foreach ($settingsByCategory['social'] ?? [] as $setting): ?>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
+                                <input type="url" name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] text-sm" value="<?= htmlspecialchars($setting['setting_value']) ?>" placeholder="https://...">
+                                <?php if (!empty($setting['description'])): ?>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= htmlspecialchars($setting['description']) ?></p>
+                                <?php endif; ?>
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                        <button type="submit" class="px-6 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Save Social Media Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- seo tab -->
+        <div class="cm-pane hidden" id="seo">
+            <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">SEO Settings</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Search engine optimization configuration</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <?php foreach ($settingsByCategory['seo'] ?? [] as $setting): ?>
+                            <div class="<?= $setting['setting_type'] === 'textarea' ? 'md:col-span-2' : '' ?>">
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
+                                <?php if ($setting['setting_type'] === 'textarea'): ?>
+                                    <textarea name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] min-h-[100px] resize-vertical text-sm" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
+                                <?php else: ?>
+                                    <input type="text" name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] text-sm" value="<?= htmlspecialchars($setting['setting_value']) ?>" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
+                                <?php endif; ?>
+                                <?php if (!empty($setting['description'])): ?>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= htmlspecialchars($setting['description']) ?></p>
+                                <?php endif; ?>
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                        <button type="submit" class="px-6 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Save SEO Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- system tab -->
+        <div class="cm-pane hidden" id="system">
+            <div class="bg-white dark:bg-[#1a1145] rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-[#2d1b6e]">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">System Settings</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Advanced system configuration</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <?php foreach ($settingsByCategory['system'] ?? [] as $setting): ?>
+                            <div class="<?= $setting['setting_type'] === 'textarea' ? 'md:col-span-2' : '' ?>">
+                                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $setting['setting_key']))) ?></label>
+                                <?php if ($setting['setting_type'] === 'boolean'): ?>
+                                    <select name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] text-sm">
+                                        <option value="0" <?= $setting['setting_value'] === '0' ? 'selected' : '' ?>>Disabled</option>
+                                        <option value="1" <?= $setting['setting_value'] === '1' ? 'selected' : '' ?>>Enabled</option>
+                                    </select>
+                                <?php elseif ($setting['setting_type'] === 'textarea'): ?>
+                                    <textarea name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] min-h-[100px] resize-vertical text-sm" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>"><?= htmlspecialchars($setting['setting_value']) ?></textarea>
+                                <?php else: ?>
+                                    <input type="text" name="settings[<?= $setting['setting_key'] ?>][value]" class="w-full px-4 py-2.5 bg-white dark:bg-[#0f0a2e] border border-gray-200 dark:border-[#2d1b6e] rounded-xl text-gray-900 dark:text-white outline-none focus:border-[#1e0e62] text-sm" value="<?= htmlspecialchars($setting['setting_value']) ?>" placeholder="Enter <?= str_replace('_', ' ', $setting['setting_key']) ?>">
+                                <?php endif; ?>
+                                <?php if (!empty($setting['description'])): ?>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"><?= htmlspecialchars($setting['description']) ?></p>
+                                <?php endif; ?>
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][type]" value="<?= $setting['setting_type'] ?>">
+                                <input type="hidden" name="settings[<?= $setting['setting_key'] ?>][category]" value="<?= $setting['category'] ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-[#2d1b6e]">
+                        <button type="submit" class="px-6 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">Save System Settings</button>
+                    </div>
                 </div>
             </div>
         </div>
     </form>
 </div>
 
+<?php include __DIR__ . '/includes/footer.php'; ?>
+
 <script>
-function showTab(tabName) {
-    // hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(function(tab) {
-        tab.style.display = 'none';
+// tab switching
+document.querySelectorAll('.cm-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        var target = this.getAttribute('data-target');
+
+        // hide all panes
+        document.querySelectorAll('.cm-pane').forEach(function(pane) {
+            pane.classList.add('hidden');
+        });
+
+        // deactivate all tabs
+        document.querySelectorAll('.cm-tab').forEach(function(t) {
+            t.classList.remove('bg-[#1e0e62]', 'text-white');
+            t.classList.add('text-gray-600', 'dark:text-gray-400');
+        });
+
+        // show target pane
+        var pane = document.getElementById(target);
+        if (pane) pane.classList.remove('hidden');
+
+        // activate clicked tab
+        this.classList.remove('text-gray-600', 'dark:text-gray-400');
+        this.classList.add('bg-[#1e0e62]', 'text-white');
     });
+});
 
-    // deactivate all tab buttons
-    document.querySelectorAll('.cm-tab').forEach(function(button) {
-        button.classList.remove('bg-[#1e0e62]', 'text-white');
-        button.classList.add('text-gray-500', 'dark:text-gray-400');
-    });
-
-    // show selected tab content
-    var targetTab = document.getElementById(tabName + '-tab');
-    if (targetTab) targetTab.style.display = 'block';
-
-    // activate clicked button
-    if (event && event.target) {
-        event.target.classList.add('bg-[#1e0e62]', 'text-white');
-        event.target.classList.remove('text-gray-500', 'dark:text-gray-400');
+// color input sync
+document.querySelectorAll('input[type="color"][data-sync]').forEach(function(colorInput) {
+    var key = colorInput.getAttribute('data-sync');
+    var textInput = document.querySelector('input[data-sync-text="' + key + '"]');
+    if (textInput) {
+        colorInput.addEventListener('input', function() {
+            textInput.value = this.value;
+        });
+        textInput.addEventListener('input', function() {
+            if (this.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                colorInput.value = this.value;
+            }
+        });
     }
-}
+});
 
 function saveAllSettings() {
     document.getElementById('settingsForm').submit();
 }
 
 function resetSettings() {
-    if (confirm('Are you sure you want to reset all settings to defaults? This action cannot be undone.')) {
-        const form = document.createElement('form');
+    if (confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
+        var form = document.createElement('form');
         form.method = 'POST';
         form.innerHTML = '<input type="hidden" name="action" value="reset_settings">';
         document.body.appendChild(form);
@@ -435,35 +464,14 @@ function resetSettings() {
 }
 
 function uploadLogo() {
-    const form = document.createElement('form');
+    var form = document.createElement('form');
     form.method = 'POST';
     form.enctype = 'multipart/form-data';
     form.innerHTML = '<input type="hidden" name="action" value="upload_logo">';
-    
-    const fileInput = document.getElementById('logoUpload');
-    const newFileInput = fileInput.cloneNode(true);
-    form.appendChild(newFileInput);
-    
+    var fileInput = document.getElementById('logoUpload');
+    var clone = fileInput.cloneNode(true);
+    form.appendChild(clone);
     document.body.appendChild(form);
     form.submit();
 }
-
-// Sync color inputs
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('input[type="color"]').forEach(colorInput => {
-        const textInput = colorInput.parentElement.querySelector('input[type="text"]');
-        
-        colorInput.addEventListener('input', function() {
-            textInput.value = this.value;
-        });
-        
-        textInput.addEventListener('input', function() {
-            if (this.value.match(/^#[0-9A-Fa-f]{6}$/)) {
-                colorInput.value = this.value;
-            }
-        });
-    });
-});
 </script>
-
-<?php include __DIR__ . '/includes/footer.php'; ?>

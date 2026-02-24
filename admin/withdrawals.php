@@ -286,7 +286,7 @@ include __DIR__ . '/includes/header.php';
                                 <p class="text-xs text-gray-400"><?= htmlspecialchars($withdrawal['email']) ?></p>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-medium"><?= \App\Config\Config::getCurrencySymbol() ?><?= number_format($withdrawal['requested_amount'], 2) ?></td>
-                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><span class="rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"><?= htmlspecialchars($withdrawal['payment_method'] ?? 'N/A') ?></span></td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><span class="rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"><?= htmlspecialchars(($withdrawal['currency'] ?? 'USDT') . ' / ' . ($withdrawal['network'] ?? 'TRC20')) ?></span></td>
                             <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                 <?php $sc = match($withdrawal['status']) { 'completed' => 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400', 'pending' => 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400', 'rejected' => 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400', default => 'bg-gray-100 dark:bg-gray-800 text-gray-500' }; ?>
                                 <span class="rounded-full px-2.5 py-0.5 text-xs font-medium <?= $sc ?>"><?= ucfirst($withdrawal['status']) ?></span>

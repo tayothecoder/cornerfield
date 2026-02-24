@@ -82,7 +82,15 @@ require_once __DIR__ . '/includes/header.php';
                 <?php else: ?>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
                 <?php endif; ?>
-                <span class="text-xs font-medium"><?= $bc > 0 ? '+' : '' ?><?= $bc == 0 ? '0' : number_format($bc, 1) ?>%</span>
+                <span class="text-xs font-medium"><?php
+                    if ($bc == 0) {
+                        echo '0%';
+                    } elseif ($bc > 0) {
+                        echo '+' . number_format($bc, 1) . '%';
+                    } else {
+                        echo '-' . number_format(abs($bc), 1) . '%';
+                    }
+                ?></span>
             </div>
         </div>
 
@@ -102,7 +110,15 @@ require_once __DIR__ . '/includes/header.php';
                 <?php else: ?>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
                 <?php endif; ?>
-                <span class="text-xs font-medium"><?= $ec > 0 ? '+' : '' ?><?= $ec == 0 ? '0' : number_format($ec, 1) ?>%</span>
+                <span class="text-xs font-medium"><?php
+                    if ($ec == 0) {
+                        echo '0%';
+                    } elseif ($ec > 0) {
+                        echo '+' . number_format($ec, 1) . '%';
+                    } else {
+                        echo '-' . number_format(abs($ec), 1) . '%';
+                    }
+                ?></span>
             </div>
         </div>
 

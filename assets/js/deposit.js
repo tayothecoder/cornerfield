@@ -377,7 +377,7 @@ class DepositManager {
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">${deposit.formatted_date}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">${deposit.method_name || 'N/A'}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-300">${deposit.formatted_amount}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${deposit.formatted_fee}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${deposit.status === 'rejected' ? '-' : deposit.formatted_fee}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${this.getStatusClasses(deposit.status)}">
                         ${deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}

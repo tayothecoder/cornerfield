@@ -45,6 +45,10 @@ try {
     $userModel = new \App\Models\UserModel();
     $profileUser = $userModel->findById($userId) ?? [];
     $base = \App\Config\Config::getBasePath();
+    // get investment count
+    $db = new \App\Config\Database();
+    $investmentCount = $db->fetchOne("SELECT COUNT(*) as cnt FROM investments WHERE user_id = ? AND status = 'active'", [$userId])['cnt'] ?? 0;
+
     $data = ['profile' => array_merge([
         'avatar' => $base . '/assets/images/default-avatar.png',
         'firstname' => $profileUser['first_name'] ?? '',
@@ -65,7 +69,7 @@ try {
             'total_deposits' => (float)($profileUser['total_invested'] ?? 0),
             'total_withdrawals' => (float)($profileUser['total_withdrawn'] ?? 0),
             'total_earnings' => (float)($profileUser['total_earned'] ?? 0),
-            'total_investments' => (float)($profileUser['total_invested'] ?? 0),
+            'total_investments' => (int)$investmentCount,
             'referral_earnings' => 0,
             'referrals_count' => 0,
         ],
@@ -119,9 +123,17 @@ require_once __DIR__ . '/includes/header.php';
                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                             Email verified
                         </span>
-                        <span class="inline-flex items-center gap-1 text-xs <?= ($data['profile']['kyc_status'] ?? '') === 'verified' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' ?>">
+                        <?php
+                        $kycStatus = $data['profile']['kyc_status'] ?? 'pending';
+                        $kycColor = match($kycStatus) {
+                            'approved', 'verified' => 'text-emerald-600 dark:text-emerald-400',
+                            'pending' => 'text-amber-600 dark:text-amber-400',
+                            default => 'text-red-600 dark:text-red-400',
+                        };
+                        ?>
+                        <span class="inline-flex items-center gap-1 text-xs <?= $kycColor ?>">
                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                            KYC <?= ucfirst($data['profile']['kyc_status'] ?? 'pending') ?>
+                            KYC <?= ucfirst($kycStatus) ?>
                         </span>
                     </div>
                 </div>
@@ -237,22 +249,23 @@ require_once __DIR__ . '/includes/header.php';
             <div class="bg-white dark:bg-[#1a1145] rounded-3xl p-6">
                 <h3 class="text-sm font-semibold tracking-tight text-gray-900 dark:text-white mb-4">KYC Verification</h3>
                 
+                <?php
+                $kycSidebarStatus = $data['profile']['kyc_status'] ?? 'pending';
+                $kycBg = match($kycSidebarStatus) {
+                    'approved', 'verified' => 'bg-emerald-100 dark:bg-emerald-900/30',
+                    'pending' => 'bg-amber-100 dark:bg-amber-900/30',
+                    default => 'bg-red-100 dark:bg-red-900/30'
+                };
+                $kycIconColor = match($kycSidebarStatus) {
+                    'approved', 'verified' => 'text-emerald-600 dark:text-emerald-400',
+                    'pending' => 'text-amber-600 dark:text-amber-400',
+                    default => 'text-red-600 dark:text-red-400'
+                };
+                ?>
                 <div class="p-3 bg-[#f5f3ff] dark:bg-[#0f0a2e] rounded-2xl flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center <?php
-                        echo match($data['profile']['kyc_status'] ?? 'pending') {
-                            'verified' => 'bg-emerald-100 dark:bg-emerald-900/30',
-                            'pending' => 'bg-amber-100 dark:bg-amber-900/30',
-                            default => 'bg-red-100 dark:bg-red-900/30'
-                        };
-                    ?>">
-                        <svg class="w-4 h-4 <?php
-                            echo match($data['profile']['kyc_status'] ?? 'pending') {
-                                'verified' => 'text-emerald-600 dark:text-emerald-400',
-                                'pending' => 'text-amber-600 dark:text-amber-400',
-                                default => 'text-red-600 dark:text-red-400'
-                            };
-                        ?>" fill="currentColor" viewBox="0 0 20 20">
-                            <?php if (($data['profile']['kyc_status'] ?? '') === 'verified'): ?>
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center <?= $kycBg ?>">
+                        <svg class="w-4 h-4 <?= $kycIconColor ?>" fill="currentColor" viewBox="0 0 20 20">
+                            <?php if (in_array($kycSidebarStatus, ['approved', 'verified'])): ?>
                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                             <?php else: ?>
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
@@ -261,18 +274,23 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-900 dark:text-white">Identity Verification</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400"><?= ucfirst($data['profile']['kyc_status'] ?? 'pending') ?></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400"><?= ucfirst($kycSidebarStatus) ?></p>
                     </div>
                 </div>
                 
-                <?php if (($data['profile']['kyc_status'] ?? '') === 'not_submitted'): ?>
+                <?php if (in_array($kycSidebarStatus, ['not_submitted', ''])): ?>
                 <button onclick="openKYCModal()" class="w-full px-4 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">
                     Start Verification
                 </button>
-                <?php elseif (($data['profile']['kyc_status'] ?? '') === 'pending'): ?>
+                <?php elseif ($kycSidebarStatus === 'pending'): ?>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Documents under review. Usually takes 1-3 business days.</p>
-                <?php elseif (($data['profile']['kyc_status'] ?? '') === 'verified'): ?>
+                <?php elseif (in_array($kycSidebarStatus, ['approved', 'verified'])): ?>
                 <p class="text-xs text-emerald-600 dark:text-emerald-400">Your identity has been verified. Full access enabled.</p>
+                <?php elseif ($kycSidebarStatus === 'rejected'): ?>
+                <p class="text-xs text-red-600 dark:text-red-400">Verification was rejected. Please resubmit your documents.</p>
+                <button onclick="openKYCModal()" class="w-full mt-2 px-4 py-2.5 bg-[#1e0e62] text-white text-sm font-medium rounded-full hover:bg-[#2d1b8a] transition-colors">
+                    Resubmit Documents
+                </button>
                 <?php endif; ?>
             </div>
 

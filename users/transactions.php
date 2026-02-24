@@ -22,7 +22,7 @@ try {
     // map created_at to date for template compatibility
     $transactions = array_map(function ($tx) {
         $tx['date'] = $tx['created_at'] ?? '';
-        $tx['description'] = $tx['description'] ?? ucwords(str_replace('_', ' ', $tx['type'] ?? ''));
+        $tx['description'] = !empty($tx['description']) ? $tx['description'] : ucwords(str_replace('_', ' ', $tx['type'] ?? 'Transaction'));
         return $tx;
     }, $rawTransactions);
     // compute per-type totals from the by_type breakdown
@@ -338,7 +338,7 @@ require_once __DIR__ . '/includes/header.php';
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
             <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">No transactions found</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">try adjusting your search criteria or filters</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Try adjusting your search criteria or filters</p>
         </div>
 
         <!-- simple pagination info -->
